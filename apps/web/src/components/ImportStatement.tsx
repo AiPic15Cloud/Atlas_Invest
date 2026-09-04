@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { parseStatementText, type ImportGroup } from "../lib/importStatement";
-import { extractPdfText } from "../lib/pdfText";
+import { extractPdfText, PdfPasswordRequiredError } from "../lib/pdfText";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import type { BankAccount, BudgetCategory, Expense, ExpensesResponse } from "../api/types";
 
@@ -87,8 +87,12 @@ export function ImportStatement({ year, month, accounts, onDone, onClose }: Impo
           return;
         }
         setText(content);
-      } catch {
-        setError("Impossible de lire ce PDF. Essaie d'exporter ton relevé en CSV, ou colle-le directement en texte.");
+      } catch (err) {
+        if (err instanceof PdfPasswordRequiredError) {
+          setError("Ce PDF est protégé par un mot de passe. Retire la protection avant de l'importer (ou exporte le relevé au format CSV).");
+        } else {
+          setError("Impossible de lire ce PDF. Essaie d'exporter ton relevé en CSV, ou colle-le directement en texte.");
+        }
       } finally {
         setExtractingPdf(false);
       }
