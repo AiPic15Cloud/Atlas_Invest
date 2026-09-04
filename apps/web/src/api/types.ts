@@ -284,6 +284,46 @@ export interface RecurringChargesResponse {
   subscriptionsWithoutDate: { id: string; poste: string; amount: number }[];
 }
 
+export type WealthCategory = "IMMOBILIER" | "VEHICULE" | "PLACEMENT" | "AUTRE_ACTIF" | "CREDIT" | "AUTRE_DETTE";
+export type WealthKind = "ASSET" | "LIABILITY";
+
+export interface WealthCategoryDefinition {
+  label: string;
+  kind: WealthKind;
+}
+
+export interface WealthItem {
+  id: string;
+  label: string;
+  category: WealthCategory;
+  kind: WealthKind;
+  amount: string;
+  signedAmount: number;
+  createdAt: string;
+}
+
+export interface WealthHouseholdMember {
+  userId: string;
+  firstName: string;
+  sharesDetails: boolean;
+  bankAccountsTotal?: number;
+  wealthItems?: WealthItem[];
+  netWorth: number;
+}
+
+export interface WealthResponse {
+  mine: {
+    bankAccountsTotal: number;
+    wealthItems: WealthItem[];
+    wealthItemsTotal: number;
+    netWorth: number;
+  } | null;
+  joint: { accountsTotal: number };
+  household: WealthHouseholdMember[];
+  householdNetWorth: number;
+  categories: Record<WealthCategory, WealthCategoryDefinition>;
+}
+
 export interface DashboardResponse {
   year: number;
   totals: { income: number; expenses: number; reste: number };
