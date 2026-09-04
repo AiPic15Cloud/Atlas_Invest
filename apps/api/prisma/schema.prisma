@@ -46,6 +46,7 @@ model User {
   subscriptions        Subscription[]
   recurringCharges     RecurringCharge[]
   wealthItems          WealthItem[]
+  savingsGoals         SavingsGoal[]
 }
 
 model BankAccount {
@@ -296,6 +297,26 @@ model WealthItem {
   amount    Decimal        @db.Decimal(12, 2)
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@index([userId])
+}
+
+// Objectif d'epargne nomme (ex. "Voyage au Japon", "Apport immobilier"),
+// distinct de l'epargne de precaution : montant cible, date cible et
+// contribution mensuelle prevue sont tous optionnels sauf le montant cible.
+model SavingsGoal {
+  id                  String    @id @default(cuid())
+  name                String
+  targetAmount        Decimal   @db.Decimal(12, 2)
+  currentAmount       Decimal   @default(0) @db.Decimal(12, 2)
+  targetDate          DateTime?
+  monthlyContribution Decimal?  @db.Decimal(12, 2)
+  achieved            Boolean   @default(false)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String

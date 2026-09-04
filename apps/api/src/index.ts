@@ -15,6 +15,7 @@ import { subscriptionsRouter } from "./routes/subscriptions.js";
 import { savingsOpportunitiesRouter } from "./routes/savingsOpportunities.js";
 import { recurringChargesRouter } from "./routes/recurringCharges.js";
 import { wealthRouter } from "./routes/wealth.js";
+import { savingsGoalsRouter } from "./routes/savingsGoals.js";
 
 const app = express();
 
@@ -38,6 +39,7 @@ app.use("/api/subscriptions", subscriptionsRouter);
 app.use("/api/savings-opportunities", savingsOpportunitiesRouter);
 app.use("/api/recurring-charges", recurringChargesRouter);
 app.use("/api/wealth", wealthRouter);
+app.use("/api/savings-goals", savingsGoalsRouter);
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);

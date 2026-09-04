@@ -324,6 +324,25 @@ export interface WealthResponse {
   categories: Record<WealthCategory, WealthCategoryDefinition>;
 }
 
+export interface SavingsGoal {
+  id: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  remaining: number;
+  progressRatio: number;
+  targetDate: string | null;
+  monthlyContribution: number | null;
+  monthsRemaining: number | null;
+  requiredMonthlyContribution: number | null;
+  achieved: boolean;
+  createdAt: string;
+}
+
+export interface SavingsGoalsResponse {
+  goals: SavingsGoal[];
+}
+
 export interface DashboardResponse {
   year: number;
   totals: { income: number; expenses: number; reste: number };
