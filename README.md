@@ -68,8 +68,8 @@ Tu n'as pas besoin de connaître le développement pour suivre ces étapes.
 ### 2. Récupérer le projet
 
 ```bash
-git clone https://github.com/AiPic15Cloud/github.com-aipic15cloud-budget-foyer.git
-cd github.com-aipic15cloud-budget-foyer
+git clone https://github.com/AiPic15Cloud/Atlas_Invest.git
+cd Atlas_Invest
 pnpm install
 ```
 
