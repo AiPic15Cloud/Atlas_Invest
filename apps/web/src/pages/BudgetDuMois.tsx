@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { apiFetch, ApiError } from "../api/client";
 import { QuickAddExpense } from "../components/QuickAddExpense";
@@ -56,6 +56,13 @@ export function BudgetDuMois() {
   const [copyFromYear, setCopyFromYear] = useState(year);
   const [copyFromMonth, setCopyFromMonth] = useState(month);
   const [importOpen, setImportOpen] = useState(false);
+  const importSectionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (importOpen) {
+      importSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [importOpen]);
 
   async function loadMonth() {
     try {
@@ -298,7 +305,7 @@ export function BudgetDuMois() {
             internes écartés.
           </p>
           <button onClick={() => setImportOpen((v) => !v)} className="mt-3 btn btn-primary">
-            📥 Importer un relevé
+            {importOpen ? "▲ Fermer l'import" : "📥 Importer un relevé"}
           </button>
         </div>
       </div>
@@ -349,13 +356,15 @@ export function BudgetDuMois() {
       </section>
 
       {importOpen && (
-        <ImportStatement
-          year={year}
-          month={month}
-          accounts={availableAccounts}
-          onDone={loadMonth}
-          onClose={() => setImportOpen(false)}
-        />
+        <div ref={importSectionRef}>
+          <ImportStatement
+            year={year}
+            month={month}
+            accounts={availableAccounts}
+            onDone={loadMonth}
+            onClose={() => setImportOpen(false)}
+          />
+        </div>
       )}
 
       <section className="card">
