@@ -46,7 +46,7 @@ export function Historique() {
             key={t}
             onClick={() => setFilter(t)}
             className={`rounded-md px-3 py-2 text-sm font-medium ${
-              filter === t ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
+              filter === t ? "bg-pink-600 text-white" : "bg-slate-100 text-slate-700"
             }`}
           >
             {t === "ALL" ? "Tout" : TYPE_LABELS[t]}

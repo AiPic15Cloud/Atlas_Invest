@@ -6,6 +6,12 @@ import type { BudgetCategory, BudgetItemNode } from "../api/types";
 const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 const percent = new Intl.NumberFormat("fr-FR", { style: "percent", maximumFractionDigits: 0 });
 
+const CATEGORY_TITLE_COLOR: Record<BudgetCategory, string> = {
+  BESOINS: "text-amber-600",
+  ENVIES: "text-pink-600",
+  EPARGNE: "text-violet-600",
+};
+
 interface BudgetCategorySectionProps {
   category: BudgetCategory;
   title: string;
@@ -40,7 +46,7 @@ export function BudgetCategorySection({
     <section className="card">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-semibold">{title}</h2>
+          <h2 className={`font-semibold ${CATEGORY_TITLE_COLOR[category]}`}>{title}</h2>
           <p className={`text-xs ${overBudget ? "text-red-600" : "text-slate-500"}`}>
             {currency.format(actual)}
             {showTarget && (

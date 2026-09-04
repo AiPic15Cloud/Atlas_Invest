@@ -74,8 +74,8 @@ export function Dashboard() {
 
       <section className="card">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <StatTile label="Revenu annuel net" value={currency.format(data.totals.income)} />
-          <StatTile label="Dépenses sur l'année" value={currency.format(data.totals.expenses)} />
+          <StatTile label="💶 Revenu annuel net" value={currency.format(data.totals.income)} />
+          <StatTile label="💸 Dépenses sur l'année" value={currency.format(data.totals.expenses)} />
           <StatTile
             label="Reste"
             value={currency.format(data.totals.reste)}

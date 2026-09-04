@@ -124,9 +124,9 @@ export function BudgetType() {
           />
         ) : (
           <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <StatTile label="Budget disponible" value={currency.format(template.monthlyIncome)} />
-            <StatTile label="Reste à vivre" value={currency.format(breakdown.resteAVivre)} />
-            <StatTile label="Capacité d'épargne théorique" value={currency.format(breakdown.capaciteEpargne)} />
+            <StatTile label="💰 Budget disponible" value={currency.format(template.monthlyIncome)} />
+            <StatTile label="🌷 Reste à vivre" value={currency.format(breakdown.resteAVivre)} />
+            <StatTile label="🛡️ Capacité d'épargne théorique" value={currency.format(breakdown.capaciteEpargne)} />
           </div>
         )}
 
@@ -198,14 +198,14 @@ function SplitBar({ besoins, envies, epargne, total }: { besoins: number; envies
   return (
     <div className="mt-4">
       <div className="flex h-4 w-full overflow-hidden rounded-full bg-slate-100">
-        <div style={{ width: `${pct(besoins)}%` }} className="bg-slate-700" title={`Besoins ${currency.format(besoins)}`} />
-        <div style={{ width: `${pct(envies)}%` }} className="bg-slate-400" title={`Envies ${currency.format(envies)}`} />
-        <div style={{ width: `${pct(epargne)}%` }} className="bg-emerald-500" title={`Épargne ${currency.format(epargne)}`} />
+        <div style={{ width: `${pct(besoins)}%` }} className="bg-amber-500" title={`Besoins ${currency.format(besoins)}`} />
+        <div style={{ width: `${pct(envies)}%` }} className="bg-pink-500" title={`Envies ${currency.format(envies)}`} />
+        <div style={{ width: `${pct(epargne)}%` }} className="bg-violet-500" title={`Épargne ${currency.format(epargne)}`} />
       </div>
       <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-600">
-        <span><span className="inline-block h-2 w-2 rounded-full bg-slate-700" /> Besoins {currency.format(besoins)}</span>
-        <span><span className="inline-block h-2 w-2 rounded-full bg-slate-400" /> Envies {currency.format(envies)}</span>
-        <span><span className="inline-block h-2 w-2 rounded-full bg-emerald-500" /> Épargne {currency.format(epargne)}</span>
+        <span><span className="inline-block h-2 w-2 rounded-full bg-amber-500" /> Besoins {currency.format(besoins)}</span>
+        <span><span className="inline-block h-2 w-2 rounded-full bg-pink-500" /> Envies {currency.format(envies)}</span>
+        <span><span className="inline-block h-2 w-2 rounded-full bg-violet-500" /> Épargne {currency.format(epargne)}</span>
       </div>
     </div>
   );
@@ -249,7 +249,7 @@ function IncomeOnlyForm({ initial, onCancel, onSubmit }: { initial: number; onCa
       <button
         onClick={handleSubmit}
         disabled={submitting}
-        className="rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+        className="rounded-md bg-pink-600 hover:bg-pink-700 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
       >
         Enregistrer
       </button>
@@ -314,7 +314,7 @@ function MethodPicker({
               key={key}
               onClick={() => setMethod(key)}
               className={`rounded-lg border p-3 text-left transition ${
-                method === key ? "border-slate-900 bg-slate-50 ring-1 ring-slate-900" : "border-slate-200 bg-white hover:border-slate-300"
+                method === key ? "border-pink-500 bg-pink-50 ring-1 ring-pink-500" : "border-slate-200 bg-white hover:border-slate-300"
               }`}
             >
               <p className="font-medium">{def.label}</p>

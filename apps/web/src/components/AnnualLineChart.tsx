@@ -11,9 +11,9 @@ const MONTH_NAMES_FULL = [
 ];
 
 const SERIES = [
-  { key: "income" as const, label: "Revenu", color: "#2a78d6" },
-  { key: "expense" as const, label: "Dépenses", color: "#eb6834" },
-  { key: "reste" as const, label: "Reste", color: "#1baf7a" },
+  { key: "income" as const, label: "Revenu", color: "#10b981" },
+  { key: "expense" as const, label: "Dépenses", color: "#ec4899" },
+  { key: "reste" as const, label: "Reste", color: "#8b5cf6" },
 ];
 
 const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
@@ -181,7 +181,7 @@ export function AnnualLineChart({ monthly, selectedIndex, onSelectMonth }: Annua
 
           {hovered && hoverIndex !== null && (
             <div
-              className="pointer-events-none absolute top-2 rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 py-2 text-xs text-white shadow-lg"
+              className="pointer-events-none absolute top-2 rounded-md bg-pink-600 hover:bg-pink-700 px-3 py-2 text-xs text-white shadow-lg"
               style={{ left: `min(${(x(hoverIndex) / WIDTH) * 100}%, 78%)` }}
             >
               <p className="font-medium">{MONTH_NAMES_FULL[hoverIndex]}</p>

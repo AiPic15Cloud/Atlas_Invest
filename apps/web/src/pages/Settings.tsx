@@ -200,7 +200,7 @@ export function Settings() {
               <button
                 onClick={handleConfirmSetup}
                 disabled={twoFactorBusy}
-                className="rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+                className="rounded-md bg-pink-600 hover:bg-pink-700 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
               >
                 Confirmer et activer
               </button>

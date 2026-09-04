@@ -69,7 +69,7 @@ export function Repartition() {
           <button
             onClick={() => setMode("PROPORTIONNEL")}
             className={`rounded-md px-3 py-2 text-sm font-medium ${
-              mode === "PROPORTIONNEL" ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
+              mode === "PROPORTIONNEL" ? "bg-pink-600 text-white" : "bg-slate-100 text-slate-700"
             }`}
           >
             Proportionnel aux revenus
@@ -77,7 +77,7 @@ export function Repartition() {
           <button
             onClick={() => setMode("EGAL")}
             className={`rounded-md px-3 py-2 text-sm font-medium ${
-              mode === "EGAL" ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
+              mode === "EGAL" ? "bg-pink-600 text-white" : "bg-slate-100 text-slate-700"
             }`}
           >
             Parts égales

@@ -1,35 +1,12 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import {
-  IconHome,
-  IconWallet,
-  IconTrendingUp,
-  IconTarget,
-  IconChartBar,
-  IconUsers,
-  IconShield,
-  IconFlag,
-  IconBuilding,
-  IconScissors,
-  IconRepeat,
-  IconCalendar,
-  IconClock,
-  IconDownload,
-  IconChartLine,
-  IconSliders,
-  IconMenu,
-  IconX,
-  IconLogout,
-} from "./icons";
-import type { ComponentType, SVGProps } from "react";
-
-type Icon = ComponentType<SVGProps<SVGSVGElement>>;
+import { IconMenu, IconX, IconLogout } from "./icons";
 
 interface NavItem {
   to: string;
   label: string;
-  icon: Icon;
+  icon: string;
 }
 
 interface NavGroup {
@@ -38,46 +15,46 @@ interface NavGroup {
 }
 
 const NAV_GROUPS: NavGroup[] = [
-  { title: null, items: [{ to: "/", label: "Tableau de bord", icon: IconHome }] },
+  { title: null, items: [{ to: "/", label: "Tableau de bord", icon: "📊" }] },
   {
     title: "Budget",
     items: [
-      { to: "/comptes", label: "Comptes", icon: IconWallet },
-      { to: "/revenus", label: "Revenus", icon: IconTrendingUp },
-      { to: "/budget-type", label: "Budget type", icon: IconTarget },
-      { to: "/budget-du-mois", label: "Budget du mois", icon: IconChartBar },
-      { to: "/repartition", label: "Répartition", icon: IconUsers },
+      { to: "/comptes", label: "Comptes", icon: "🏦" },
+      { to: "/revenus", label: "Revenus", icon: "💰" },
+      { to: "/budget-type", label: "Budget type", icon: "📁" },
+      { to: "/budget-du-mois", label: "Budget du mois", icon: "🗓️" },
+      { to: "/repartition", label: "Répartition", icon: "🤝" },
     ],
   },
   {
     title: "Épargne & patrimoine",
     items: [
-      { to: "/epargne", label: "Épargne", icon: IconShield },
-      { to: "/objectifs", label: "Objectifs", icon: IconFlag },
-      { to: "/patrimoine", label: "Patrimoine", icon: IconBuilding },
-      { to: "/economies", label: "Économies", icon: IconScissors },
+      { to: "/epargne", label: "Épargne", icon: "🛡️" },
+      { to: "/objectifs", label: "Objectifs", icon: "🎯" },
+      { to: "/patrimoine", label: "Patrimoine", icon: "🏛️" },
+      { to: "/economies", label: "Économies", icon: "✂️" },
     ],
   },
   {
     title: "Suivi",
     items: [
-      { to: "/abonnements", label: "Abonnements", icon: IconRepeat },
-      { to: "/echeances", label: "Échéances", icon: IconCalendar },
-      { to: "/historique", label: "Historique", icon: IconClock },
+      { to: "/abonnements", label: "Abonnements", icon: "🔁" },
+      { to: "/echeances", label: "Échéances", icon: "⏰" },
+      { to: "/historique", label: "Historique", icon: "🕒" },
     ],
   },
   {
     title: "Outils",
     items: [
-      { to: "/export", label: "Export", icon: IconDownload },
-      { to: "/projection", label: "Projection", icon: IconChartLine },
+      { to: "/export", label: "Export", icon: "📤" },
+      { to: "/projection", label: "Projection", icon: "🔮" },
     ],
   },
 ];
 
 function navLinkClass({ isActive }: { isActive: boolean }) {
   return `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-    isActive ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+    isActive ? "bg-pink-50 text-pink-700" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
   }`;
 }
 
@@ -87,10 +64,13 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 px-5 py-5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white">
-          B
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 text-base shadow-sm">
+          💰
         </div>
-        <span className="text-base font-bold tracking-tight text-slate-900">Budget Foyer</span>
+        <div className="leading-tight">
+          <p className="text-base font-bold tracking-tight text-slate-900">Budget Foyer</p>
+          <p className="text-xs text-slate-400">mon budget</p>
+        </div>
       </div>
 
       <nav className="flex-1 space-y-5 overflow-y-auto px-3 pb-4">
@@ -104,7 +84,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             <div className="space-y-0.5">
               {group.items.map((item) => (
                 <NavLink key={item.to} to={item.to} end={item.to === "/"} className={navLinkClass} onClick={onNavigate}>
-                  <item.icon className="h-5 w-5 shrink-0" />
+                  <span className="w-5 shrink-0 text-center text-base leading-none">{item.icon}</span>
                   {item.label}
                 </NavLink>
               ))}
@@ -115,7 +95,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       <div className="space-y-0.5 border-t border-slate-100 px-3 py-3">
         <NavLink to="/settings" className={navLinkClass} onClick={onNavigate}>
-          <IconSliders className="h-5 w-5 shrink-0" />
+          <span className="w-5 shrink-0 text-center text-base leading-none">⚙️</span>
           Réglages
         </NavLink>
         <div className="flex items-center justify-between px-3 py-2">
@@ -156,8 +136,8 @@ export function Layout() {
       {/* Mobile top bar */}
       <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 md:hidden">
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-xs font-bold text-white">
-            B
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-pink-500 text-sm shadow-sm">
+            💰
           </div>
           <span className="text-sm font-bold text-slate-900">Budget Foyer</span>
         </div>

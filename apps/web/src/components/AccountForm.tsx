@@ -90,7 +90,7 @@ export function AccountForm({ variant, onSubmit, onCancel }: AccountFormProps) {
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+          className="rounded-md bg-pink-600 hover:bg-pink-700 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
         >
           {submitting ? "Ajout..." : "Ajouter"}
         </button>

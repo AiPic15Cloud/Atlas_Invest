@@ -17,10 +17,18 @@ const CATEGORY_LABELS: Record<BudgetCategory, string> = {
 };
 
 const CATEGORY_COLORS: Record<BudgetCategory, string> = {
-  BESOINS: "#334155",
-  ENVIES: "#94a3b8",
-  EPARGNE: "#10b981",
+  BESOINS: "#f59e0b",
+  ENVIES: "#ec4899",
+  EPARGNE: "#8b5cf6",
 };
+
+const CATEGORY_TEXT_CLASS: Record<BudgetCategory, string> = {
+  BESOINS: "text-amber-600",
+  ENVIES: "text-pink-600",
+  EPARGNE: "text-violet-600",
+};
+
+const CATEGORY_ORDER: BudgetCategory[] = ["BESOINS", "ENVIES", "EPARGNE"];
 
 const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 
@@ -80,6 +88,15 @@ export function BudgetDuMois() {
     const q = search.trim().toLowerCase();
     return data.expenses.filter((e) => e.poste.toLowerCase().includes(q));
   }, [data, search]);
+
+  const expensesByCategory = useMemo(() => {
+    const groups = new Map<BudgetCategory, Expense[]>();
+    for (const cat of CATEGORY_ORDER) groups.set(cat, []);
+    for (const expense of filteredExpenses) {
+      groups.get(expense.category)?.push(expense);
+    }
+    return groups;
+  }, [filteredExpenses]);
 
   function goToMonth(delta: number) {
     const next = shiftMonth(year, month, delta);
@@ -187,10 +204,10 @@ export function BudgetDuMois() {
 
       <section className="card">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <StatTile label="Revenu du mois" value={currency.format(summary.totalIncome)} />
-          <StatTile label="Dépensé ce mois" value={currency.format(summary.totalSpent)} />
+          <StatTile label="💶 Revenu du mois" value={currency.format(summary.totalIncome)} />
+          <StatTile label="💸 Dépensé ce mois" value={currency.format(summary.totalSpent)} />
           <StatTile
-            label="Écart vs budget type"
+            label="📊 Écart vs budget type"
             value={ecart === null ? "—" : `${ecart > 0 ? "+" : ""}${currency.format(ecart)}`}
             tone={ecart !== null && ecart > 0 ? "warn" : "default"}
           />
@@ -317,7 +334,7 @@ export function BudgetDuMois() {
               className="w-24 input px-2 py-1.5 text-sm"
               aria-label="Année source"
             />
-            <button onClick={handleCopyOtherMonth} className="rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 text-xs font-medium text-white">
+            <button onClick={handleCopyOtherMonth} className="rounded-md bg-pink-600 hover:bg-pink-700 px-3 py-1.5 text-xs font-medium text-white">
               Copier
             </button>
           </div>
@@ -349,11 +366,26 @@ export function BudgetDuMois() {
         {filteredExpenses.length === 0 ? (
           <p className="mt-2 text-sm text-slate-500">Aucune dépense.</p>
         ) : (
-          <ul className="mt-2">
-            {filteredExpenses.map((expense) => (
-              <ExpenseRow key={expense.id} expense={expense} onDelete={handleDelete} onToggleWasteful={handleToggleWasteful} />
-            ))}
-          </ul>
+          <div className="mt-3 space-y-5">
+            {CATEGORY_ORDER.map((cat) => {
+              const items = expensesByCategory.get(cat) ?? [];
+              if (items.length === 0) return null;
+              const total = items.reduce((sum, e) => sum + Number(e.amount), 0);
+              return (
+                <div key={cat}>
+                  <div className="mb-1 flex items-center justify-between">
+                    <h3 className={`text-sm font-bold ${CATEGORY_TEXT_CLASS[cat]}`}>{CATEGORY_LABELS[cat]}</h3>
+                    <span className="text-xs font-medium text-slate-400">{currency.format(total)}</span>
+                  </div>
+                  <ul>
+                    {items.map((expense) => (
+                      <ExpenseRow key={expense.id} expense={expense} onDelete={handleDelete} onToggleWasteful={handleToggleWasteful} />
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
         )}
       </section>
     </div>
@@ -385,9 +417,7 @@ function ExpenseRow({
             </span>
           )}
         </p>
-        <p className="text-xs text-slate-500">
-          {CATEGORY_LABELS[expense.category]} · {expense.bankAccountName}
-        </p>
+        <p className="text-xs text-slate-500">{expense.bankAccountName}</p>
       </div>
       <div className="flex items-center gap-3">
         <span className="text-sm font-semibold">{currency.format(Number(expense.amount))}</span>

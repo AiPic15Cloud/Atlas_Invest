@@ -12,10 +12,10 @@ export function AuthShell({
   children: ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4 py-12">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#faf7fc] px-4 py-12">
       <div className="mb-6 flex items-center gap-2">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 text-base font-bold text-white">
-          B
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 text-lg shadow-sm">
+          💰
         </div>
         <span className="text-lg font-bold tracking-tight text-slate-900">Budget Foyer</span>
       </div>
