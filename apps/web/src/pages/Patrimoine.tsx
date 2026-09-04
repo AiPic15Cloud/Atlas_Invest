@@ -274,7 +274,7 @@ export function Patrimoine() {
           />
           <input
             className="input"
-            placeholder="Capital restant dû (optionnel, = montant emprunté sinon)"
+            placeholder="Capital restant dû (optionnel)"
             inputMode="decimal"
             value={loanRemaining}
             onChange={(e) => setLoanRemaining(e.target.value)}

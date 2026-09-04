@@ -129,15 +129,15 @@ export function Projection() {
 
         <div className="mt-4 border-t border-slate-100 pt-3">
           <span className="text-xs text-slate-500">Nouvelles dépenses récurrentes simulées (+) ou économies (-)</span>
-          <div className="mt-2 flex flex-wrap gap-2">
+          <div className="mt-2 grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
             <input
-              className="min-w-[160px] flex-1 input"
+              className="input sm:min-w-[160px] sm:flex-1"
               placeholder="Libellé (ex. Crédit voiture)"
               value={newLabel}
               onChange={(e) => setNewLabel(e.target.value)}
             />
             <input
-              className="w-32 input"
+              className="input sm:w-32"
               placeholder="Montant"
               value={newAmount}
               onChange={(e) => setNewAmount(e.target.value)}

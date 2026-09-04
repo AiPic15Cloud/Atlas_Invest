@@ -145,12 +145,14 @@ export function Repartition() {
 
   return (
     <div className="space-y-6">
+      <h1 className="page-title">🤝 Répartition des charges</h1>
+
       <div className="flex items-center justify-between card p-3">
         <button onClick={() => shiftMonth(-1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100">
           ← Précédent
         </button>
-        <span className="text-lg font-semibold">
-          🤝 Répartition des charges — {MONTH_LABELS[month - 1]} {year}
+        <span className="font-medium">
+          {MONTH_LABELS[month - 1]} {year}
         </span>
         <button onClick={() => shiftMonth(1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100">
           Suivant →

@@ -239,7 +239,7 @@ function MonthlyGoalsSection({ year, month }: { year: number; month: number }) {
       </p>
       {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
 
-      <div className="mt-3 flex gap-2">
+      <div className="mt-3 flex flex-wrap gap-2">
         <input
           value={emoji}
           onChange={(e) => setEmoji(e.target.value)}
@@ -250,8 +250,8 @@ function MonthlyGoalsSection({ year, month }: { year: number; month: number }) {
         <input
           value={label}
           onChange={(e) => setLabel(e.target.value)}
-          placeholder="ex. Mettre 200 € de côté"
-          className="flex-1 input"
+          placeholder="ex. Épargner 200 €"
+          className="min-w-[140px] flex-1 input"
           onKeyDown={(e) => e.key === "Enter" && handleAdd()}
         />
         <button onClick={handleAdd} disabled={submitting} className="btn btn-primary">
