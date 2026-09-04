@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
-import type { WealthCategory, WealthResponse } from "../api/types";
+import type { Loan, LoansResponse, WealthCategory, WealthResponse } from "../api/types";
 
 const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
+const dateFormat = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" });
 
 export function Patrimoine() {
   const [data, setData] = useState<WealthResponse | null>(null);
@@ -13,6 +14,17 @@ export function Patrimoine() {
   const [amount, setAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const [loans, setLoans] = useState<Loan[] | null>(null);
+  const [loanError, setLoanError] = useState<string | null>(null);
+  const [loanLabel, setLoanLabel] = useState("");
+  const [loanPrincipal, setLoanPrincipal] = useState("");
+  const [loanRemaining, setLoanRemaining] = useState("");
+  const [loanMonthlyPayment, setLoanMonthlyPayment] = useState("");
+  const [loanInterestRate, setLoanInterestRate] = useState("");
+  const [loanStartDate, setLoanStartDate] = useState("");
+  const [loanSubmitting, setLoanSubmitting] = useState(false);
+  const [paymentInputs, setPaymentInputs] = useState<Record<string, string>>({});
+
   async function load() {
     try {
       const res = await apiFetch<WealthResponse>("/api/wealth");
@@ -22,8 +34,18 @@ export function Patrimoine() {
     }
   }
 
+  async function loadLoans() {
+    try {
+      const res = await apiFetch<LoansResponse>("/api/loans");
+      setLoans(res.loans);
+    } catch (err) {
+      setLoanError(err instanceof ApiError ? err.message : "Impossible de charger les prêts.");
+    }
+  }
+
   useEffect(() => {
     load();
+    loadLoans();
   }, []);
 
   async function handleAdd() {
@@ -56,6 +78,68 @@ export function Patrimoine() {
     }
   }
 
+  async function handleAddLoan() {
+    const principal = Number(loanPrincipal.replace(",", "."));
+    const monthlyPayment = Number(loanMonthlyPayment.replace(",", "."));
+    if (!loanLabel.trim() || !Number.isFinite(principal) || principal <= 0) return;
+    if (!Number.isFinite(monthlyPayment) || monthlyPayment <= 0) return;
+    if (!loanStartDate) return;
+    setLoanSubmitting(true);
+    setLoanError(null);
+    try {
+      const remaining = loanRemaining ? Number(loanRemaining.replace(",", ".")) : undefined;
+      const rate = loanInterestRate ? Number(loanInterestRate.replace(",", ".")) : null;
+      await apiFetch("/api/loans", {
+        method: "POST",
+        body: JSON.stringify({
+          label: loanLabel.trim(),
+          principalAmount: principal,
+          remainingBalance: remaining,
+          monthlyPayment,
+          interestRate: rate,
+          startDate: new Date(`${loanStartDate}-01T00:00:00.000Z`).toISOString(),
+        }),
+      });
+      setLoanLabel("");
+      setLoanPrincipal("");
+      setLoanRemaining("");
+      setLoanMonthlyPayment("");
+      setLoanInterestRate("");
+      setLoanStartDate("");
+      await loadLoans();
+      await load();
+    } catch (err) {
+      setLoanError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    } finally {
+      setLoanSubmitting(false);
+    }
+  }
+
+  async function handleRecordPayment(id: string) {
+    const raw = paymentInputs[id];
+    const amountPaid = Number((raw ?? "").replace(",", "."));
+    if (!Number.isFinite(amountPaid) || amountPaid <= 0) return;
+    try {
+      await apiFetch(`/api/loans/${id}/record-payment`, { method: "POST", body: JSON.stringify({ amount: amountPaid }) });
+      setPaymentInputs((prev) => ({ ...prev, [id]: "" }));
+      await loadLoans();
+      await load();
+    } catch (err) {
+      setLoanError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    }
+  }
+
+  async function handleDeleteLoan(id: string) {
+    if (!confirm("Supprimer ce prêt ?")) return;
+    try {
+      await apiFetch(`/api/loans/${id}`, { method: "DELETE" });
+      await loadLoans();
+      await load();
+    } catch (err) {
+      setLoanError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    }
+  }
+
   if (error && !data) return <p className="text-sm text-red-600">{error}</p>;
   if (!data) return <p className="text-sm text-slate-500">Chargement...</p>;
 
@@ -80,7 +164,7 @@ export function Patrimoine() {
 
       <section className="card">
         <h2 className="font-semibold">Mon patrimoine</h2>
-        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-4">
           <div>
             <p className="text-xs text-slate-500">Comptes bancaires (les miens)</p>
             <p className="text-lg font-medium">{currency.format(data.mine.bankAccountsTotal)}</p>
@@ -88,6 +172,13 @@ export function Patrimoine() {
           <div>
             <p className="text-xs text-slate-500">Comptes joints du foyer</p>
             <p className="text-lg font-medium">{currency.format(data.joint.accountsTotal)}</p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-500">Prêts en cours (restant dû)</p>
+            <p className="text-lg font-medium text-red-600">
+              {data.mine.loansTotal > 0 ? "− " : ""}
+              {currency.format(data.mine.loansTotal)}
+            </p>
           </div>
           <div>
             <p className="text-xs text-slate-500">Mon solde net (patrimoine déclaré)</p>
@@ -155,6 +246,118 @@ export function Patrimoine() {
               </li>
             ))}
           </ul>
+        )}
+      </section>
+
+      <section className="card">
+        <h2 className="font-semibold">💳 Prêts en cours</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Crédit auto, prêt immobilier, prêt étudiant... suis le capital restant dû et la mensualité de chaque prêt,
+          en plus de la dette globale déclarée ci-dessus.
+        </p>
+        {loanError && <p className="mt-2 text-sm text-red-600">{loanError}</p>}
+
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <input
+            className="input sm:col-span-2"
+            placeholder="Libellé (ex. Prêt auto)"
+            value={loanLabel}
+            onChange={(e) => setLoanLabel(e.target.value)}
+          />
+          <input
+            className="input"
+            placeholder="Montant emprunté"
+            inputMode="decimal"
+            value={loanPrincipal}
+            onChange={(e) => setLoanPrincipal(e.target.value)}
+          />
+          <input
+            className="input"
+            placeholder="Capital restant dû (optionnel, = montant emprunté sinon)"
+            inputMode="decimal"
+            value={loanRemaining}
+            onChange={(e) => setLoanRemaining(e.target.value)}
+          />
+          <input
+            className="input"
+            placeholder="Mensualité"
+            inputMode="decimal"
+            value={loanMonthlyPayment}
+            onChange={(e) => setLoanMonthlyPayment(e.target.value)}
+          />
+          <input
+            className="input"
+            placeholder="Taux annuel % (optionnel)"
+            inputMode="decimal"
+            value={loanInterestRate}
+            onChange={(e) => setLoanInterestRate(e.target.value)}
+          />
+          <input
+            className="input"
+            type="month"
+            value={loanStartDate}
+            onChange={(e) => setLoanStartDate(e.target.value)}
+            title="Date de début du prêt"
+          />
+        </div>
+        <button onClick={handleAddLoan} disabled={loanSubmitting} className="mt-3 btn btn-primary">
+          {loanSubmitting ? "..." : "Ajouter le prêt"}
+        </button>
+
+        {loans && loans.length > 0 && (
+          <div className="mt-4 space-y-3">
+            {loans.map((loan) => (
+              <div key={loan.id} className="rounded-md border border-slate-200 p-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium">
+                    {loan.label} {loan.paidOff && <span className="text-emerald-600">✓ remboursé</span>}
+                  </h3>
+                  <button onClick={() => handleDeleteLoan(loan.id)} className="text-xs text-red-500 underline">
+                    Supprimer
+                  </button>
+                </div>
+
+                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className={`h-full ${loan.paidOff ? "bg-emerald-500" : "bg-pink-600"}`}
+                    style={{ width: `${Math.round(loan.progressRatio * 100)}%` }}
+                  />
+                </div>
+                <p className="mt-1 text-sm text-slate-600">
+                  Capital restant dû : <span className="font-medium">{currency.format(loan.remainingBalance)}</span> /{" "}
+                  {currency.format(loan.principalAmount)} emprunté ({Math.round(loan.progressRatio * 100)}% remboursé)
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Mensualité {currency.format(loan.monthlyPayment)}
+                  {loan.interestRate !== null && <> · taux {loan.interestRate}%</>}
+                  {loan.monthsRemaining !== null && !loan.paidOff && (
+                    <> · encore environ {loan.monthsRemaining} mois</>
+                  )}
+                  {loan.projectedPayoffDate && !loan.paidOff && (
+                    <> · fin prévue {dateFormat.format(new Date(loan.projectedPayoffDate))}</>
+                  )}
+                </p>
+
+                {!loan.paidOff && (
+                  <div className="mt-3 flex items-center gap-2">
+                    <input
+                      className="w-40 input"
+                      placeholder="Remboursement (€)"
+                      inputMode="decimal"
+                      value={paymentInputs[loan.id] ?? ""}
+                      onChange={(e) => setPaymentInputs((prev) => ({ ...prev, [loan.id]: e.target.value }))}
+                    />
+                    <button onClick={() => handleRecordPayment(loan.id)} className="btn btn-secondary">
+                      Enregistrer un remboursement
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+        {loans && loans.length === 0 && (
+          <p className="mt-3 text-sm text-slate-500">Aucun prêt en cours déclaré pour l'instant.</p>
         )}
       </section>
 

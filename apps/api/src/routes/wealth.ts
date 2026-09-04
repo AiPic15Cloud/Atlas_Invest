@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
 import { WEALTH_CATEGORIES, wealthItemSignedAmount, type WealthCategoryKey } from "../constants/wealth.js";
+import { loansFor, loansRemainingTotal } from "./loans.js";
 import type { WealthItem } from "@prisma/client";
 
 export const wealthRouter = Router();
@@ -40,22 +41,25 @@ wealthRouter.get("/", async (req, res) => {
     return;
   }
 
-  const [myBankTotal, myItems, jointAccounts, members] = await Promise.all([
+  const [myBankTotal, myItems, myLoans, jointAccounts, members] = await Promise.all([
     bankAccountsTotal(user.id),
     wealthItemsFor(user.id),
+    loansFor(user.id),
     prisma.bankAccount.findMany({ where: { householdId: user.householdId, ownerId: null } }),
     prisma.user.findMany({ where: { householdId: user.householdId, id: { not: user.id } } }),
   ]);
 
   const jointTotal = jointAccounts.reduce((sum, a) => sum + Number(a.initialBalance), 0);
   const myItemsTotal = myItems.reduce((sum, i) => sum + wealthItemSignedAmount(i.category as WealthCategoryKey, Number(i.amount)), 0);
-  const myNetWorth = myBankTotal + myItemsTotal;
+  const myLoansTotal = loansRemainingTotal(myLoans);
+  const myNetWorth = myBankTotal + myItemsTotal - myLoansTotal;
 
   const household = await Promise.all(
     members.map(async (member) => {
-      const [bankTotal, items] = await Promise.all([bankAccountsTotal(member.id), wealthItemsFor(member.id)]);
+      const [bankTotal, items, loans] = await Promise.all([bankAccountsTotal(member.id), wealthItemsFor(member.id), loansFor(member.id)]);
       const itemsTotal = items.reduce((sum, i) => sum + wealthItemSignedAmount(i.category as WealthCategoryKey, Number(i.amount)), 0);
-      const netWorth = bankTotal + itemsTotal;
+      const loansTotal = loansRemainingTotal(loans);
+      const netWorth = bankTotal + itemsTotal - loansTotal;
       if (member.shareDetailsWithHousehold) {
         return {
           userId: member.id,
@@ -63,6 +67,7 @@ wealthRouter.get("/", async (req, res) => {
           sharesDetails: true,
           bankAccountsTotal: bankTotal,
           wealthItems: items.map(serializeItem),
+          loansTotal,
           netWorth,
         };
       }
@@ -82,6 +87,7 @@ wealthRouter.get("/", async (req, res) => {
       bankAccountsTotal: myBankTotal,
       wealthItems: myItems.map(serializeItem),
       wealthItemsTotal: myItemsTotal,
+      loansTotal: myLoansTotal,
       netWorth: myNetWorth,
     },
     joint: { accountsTotal: jointTotal },

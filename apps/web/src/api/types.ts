@@ -320,6 +320,7 @@ export interface WealthHouseholdMember {
   sharesDetails: boolean;
   bankAccountsTotal?: number;
   wealthItems?: WealthItem[];
+  loansTotal?: number;
   netWorth: number;
 }
 
@@ -328,12 +329,33 @@ export interface WealthResponse {
     bankAccountsTotal: number;
     wealthItems: WealthItem[];
     wealthItemsTotal: number;
+    loansTotal: number;
     netWorth: number;
   } | null;
   joint: { accountsTotal: number };
   household: WealthHouseholdMember[];
   householdNetWorth: number;
   categories: Record<WealthCategory, WealthCategoryDefinition>;
+}
+
+export interface Loan {
+  id: string;
+  label: string;
+  principalAmount: number;
+  remainingBalance: number;
+  monthlyPayment: number;
+  interestRate: number | null;
+  startDate: string;
+  endDate: string | null;
+  progressRatio: number;
+  monthsRemaining: number | null;
+  projectedPayoffDate: string | null;
+  paidOff: boolean;
+  createdAt: string;
+}
+
+export interface LoansResponse {
+  loans: Loan[];
 }
 
 export interface SavingsGoal {
