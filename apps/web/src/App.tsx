@@ -6,6 +6,7 @@ import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
 import { Onboarding } from "./pages/Onboarding";
 import { Accounts } from "./pages/Accounts";
+import { Revenus } from "./pages/Revenus";
 import { Settings } from "./pages/Settings";
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -53,6 +54,7 @@ export default function App() {
         }
       >
         <Route path="/" element={<Accounts />} />
+        <Route path="/revenus" element={<Revenus />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

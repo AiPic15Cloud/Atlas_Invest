@@ -56,4 +56,20 @@ model BankAccount {
 
   household   Household @relation(fields: [householdId], references: [id])
   householdId String
+
+  incomes Income[]
+}
+
+model Income {
+  id        String   @id @default(cuid())
+  year      Int
+  month     Int
+  source    String
+  amount    Decimal  @db.Decimal(12, 2)
+  createdAt DateTime @default(now())
+
+  bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+  bankAccountId String
+
+  @@index([bankAccountId, year, month])
 }

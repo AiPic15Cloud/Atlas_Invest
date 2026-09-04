@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
+import { loadAccessibleAccount } from "../utils/accountAccess.js";
 import type { BankAccount } from "@prisma/client";
 
 export const bankAccountsRouter = Router();
@@ -100,28 +101,13 @@ bankAccountsRouter.post("/", async (req, res) => {
   res.status(201).json({ account: serializeAccount(account) });
 });
 
-type EditableAccountResult = { error: 404 | 403 } | { account: BankAccount };
-
-async function loadEditableAccount(userId: string, accountId: string): Promise<EditableAccountResult> {
-  const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
-  const account = await prisma.bankAccount.findUnique({ where: { id: accountId } });
-
-  if (!account || !user.householdId || account.householdId !== user.householdId) {
-    return { error: 404 };
-  }
-  if (account.ownerId !== null && account.ownerId !== userId) {
-    return { error: 403 };
-  }
-  return { account };
-}
-
 const updateAccountSchema = z.object({
   name: z.string().trim().min(1).max(80).optional(),
   initialBalance: z.number().finite().optional(),
 });
 
 bankAccountsRouter.patch("/:id", async (req, res) => {
-  const result = await loadEditableAccount(req.userId!, req.params.id);
+  const result = await loadAccessibleAccount(req.userId!, req.params.id);
   if ("error" in result) {
     res.status(result.error).json({ error: result.error === 404 ? "Compte introuvable." : "Accès refusé." });
     return;
@@ -142,7 +128,7 @@ bankAccountsRouter.patch("/:id", async (req, res) => {
 });
 
 bankAccountsRouter.delete("/:id", async (req, res) => {
-  const result = await loadEditableAccount(req.userId!, req.params.id);
+  const result = await loadAccessibleAccount(req.userId!, req.params.id);
   if ("error" in result) {
     res.status(result.error).json({ error: result.error === 404 ? "Compte introuvable." : "Accès refusé." });
     return;

@@ -46,3 +46,19 @@ export interface BankAccountsResponse {
   joint: BankAccount[];
   household: HouseholdMemberAccounts[];
 }
+
+export interface Income {
+  id: string;
+  year: number;
+  month: number;
+  source: string;
+  amount: string;
+  bankAccountId: string;
+  bankAccountName: string;
+  createdAt: string;
+}
+
+export interface IncomeSummary {
+  year: number;
+  totalsByMonth: number[];
+}

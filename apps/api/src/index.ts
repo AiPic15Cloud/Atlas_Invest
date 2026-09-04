@@ -6,6 +6,7 @@ import { authRouter } from "./routes/auth.js";
 import { meRouter } from "./routes/me.js";
 import { householdsRouter } from "./routes/households.js";
 import { bankAccountsRouter } from "./routes/bankAccounts.js";
+import { incomesRouter } from "./routes/incomes.js";
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/me", meRouter);
 app.use("/api/households", householdsRouter);
 app.use("/api/bank-accounts", bankAccountsRouter);
+app.use("/api/incomes", incomesRouter);
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);
