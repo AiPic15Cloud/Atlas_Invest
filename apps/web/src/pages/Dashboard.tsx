@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiFetch, ApiError } from "../api/client";
 import { AnnualLineChart } from "../components/AnnualLineChart";
-import type { DashboardResponse } from "../api/types";
+import type { DashboardResponse, EmergencyFundProfile } from "../api/types";
 
 const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 const MONTH_NAMES = [
@@ -10,11 +10,18 @@ const MONTH_NAMES = [
   "juillet", "août", "septembre", "octobre", "novembre", "décembre",
 ];
 
+function defaultMonthIndex(year: number) {
+  const now = new Date();
+  return year === now.getFullYear() ? now.getMonth() : 11;
+}
+
 export function Dashboard() {
   const navigate = useNavigate();
   const [year, setYear] = useState(new Date().getFullYear());
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selectedMonthIndex, setSelectedMonthIndex] = useState(() => defaultMonthIndex(new Date().getFullYear()));
+  const [emergencyFund, setEmergencyFund] = useState<EmergencyFundProfile | null | undefined>(undefined);
 
   async function load() {
     try {
@@ -26,15 +33,21 @@ export function Dashboard() {
   }
 
   useEffect(() => {
+    apiFetch<{ profile: EmergencyFundProfile | null }>("/api/emergency-fund").then((res) =>
+      setEmergencyFund(res.profile),
+    );
+  }, []);
+
+  useEffect(() => {
     load();
+    setSelectedMonthIndex(defaultMonthIndex(year));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [year]);
 
   if (error) return <p className="text-sm text-red-600">{error}</p>;
   if (!data) return <p className="text-sm text-slate-500">Chargement...</p>;
 
-  const now = new Date();
-  const currentMonthIndex = year === now.getFullYear() ? now.getMonth() : 11;
+  const selected = data.monthly[selectedMonthIndex];
 
   return (
     <div className="space-y-6">
@@ -67,17 +80,22 @@ export function Dashboard() {
 
       <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
         <h2 className="mb-2 font-semibold">Revenu, dépenses et reste — {year}</h2>
-        <AnnualLineChart monthly={data.monthly} />
-        <p className="mt-2 text-xs text-slate-500">
-          En {MONTH_NAMES[currentMonthIndex]} : revenu de {currency.format(data.monthly[currentMonthIndex].income)},
-          dépenses de {currency.format(data.monthly[currentMonthIndex].expense)}
-          {data.monthly[currentMonthIndex].income > 0 &&
-            ` (${Math.round((data.monthly[currentMonthIndex].expense / data.monthly[currentMonthIndex].income) * 100)} % du revenu)`}
-          .{" "}
-          <button onClick={() => navigate("/budget-du-mois")} className="underline">
-            Voir le détail du mois
+        <AnnualLineChart monthly={data.monthly} selectedIndex={selectedMonthIndex} onSelectMonth={setSelectedMonthIndex} />
+
+        <div className="mt-3 rounded-md bg-slate-50 p-3 text-sm text-slate-700">
+          <p>
+            <span className="font-medium">En {MONTH_NAMES[selectedMonthIndex]}</span> : revenu de{" "}
+            {currency.format(selected.income)}, dépenses de {currency.format(selected.expense)}
+            {selected.income > 0 && ` (${Math.round((selected.expense / selected.income) * 100)} % du revenu)`}, reste
+            de {currency.format(selected.reste)}.
+          </p>
+          <button
+            onClick={() => navigate(`/budget-du-mois?year=${year}&month=${selectedMonthIndex + 1}`)}
+            className="mt-1 text-sm font-medium text-slate-900 underline"
+          >
+            Voir le détail de ce mois
           </button>
-        </p>
+        </div>
       </section>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -102,9 +120,34 @@ export function Dashboard() {
 
         <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
           <h2 className="font-semibold">Épargne de précaution</h2>
-          <p className="mt-2 text-sm text-slate-500">
-            Module à venir : questionnaire de vulnérabilité, objectif recommandé et suivi de la progression.
-          </p>
+          {emergencyFund === undefined ? (
+            <p className="mt-2 text-sm text-slate-500">Chargement...</p>
+          ) : emergencyFund ? (
+            <>
+              <p className="mt-2 text-sm text-slate-700">
+                {currency.format(emergencyFund.currentSavedAmount)} sur {currency.format(emergencyFund.targetAmount)}{" "}
+                ({Math.round(emergencyFund.progressRatio * 100)} %)
+              </p>
+              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                <div
+                  style={{ width: `${Math.min(emergencyFund.progressRatio * 100, 100)}%` }}
+                  className="h-full bg-emerald-500"
+                />
+              </div>
+              <Link to="/epargne" className="mt-3 inline-block text-sm font-medium text-slate-900 underline">
+                Voir le suivi
+              </Link>
+            </>
+          ) : (
+            <>
+              <p className="mt-2 text-sm text-slate-500">
+                Réponds au questionnaire de vulnérabilité pour estimer ton objectif d'épargne de précaution.
+              </p>
+              <Link to="/epargne" className="mt-2 inline-block text-sm font-medium text-slate-900 underline">
+                Démarrer
+              </Link>
+            </>
+          )}
         </section>
       </div>
     </div>

@@ -10,6 +10,7 @@ import { incomesRouter } from "./routes/incomes.js";
 import { budgetTemplateRouter } from "./routes/budgetTemplate.js";
 import { expensesRouter } from "./routes/expenses.js";
 import { dashboardRouter } from "./routes/dashboard.js";
+import { emergencyFundRouter } from "./routes/emergencyFund.js";
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use("/api/incomes", incomesRouter);
 app.use("/api/budget-template", budgetTemplateRouter);
 app.use("/api/expenses", expensesRouter);
 app.use("/api/dashboard", dashboardRouter);
+app.use("/api/emergency-fund", emergencyFundRouter);
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);

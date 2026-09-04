@@ -37,7 +37,13 @@ function niceTicks(min: number, max: number, count = 4): number[] {
   return ticks;
 }
 
-export function AnnualLineChart({ monthly }: { monthly: DashboardMonth[] }) {
+interface AnnualLineChartProps {
+  monthly: DashboardMonth[];
+  selectedIndex: number;
+  onSelectMonth: (index: number) => void;
+}
+
+export function AnnualLineChart({ monthly, selectedIndex, onSelectMonth }: AnnualLineChartProps) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [showTable, setShowTable] = useState(false);
 
@@ -90,7 +96,11 @@ export function AnnualLineChart({ monthly }: { monthly: DashboardMonth[] }) {
             </thead>
             <tbody>
               {monthly.map((m, i) => (
-                <tr key={m.month} className="border-t border-slate-100">
+                <tr
+                  key={m.month}
+                  onClick={() => onSelectMonth(i)}
+                  className={`cursor-pointer border-t border-slate-100 ${i === selectedIndex ? "bg-slate-50" : "hover:bg-slate-50"}`}
+                >
                   <td className="py-1 pr-3 font-medium">{MONTH_NAMES_FULL[i]}</td>
                   <td className="py-1 pr-3">{currency.format(m.income)}</td>
                   <td className="py-1 pr-3">{currency.format(m.expense)}</td>
@@ -113,7 +123,15 @@ export function AnnualLineChart({ monthly }: { monthly: DashboardMonth[] }) {
             ))}
 
             {monthly.map((_, i) => (
-              <text key={i} x={x(i)} y={HEIGHT - 8} textAnchor="middle" fontSize={10} fill="#898781">
+              <text
+                key={i}
+                x={x(i)}
+                y={HEIGHT - 8}
+                textAnchor="middle"
+                fontSize={10}
+                fontWeight={i === selectedIndex ? 700 : 400}
+                fill={i === selectedIndex ? "#0b0b0b" : "#898781"}
+              >
                 {MONTH_NAMES[i]}
               </text>
             ))}
@@ -131,7 +149,17 @@ export function AnnualLineChart({ monthly }: { monthly: DashboardMonth[] }) {
               );
             })}
 
-            {hoverIndex !== null && (
+            <line
+              x1={x(selectedIndex)}
+              x2={x(selectedIndex)}
+              y1={PADDING.top}
+              y2={HEIGHT - PADDING.bottom}
+              stroke="#0b0b0b"
+              strokeWidth={1.5}
+              strokeDasharray="3 3"
+            />
+
+            {hoverIndex !== null && hoverIndex !== selectedIndex && (
               <line x1={x(hoverIndex)} x2={x(hoverIndex)} y1={PADDING.top} y2={HEIGHT - PADDING.bottom} stroke="#c3c2b7" strokeWidth={1} />
             )}
 
@@ -143,8 +171,10 @@ export function AnnualLineChart({ monthly }: { monthly: DashboardMonth[] }) {
                 width={innerWidth / 12}
                 height={innerHeight}
                 fill="transparent"
+                className="cursor-pointer"
                 onMouseEnter={() => setHoverIndex(i)}
                 onMouseLeave={() => setHoverIndex(null)}
+                onClick={() => onSelectMonth(i)}
               />
             ))}
           </svg>

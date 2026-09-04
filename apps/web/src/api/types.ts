@@ -163,6 +163,55 @@ export interface DashboardMonth {
   reste: number;
 }
 
+export type CriterionValue = 1 | 3 | 5;
+
+export interface CriterionOption {
+  value: CriterionValue;
+  label: string;
+}
+
+export interface Criterion {
+  question: string;
+  options: CriterionOption[];
+}
+
+export type EmergencyFundCriteria = Record<
+  "jobStability" | "dependentsLoad" | "health" | "alternativeIncome" | "debtLevel",
+  Criterion
+>;
+
+export interface SavingsEnvelope {
+  id: string;
+  name: string;
+  monthlyAllocation: number;
+}
+
+export interface EmergencyFundProfile {
+  answers: {
+    jobStability: number;
+    dependentsLoad: number;
+    health: number;
+    alternativeIncome: number;
+    debtLevel: number;
+  };
+  score: number;
+  recommendedMonths: number;
+  monthsOverride: number | null;
+  targetMonths: number;
+  essentialMonthlyExpense: number;
+  targetAmount: number;
+  currentSavedAmount: number;
+  remainingAmount: number;
+  progressRatio: number;
+  defaultMonthlySavingsCapacity: number;
+  monthlySavingsCapacityOverride: number | null;
+  monthlySavingsCapacity: number;
+  monthsRemaining: number | null;
+  envelopes: SavingsEnvelope[];
+  envelopesTotal: number;
+  updatedAt: string;
+}
+
 export interface DashboardResponse {
   year: number;
   totals: { income: number; expenses: number; reste: number };

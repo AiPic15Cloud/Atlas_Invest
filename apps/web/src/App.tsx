@@ -10,6 +10,7 @@ import { Accounts } from "./pages/Accounts";
 import { Revenus } from "./pages/Revenus";
 import { BudgetType } from "./pages/BudgetType";
 import { BudgetDuMois } from "./pages/BudgetDuMois";
+import { EpargnePrecaution } from "./pages/EpargnePrecaution";
 import { Settings } from "./pages/Settings";
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -61,6 +62,7 @@ export default function App() {
         <Route path="/revenus" element={<Revenus />} />
         <Route path="/budget-type" element={<BudgetType />} />
         <Route path="/budget-du-mois" element={<BudgetDuMois />} />
+        <Route path="/epargne" element={<EpargnePrecaution />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

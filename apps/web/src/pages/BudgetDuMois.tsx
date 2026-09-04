@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { apiFetch, ApiError } from "../api/client";
 import { QuickAddExpense } from "../components/QuickAddExpense";
 import { ImportStatement } from "../components/ImportStatement";
@@ -32,8 +33,11 @@ function shiftMonth(year: number, month: number, delta: number) {
 
 export function BudgetDuMois() {
   const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth() + 1);
+  const [searchParams] = useSearchParams();
+  const urlYear = Number(searchParams.get("year"));
+  const urlMonth = Number(searchParams.get("month"));
+  const [year, setYear] = useState(urlYear >= 2000 ? urlYear : now.getFullYear());
+  const [month, setMonth] = useState(urlMonth >= 1 && urlMonth <= 12 ? urlMonth : now.getMonth() + 1);
   const [data, setData] = useState<ExpensesResponse | null>(null);
   const [accounts, setAccounts] = useState<BankAccountsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
