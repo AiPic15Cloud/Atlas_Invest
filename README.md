@@ -1,25 +1,49 @@
 # Budget Foyer
 
-Application de suivi budgétaire personnel et familial. Ce dépôt est construit
-**section par section** : chaque étape ajoute une brique de la spécification
-complète, plutôt que de tout livrer d'un coup.
+Application de suivi budgétaire personnel et familial.
 
-## Ce qui est construit pour l'instant (le "socle")
+**Le site est en ligne :** [web-production-95c41.up.railway.app](https://web-production-95c41.up.railway.app)
+(API sur `api-production-41cac.up.railway.app`).
 
-- Création de compte et connexion (email / mot de passe)
-- Notion de **foyer** : créer un foyer ou en rejoindre un avec un code
-  d'invitation
-- Plusieurs **comptes bancaires par utilisateur** (courant, livret, pro,
-  autre), avec un solde saisi manuellement
-- **Compte joint** : rattaché au foyer (pas à une seule personne), visible
-  par tous les membres, compté une seule fois dans les totaux
-- Réglage de **confidentialité** par utilisateur : partager le détail de ses
-  comptes avec le foyer, ou seulement un total consolidé
-- Suppression de compte / sortie du foyer
+## Fonctionnalités
 
-Pas encore construit (prochaines sections, dans l'ordre de la spec) :
-revenus, budget type, budget du mois, import de relevé, tableau de bord,
-épargne de précaution, 2FA, etc.
+Toutes les sections de la spécification initiale sont construites :
+
+- **Socle** : compte utilisateur, foyer (créer/rejoindre avec un code
+  d'invitation), plusieurs comptes bancaires par utilisateur (dont les
+  comptes joints, rattachés au foyer), réglage de confidentialité par
+  utilisateur (partager le détail de ses comptes ou seulement un total)
+- **Revenus** : saisie par mois et par compte, copie d'un mois sur l'autre
+- **Budget type** : choix d'une méthode (50/30/20 et variantes, base zéro),
+  postes et sous-postes personnalisables
+- **Budget du mois** : saisie rapide, import de relevé bancaire (CSV/texte)
+  avec catégorisation automatique, comparaison au budget type
+- **Tableau de bord** et **vue annuelle** : graphique interactif
+  revenus/dépenses/reste à vivre, résumé du mois sélectionné
+- **Épargne de précaution** : questionnaire de vulnérabilité, objectif
+  recommandé, suivi de la progression, enveloppes d'épargne
+- **Détection des dépenses inutiles** : marquage manuel qui s'apprend et se
+  réapplique automatiquement aux dépenses similaires
+- **Audit des abonnements** : détection automatique des dépenses
+  récurrentes, statut (à garder / à surveiller / à résilier), rappels
+- **Recommandations d'économies** : synthèse des dépenses inutiles et
+  abonnements à résilier, réallocation vers l'épargne
+- **Calendrier des échéances** : échéances récurrentes déclarées
+  manuellement, classées par jour, alerte de solde prévisionnel négatif
+- **Patrimoine global** : comptes bancaires + biens, placements et crédits
+  déclarés, patrimoine net du foyer
+- **Objectifs d'épargne nommés** : projets avec montant cible, date cible
+  optionnelle et suivi de progression
+- **Répartition des charges du foyer** : part de chaque membre dans les
+  dépenses des comptes joints, au prorata des revenus ou à parts égales
+- **Export et rapport** : téléchargement CSV du détail mensuel et du
+  récapitulatif annuel
+- **Projection et simulation** : impact d'un changement de revenu ou d'une
+  nouvelle dépense récurrente sur les mois à venir
+- **Historique des corrections** : journal des corrections manuelles
+  (dépenses marquées utiles/inutiles, statuts d'abonnements)
+- **Double authentification (2FA)** : TOTP (Google Authenticator, Authy...),
+  codes de secours, activation/désactivation depuis les réglages
 
 ## Stack technique
 
@@ -119,6 +143,12 @@ et le site web. Tout se fait depuis [railway.app](https://railway.app).
 5. Génère un domaine public pour chacun des deux services (bouton
    "Generate Domain" dans l'onglet "Settings" de chaque service), puis mets
    à jour `WEB_ORIGIN` et `VITE_API_URL` avec ces URLs et redéploie.
+
+**Note sur le déploiement continu :** sur ce projet, Railway ne redéploie pas
+automatiquement à chaque `git push` (à vérifier dans "Settings" → "Source" du
+service si ce n'est pas le comportement souhaité) — il faut parfois
+redéclencher un déploiement manuellement depuis le dashboard Railway
+("Deploy" sur le dernier commit) après un push.
 
 ## Structure du dépôt
 
