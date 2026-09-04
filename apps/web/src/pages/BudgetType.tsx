@@ -162,13 +162,13 @@ export function BudgetType() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Rechercher un poste..."
-            className="min-w-[160px] flex-1 input"
+            className="min-w-[160px] flex-1 basis-full input sm:basis-auto"
             aria-label="Rechercher un poste"
           />
           <select
             value={quickAddCategory}
             onChange={(e) => setQuickAddCategory(e.target.value as BudgetCategory)}
-            className="input px-2 py-2 text-sm"
+            className="basis-full input px-2 py-2 text-sm sm:basis-auto"
             aria-label="Catégorie du nouveau poste"
           >
             <option value="BESOINS">Besoins</option>
@@ -179,9 +179,9 @@ export function BudgetType() {
             value={quickAddText}
             onChange={(e) => setQuickAddText(e.target.value)}
             placeholder="Ajoutez un poste, ex. : courses 280€"
-            className="min-w-[200px] flex-1 input"
+            className="min-w-[200px] flex-1 basis-full input sm:basis-auto"
           />
-          <button onClick={handleQuickAdd} className="btn btn-primary">
+          <button onClick={handleQuickAdd} className="btn btn-primary w-full sm:w-auto">
             Ajouter
           </button>
         </div>

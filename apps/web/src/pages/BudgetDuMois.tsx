@@ -196,6 +196,7 @@ export function BudgetDuMois() {
   const ecart = summary.budgetComparison
     ? summary.totalSpent - (summary.budgetComparison.besoinsTarget + summary.budgetComparison.enviesTarget + summary.budgetComparison.epargneTarget)
     : null;
+  const unusualCount = data.expenses.filter((e) => e.unusual).length;
 
   return (
     <div className="space-y-6">
@@ -212,13 +213,86 @@ export function BudgetDuMois() {
       </div>
 
       <section className="card">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <h2 className="section-title text-sm">Actions rapides</h2>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button onClick={handleCopyTemplate} className="btn btn-outline btn-sm">
+            📁 Copier le budget type
+          </button>
+          <button onClick={handleCopyPreviousMonth} className="btn btn-outline btn-sm">
+            ↩️ Copier le mois précédent
+          </button>
+          <button onClick={() => setCopyOtherOpen((v) => !v)} className="btn btn-outline btn-sm">
+            🗓️ Copier un autre mois
+          </button>
+          <button onClick={() => setImportOpen((v) => !v)} className="btn btn-primary btn-sm">
+            {importOpen ? "▲ Fermer l'import" : "📥 Importer un relevé"}
+          </button>
+          <button onClick={handleClearMonth} className="btn btn-danger btn-sm">
+            Vider le mois
+          </button>
+        </div>
+        {copyOtherOpen && (
+          <div className="mt-3 flex items-end gap-2 rounded-md border border-slate-200 bg-slate-50 p-2">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-700">Mois source</label>
+              <select
+                value={copyFromMonth}
+                onChange={(e) => setCopyFromMonth(Number(e.target.value))}
+                className="input px-2 py-1.5 text-sm"
+              >
+                {MONTH_NAMES.map((name, index) => (
+                  <option key={name} value={index + 1}>{name}</option>
+                ))}
+              </select>
+            </div>
+            <input
+              type="number"
+              value={copyFromYear}
+              onChange={(e) => setCopyFromYear(Number(e.target.value))}
+              className="w-24 input px-2 py-1.5 text-sm"
+              aria-label="Année source"
+            />
+            <button onClick={handleCopyOtherMonth} className="rounded-md bg-pink-600 hover:bg-pink-700 px-3 py-1.5 text-xs font-medium text-white">
+              Copier
+            </button>
+          </div>
+        )}
+        {actionError && <p className="mt-2 text-xs text-red-600">{actionError}</p>}
+      </section>
+
+      {importOpen && (
+        <div ref={importSectionRef}>
+          <ImportStatement
+            year={year}
+            month={month}
+            accounts={availableAccounts}
+            onDone={loadMonth}
+            onClose={() => setImportOpen(false)}
+          />
+        </div>
+      )}
+
+      <section className="card">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <StatTile label="💶 Revenu du mois" value={currency.format(summary.totalIncome)} />
           <StatTile label="💸 Dépensé ce mois" value={currency.format(summary.totalSpent)} />
           <StatTile
             label="📊 Écart vs budget type"
             value={ecart === null ? "—" : `${ecart > 0 ? "+" : ""}${currency.format(ecart)}`}
-            tone={ecart !== null && ecart > 0 ? "warn" : "default"}
+            tone={ecart === null ? "default" : ecart > 0 ? "warn" : "good"}
+            hint={
+              ecart === null
+                ? undefined
+                : ecart > 0
+                  ? `Dépassé de ${currency.format(ecart)} ⚠️`
+                  : "Sous ton budget type, bravo 💪"
+            }
+          />
+          <StatTile
+            label="🔍 Dépense inhabituelle"
+            value={unusualCount === 0 ? "Aucune" : String(unusualCount)}
+            tone={unusualCount === 0 ? "good" : "warn"}
+            hint={unusualCount === 0 ? "Tout est dans les clous 👍" : "À vérifier ci-dessous"}
           />
         </div>
         {!summary.budgetComparison && (
@@ -294,78 +368,7 @@ export function BudgetDuMois() {
         )}
       </section>
 
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <div className="flex-1">
-          <QuickAddExpense accounts={availableAccounts} onSubmit={handleQuickAdd} />
-        </div>
-        <div className="card flex flex-col justify-center sm:w-64">
-          <p className="text-sm font-medium text-slate-700">Pas envie de tout saisir à la main ?</p>
-          <p className="mt-1 text-xs text-slate-500">
-            Importe ton relevé bancaire : les dépenses sont classées automatiquement, les doublons et virements
-            internes écartés.
-          </p>
-          <button onClick={() => setImportOpen((v) => !v)} className="mt-3 btn btn-primary">
-            {importOpen ? "▲ Fermer l'import" : "📥 Importer un relevé"}
-          </button>
-        </div>
-      </div>
-
-      <section className="card">
-        <h2 className="font-semibold">Actions rapides</h2>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <button onClick={handleCopyTemplate} className="btn btn-outline btn-sm">
-            Copier le budget type
-          </button>
-          <button onClick={handleCopyPreviousMonth} className="btn btn-outline btn-sm">
-            Copier le mois précédent
-          </button>
-          <button onClick={() => setCopyOtherOpen((v) => !v)} className="btn btn-outline btn-sm">
-            Copier un autre mois
-          </button>
-          <button onClick={handleClearMonth} className="btn btn-danger btn-sm">
-            Vider le mois
-          </button>
-        </div>
-        {copyOtherOpen && (
-          <div className="mt-3 flex items-end gap-2 rounded-md border border-slate-200 bg-slate-50 p-2">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-700">Mois source</label>
-              <select
-                value={copyFromMonth}
-                onChange={(e) => setCopyFromMonth(Number(e.target.value))}
-                className="input px-2 py-1.5 text-sm"
-              >
-                {MONTH_NAMES.map((name, index) => (
-                  <option key={name} value={index + 1}>{name}</option>
-                ))}
-              </select>
-            </div>
-            <input
-              type="number"
-              value={copyFromYear}
-              onChange={(e) => setCopyFromYear(Number(e.target.value))}
-              className="w-24 input px-2 py-1.5 text-sm"
-              aria-label="Année source"
-            />
-            <button onClick={handleCopyOtherMonth} className="rounded-md bg-pink-600 hover:bg-pink-700 px-3 py-1.5 text-xs font-medium text-white">
-              Copier
-            </button>
-          </div>
-        )}
-        {actionError && <p className="mt-2 text-xs text-red-600">{actionError}</p>}
-      </section>
-
-      {importOpen && (
-        <div ref={importSectionRef}>
-          <ImportStatement
-            year={year}
-            month={month}
-            accounts={availableAccounts}
-            onDone={loadMonth}
-            onClose={() => setImportOpen(false)}
-          />
-        </div>
-      )}
+      <QuickAddExpense accounts={availableAccounts} onSubmit={handleQuickAdd} />
 
       <section className="card">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -464,11 +467,32 @@ function ExpenseRow({
   );
 }
 
-function StatTile({ label, value, tone = "default" }: { label: string; value: string; tone?: "default" | "warn" }) {
+function StatTile({
+  label,
+  value,
+  tone = "default",
+  hint,
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "warn" | "good";
+  hint?: string;
+}) {
   return (
     <div className="rounded-md bg-slate-50 p-3">
       <p className="text-xs text-slate-500">{label}</p>
-      <p className={`mt-1 text-lg font-semibold ${tone === "warn" ? "text-red-600" : ""}`}>{value}</p>
+      <p
+        className={`mt-1 text-lg font-semibold ${
+          tone === "warn" ? "text-red-600" : tone === "good" ? "text-emerald-600" : ""
+        }`}
+      >
+        {value}
+      </p>
+      {hint && (
+        <p className={`mt-0.5 text-xs ${tone === "warn" ? "text-red-600" : tone === "good" ? "text-emerald-600" : "text-slate-500"}`}>
+          {hint}
+        </p>
+      )}
     </div>
   );
 }
