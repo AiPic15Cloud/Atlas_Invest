@@ -121,3 +121,37 @@ export interface BudgetTemplateResponse {
   template: BudgetTemplate | null;
   methods: Record<BudgetMethodKey, BudgetMethodDefinition>;
 }
+
+export interface Expense {
+  id: string;
+  year: number;
+  month: number;
+  poste: string;
+  category: BudgetCategory;
+  amount: string;
+  note: string | null;
+  bankAccountId: string;
+  bankAccountName: string;
+  unusual: boolean;
+  createdAt: string;
+}
+
+export interface BudgetComparison {
+  method: BudgetMethodKey;
+  besoinsTarget: number;
+  enviesTarget: number;
+  epargneTarget: number;
+  overBudgetCategories: { category: BudgetCategory; actual: number; target: number; overBy: number }[];
+}
+
+export interface ExpensesSummary {
+  totalSpent: number;
+  totalIncome: number;
+  byCategory: { besoins: number; envies: number; epargne: number };
+  budgetComparison: BudgetComparison | null;
+}
+
+export interface ExpensesResponse {
+  expenses: Expense[];
+  summary: ExpensesSummary;
+}

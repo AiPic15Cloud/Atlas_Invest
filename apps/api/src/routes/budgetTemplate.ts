@@ -3,57 +3,14 @@ import { z } from "zod";
 import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
 import { BUDGET_METHODS, computeBudgetBreakdown, type BudgetMethodKey } from "../constants/budgetMethods.js";
-import type { BudgetItem, BudgetTemplate } from "@prisma/client";
+import { buildItemTree } from "../utils/budgetItemTree.js";
+import type { BudgetTemplate } from "@prisma/client";
 
 export const budgetTemplateRouter = Router();
 
 budgetTemplateRouter.use(requireAuth);
 
 const METHOD_KEYS = Object.keys(BUDGET_METHODS) as [BudgetMethodKey, ...BudgetMethodKey[]];
-
-interface SerializedItem {
-  id: string;
-  category: string;
-  name: string;
-  monthlyAmount: number;
-  displayedAmount: number;
-  essential: boolean;
-  sortOrder: number;
-  parentId: string | null;
-  children: SerializedItem[];
-}
-
-function buildItemTree(items: BudgetItem[]): SerializedItem[] {
-  const byParent = new Map<string | null, BudgetItem[]>();
-  for (const item of items) {
-    const key = item.parentId ?? null;
-    if (!byParent.has(key)) byParent.set(key, []);
-    byParent.get(key)!.push(item);
-  }
-  for (const siblings of byParent.values()) {
-    siblings.sort((a, b) => a.sortOrder - b.sortOrder);
-  }
-
-  function toNode(item: BudgetItem): SerializedItem {
-    const children = (byParent.get(item.id) ?? []).map(toNode);
-    const displayedAmount = children.length > 0
-      ? children.reduce((sum, c) => sum + c.displayedAmount, 0)
-      : Number(item.monthlyAmount);
-    return {
-      id: item.id,
-      category: item.category,
-      name: item.name,
-      monthlyAmount: Number(item.monthlyAmount),
-      displayedAmount,
-      essential: item.essential,
-      sortOrder: item.sortOrder,
-      parentId: item.parentId,
-      children,
-    };
-  }
-
-  return (byParent.get(null) ?? []).map(toNode);
-}
 
 async function serializeTemplate(template: BudgetTemplate) {
   const items = await prisma.budgetItem.findMany({ where: { templateId: template.id } });
