@@ -22,6 +22,13 @@ const STATUS_LABELS: Record<(typeof STATUS_VALUES)[number], string> = {
 const AMOUNT_TOLERANCE_RATIO = 0.05; // +/- 5%
 const AMOUNT_TOLERANCE_MIN = 1; // au moins 1 euro de marge
 
+// Ces dépenses sont, par nature, tout aussi stables et récurrentes qu'un
+// abonnement (un virement d'épargne programmé, un loyer) mais n'en sont pas
+// un : personne ne "résilie" son épargne ou son loyer. On les écarte de la
+// détection pour ne pas noyer les vrais abonnements (Netflix, salle de
+// sport...) au milieu de charges fixes non concernées.
+const NON_SUBSCRIPTION_KEYWORDS = /\b(loyer|virement\s*epargne|virement\s*épargne)\b/i;
+
 function monthKey(year: number, month: number) {
   return year * 12 + month;
 }
@@ -41,11 +48,16 @@ async function refreshSubscriptions(userId: string) {
 
   const expenses = await prisma.expense.findMany({
     where: { bankAccountId: { in: accountIds } },
-    select: { poste: true, amount: true, year: true, month: true },
+    select: { poste: true, amount: true, year: true, month: true, category: true },
     orderBy: [{ year: "asc" }, { month: "asc" }],
   });
 
-  const recent = expenses.filter((e) => monthKey(e.year, e.month) >= windowStart);
+  const recent = expenses.filter(
+    (e) =>
+      monthKey(e.year, e.month) >= windowStart &&
+      e.category !== "EPARGNE" &&
+      !NON_SUBSCRIPTION_KEYWORDS.test(e.poste),
+  );
 
   const groups = new Map<
     string,
