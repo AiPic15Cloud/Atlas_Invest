@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { IncomeForm } from "../components/IncomeForm";
+import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import type { BankAccountsResponse, Income, IncomeSummary } from "../api/types";
 
 const MONTH_NAMES = [
@@ -18,7 +19,6 @@ const MONTH_NAMES = [
   "Décembre",
 ];
 
-const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 const percent = new Intl.NumberFormat("fr-FR", { style: "percent", maximumFractionDigits: 1 });
 
 function shiftMonth(year: number, month: number, delta: number) {
@@ -29,6 +29,7 @@ function shiftMonth(year: number, month: number, delta: number) {
 }
 
 export function Revenus() {
+  const currency = useCurrencyFormatter();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -209,6 +210,7 @@ function YearView({
   summary: IncomeSummary | null;
   onSelectMonth: (month: number) => void;
 }) {
+  const currency = useCurrencyFormatter();
   const total = summary?.totalsByMonth.reduce((a, b) => a + b, 0) ?? 0;
   return (
     <section className="card">

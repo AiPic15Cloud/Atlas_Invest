@@ -21,6 +21,8 @@ meRouter.get("/", async (req, res) => {
       id: householdRecord.id,
       name: householdRecord.name,
       inviteCode: householdRecord.inviteCode,
+      currency: householdRecord.currency,
+      fiscalYearStartMonth: householdRecord.fiscalYearStartMonth,
       members: householdRecord.members.map((member) => ({
         id: member.id,
         firstName: member.firstName,

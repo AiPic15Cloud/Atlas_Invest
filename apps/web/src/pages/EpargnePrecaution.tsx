@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { EmergencyFundQuestionnaire } from "../components/EmergencyFundQuestionnaire";
+import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import type { CriterionValue, EmergencyFundProfile } from "../api/types";
-
-const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 
 function vulnerabilityLabel(score: number): string {
   if (score >= 4.5) return "Très stable";
@@ -14,6 +13,7 @@ function vulnerabilityLabel(score: number): string {
 }
 
 export function EpargnePrecaution() {
+  const currency = useCurrencyFormatter();
   const [profile, setProfile] = useState<EmergencyFundProfile | null | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [retaking, setRetaking] = useState(false);
@@ -77,6 +77,7 @@ function ObjectiveSection({
   profile: EmergencyFundProfile;
   onUpdated: (p: EmergencyFundProfile) => void;
 }) {
+  const currency = useCurrencyFormatter();
   const [editingMonths, setEditingMonths] = useState(false);
   const [monthsInput, setMonthsInput] = useState(String(profile.targetMonths));
   const [error, setError] = useState<string | null>(null);
@@ -254,6 +255,7 @@ function ProgressSection({
   profile: EmergencyFundProfile;
   onUpdated: (p: EmergencyFundProfile) => void;
 }) {
+  const currency = useCurrencyFormatter();
   const [savedInput, setSavedInput] = useState(String(profile.currentSavedAmount));
   const [capacityInput, setCapacityInput] = useState(
     profile.monthlySavingsCapacityOverride !== null ? String(profile.monthlySavingsCapacityOverride) : "",
@@ -364,6 +366,7 @@ function EnvelopesSection({
   profile: EmergencyFundProfile;
   onUpdated: (p: EmergencyFundProfile) => void;
 }) {
+  const currency = useCurrencyFormatter();
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");

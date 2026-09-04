@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
+import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import type { Subscription, SubscriptionsResponse, SubscriptionStatus, UsageFrequency } from "../api/types";
 
-const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 const MONTH_NAMES = [
   "janvier", "février", "mars", "avril", "mai", "juin",
   "juillet", "août", "septembre", "octobre", "novembre", "décembre",
@@ -31,6 +31,7 @@ const USAGE_LABELS: Record<UsageFrequency, string> = {
 };
 
 export function Abonnements() {
+  const currency = useCurrencyFormatter();
   const [data, setData] = useState<SubscriptionsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -100,6 +101,7 @@ function SubscriptionCard({
   onUpdate: (id: string, patch: Record<string, unknown>) => Promise<void>;
   onDismiss: (id: string) => Promise<void>;
 }) {
+  const currency = useCurrencyFormatter();
   const [lastUsed, setLastUsed] = useState(sub.lastUsedAt ? sub.lastUsedAt.slice(0, 10) : "");
   const [reminder, setReminder] = useState(sub.cancelReminderAt ? sub.cancelReminderAt.slice(0, 10) : "");
 

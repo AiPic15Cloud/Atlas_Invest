@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { BudgetCategorySection } from "../components/BudgetCategorySection";
 import { parseQuickExpense } from "../lib/parseQuickExpense";
+import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import type { BudgetCategory, BudgetMethodKey, BudgetTemplateResponse } from "../api/types";
 
-const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
-
 export function BudgetType() {
+  const currency = useCurrencyFormatter();
   const [data, setData] = useState<BudgetTemplateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [changingMethod, setChangingMethod] = useState(false);
@@ -244,6 +244,7 @@ function StatTile({ label, value }: { label: string; value: string }) {
 }
 
 function SplitBar({ besoins, envies, epargne, total }: { besoins: number; envies: number; epargne: number; total: number }) {
+  const currency = useCurrencyFormatter();
   const safeTotal = total > 0 ? total : besoins + envies + epargne || 1;
   const pct = (v: number) => Math.max(0, Math.min(100, (v / safeTotal) * 100));
   return (

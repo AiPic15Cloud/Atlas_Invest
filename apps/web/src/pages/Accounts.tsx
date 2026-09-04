@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { AccountForm } from "../components/AccountForm";
 import { useAuth } from "../context/AuthContext";
+import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import type { BankAccount, BankAccountsResponse, BankAccountType } from "../api/types";
 
 const TYPE_LABELS: Record<BankAccountType, string> = {
@@ -12,9 +13,8 @@ const TYPE_LABELS: Record<BankAccountType, string> = {
   AUTRE: "Autre",
 };
 
-const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
-
 function AccountRow({ account, onDelete }: { account: BankAccount; onDelete: (id: string) => void }) {
+  const currency = useCurrencyFormatter();
   return (
     <li className="flex items-center justify-between border-b border-slate-100 py-2 last:border-0">
       <div>
@@ -36,6 +36,7 @@ function AccountRow({ account, onDelete }: { account: BankAccount; onDelete: (id
 }
 
 export function Accounts() {
+  const currency = useCurrencyFormatter();
   const { household } = useAuth();
   const [data, setData] = useState<BankAccountsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);

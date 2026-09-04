@@ -13,6 +13,8 @@ export const SPLIT_MODES = [
   "RESTE_EGAL",
   "POURCENTAGE_CHOISI",
   "FORFAIT_FIXE",
+  "POT_COMMUN_POURCENTAGE",
+  "A_LA_CARTE",
 ] as const;
 export type SplitMode = (typeof SPLIT_MODES)[number];
 
@@ -99,6 +101,30 @@ function computeShares(
     };
   }
 
+  if (mode === "POT_COMMUN_POURCENTAGE") {
+    const hasCustom = members.some((m) => typeof customShares[m.id] === "number");
+    if (!hasCustom) {
+      const each = jointExpensesTotal / n;
+      return {
+        amounts: Object.fromEntries(members.map((m) => [m.id, each])),
+        fellBackToEqual: true,
+        note: "Aucun pourcentage de pot commun enregistré : répartition à parts égales appliquée par défaut.",
+      };
+    }
+    const amounts = Object.fromEntries(
+      members.map((m) => [m.id, (incomes[m.id] ?? 0) * ((customShares[m.id] ?? 0) / 100)]),
+    );
+    const potTotal = Object.values(amounts).reduce((sum, v) => sum + v, 0);
+    const diff = Math.round((jointExpensesTotal - potTotal) * 100) / 100;
+    const note =
+      Math.abs(diff) > 0.01
+        ? diff > 0
+          ? `Le pot commun (${potTotal.toFixed(2)} €) ne couvre que ${Math.round((potTotal / jointExpensesTotal) * 100)}% des charges : il manque ${diff.toFixed(2)} €.`
+          : `Le pot commun dépasse les charges de ${Math.abs(diff).toFixed(2)} € (excédent).`
+        : null;
+    return { amounts, fellBackToEqual: false, note };
+  }
+
   // FORFAIT_FIXE
   const hasCustom = members.some((m) => typeof customShares[m.id] === "number");
   if (!hasCustom) {
@@ -144,13 +170,13 @@ householdSplitRouter.get("/", async (req, res) => {
   ]);
 
   const jointAccountIds = jointAccounts.map((a) => a.id);
-  const jointExpenses = jointAccountIds.length
+  const jointExpensesRaw = jointAccountIds.length
     ? await prisma.expense.findMany({
         where: { bankAccountId: { in: jointAccountIds }, year, month },
-        select: { amount: true },
+        select: { id: true, poste: true, amount: true, assignment: { select: { userId: true } } },
       })
     : [];
-  const jointExpensesTotal = jointExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
+  const jointExpensesTotal = jointExpensesRaw.reduce((sum, e) => sum + Number(e.amount), 0);
 
   const memberIncomes = await Promise.all(
     members.map(async (member) => {
@@ -168,7 +194,42 @@ householdSplitRouter.get("/", async (req, res) => {
   const incomesById = Object.fromEntries(memberIncomes.map(({ member, income }) => [member.id, income]));
   const totalIncome = memberIncomes.reduce((sum, m) => sum + m.income, 0);
 
-  const { amounts, fellBackToEqual, note } = computeShares(mode, members, incomesById, jointExpensesTotal, customShares);
+  let amounts: Record<string, number>;
+  let fellBackToEqual = false;
+  let note: string | null = null;
+  let expensesPayload: { id: string; poste: string; amount: number; assignedToUserId: string | null }[] | undefined;
+
+  if (mode === "A_LA_CARTE") {
+    amounts = Object.fromEntries(members.map((m) => [m.id, 0]));
+    let unassignedTotal = 0;
+    for (const e of jointExpensesRaw) {
+      const assignedId = e.assignment?.userId ?? null;
+      if (assignedId && assignedId in amounts) {
+        amounts[assignedId] += Number(e.amount);
+      } else {
+        unassignedTotal += Number(e.amount);
+      }
+    }
+    if (unassignedTotal > 0 && members.length > 0) {
+      if (totalIncome > 0) {
+        members.forEach((m) => (amounts[m.id] += unassignedTotal * ((incomesById[m.id] ?? 0) / totalIncome)));
+      } else {
+        members.forEach((m) => (amounts[m.id] += unassignedTotal / members.length));
+      }
+      note = `${unassignedTotal.toFixed(2)} € de dépenses non attribuées, réparties automatiquement.`;
+    }
+    expensesPayload = jointExpensesRaw.map((e) => ({
+      id: e.id,
+      poste: e.poste,
+      amount: Number(e.amount),
+      assignedToUserId: e.assignment?.userId ?? null,
+    }));
+  } else {
+    const result = computeShares(mode, members, incomesById, jointExpensesTotal, customShares);
+    amounts = result.amounts;
+    fellBackToEqual = result.fellBackToEqual;
+    note = result.note;
+  }
 
   const results = memberIncomes.map(({ member, income }) => {
     const amountDue = Math.round((amounts[member.id] ?? 0) * 100) / 100;
@@ -192,7 +253,51 @@ householdSplitRouter.get("/", async (req, res) => {
     customShares,
     fallbackToEqual: fellBackToEqual,
     note,
+    expenses: expensesPayload,
   });
+});
+
+const assignSchema = z.object({ userId: z.string().nullable() });
+
+householdSplitRouter.patch("/assignments/:expenseId", async (req, res) => {
+  const parsed = assignSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Données invalides." });
+    return;
+  }
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: req.userId! } });
+  if (!user.householdId) {
+    res.status(409).json({ error: "Rejoins ou crée un foyer d'abord." });
+    return;
+  }
+
+  const expense = await prisma.expense.findUnique({
+    where: { id: req.params.expenseId },
+    include: { bankAccount: true },
+  });
+  if (!expense || expense.bankAccount.householdId !== user.householdId || expense.bankAccount.ownerId !== null) {
+    res.status(404).json({ error: "Dépense commune introuvable." });
+    return;
+  }
+
+  if (parsed.data.userId === null) {
+    await prisma.expenseAssignment.deleteMany({ where: { expenseId: expense.id } });
+    res.status(204).send();
+    return;
+  }
+
+  const targetMember = await prisma.user.findUnique({ where: { id: parsed.data.userId } });
+  if (!targetMember || targetMember.householdId !== user.householdId) {
+    res.status(400).json({ error: "Membre du foyer invalide." });
+    return;
+  }
+
+  await prisma.expenseAssignment.upsert({
+    where: { expenseId: expense.id },
+    create: { expenseId: expense.id, userId: targetMember.id },
+    update: { userId: targetMember.id },
+  });
+  res.status(204).send();
 });
 
 const settingsSchema = z.object({

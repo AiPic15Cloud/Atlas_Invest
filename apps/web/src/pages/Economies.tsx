@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiFetch, ApiError } from "../api/client";
+import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import type { EmergencyFundProfile, SavingsOpportunities } from "../api/types";
 
-const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
-
 export function Economies() {
+  const currency = useCurrencyFormatter();
   const [year, setYear] = useState(new Date().getFullYear());
   const [data, setData] = useState<SavingsOpportunities | null>(null);
   const [profile, setProfile] = useState<EmergencyFundProfile | null | undefined>(undefined);

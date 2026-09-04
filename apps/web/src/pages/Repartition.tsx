@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
+import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import type { HouseholdSplitMode, HouseholdSplitResponse } from "../api/types";
 
-const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 const MONTH_LABELS = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
   "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
@@ -14,6 +14,8 @@ const MODE_LABELS: Record<HouseholdSplitMode, string> = {
   RESTE_EGAL: "À reste égal",
   POURCENTAGE_CHOISI: "% au choix",
   FORFAIT_FIXE: "Forfait fixe",
+  POT_COMMUN_POURCENTAGE: "Pot commun en %",
+  A_LA_CARTE: "À la carte",
 };
 
 const MODE_EXPLAINERS: Record<HouseholdSplitMode, { avantage: string; angleMort: string; pourQui: string }> = {
@@ -42,9 +44,20 @@ const MODE_EXPLAINERS: Record<HouseholdSplitMode, { avantage: string; angleMort:
     angleMort: "Ne s'ajuste pas automatiquement si le montant des charges communes varie.",
     pourQui: "Les couples qui préfèrent un montant fixe, façon pot commun.",
   },
+  POT_COMMUN_POURCENTAGE: {
+    avantage: "Chacun·e verse un % de son propre revenu dans un pot commun qui paie les charges.",
+    angleMort: "Le pot peut ne pas couvrir exactement les charges : un écart (manque ou surplus) peut apparaître.",
+    pourQui: "Les couples qui pensent en % de revenu plutôt qu'en montant précis des charges.",
+  },
+  A_LA_CARTE: {
+    avantage: "Chaque dépense commune est attribuée à qui l'a vraiment engagée, au cas par cas.",
+    angleMort: "Demande d'attribuer chaque dépense manuellement ; celles non attribuées sont réparties au prorata.",
+    pourQui: "Les couples qui préfèrent suivre précisément qui paie quoi.",
+  },
 };
 
 export function Repartition() {
+  const currency = useCurrencyFormatter();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -93,7 +106,7 @@ export function Repartition() {
     setError(null);
     setSaveMessage(null);
     try {
-      const needsCustom = mode === "POURCENTAGE_CHOISI" || mode === "FORFAIT_FIXE";
+      const needsCustom = mode === "POURCENTAGE_CHOISI" || mode === "FORFAIT_FIXE" || mode === "POT_COMMUN_POURCENTAGE";
       const customShares = needsCustom
         ? Object.fromEntries(
             data.members
@@ -114,9 +127,21 @@ export function Repartition() {
     }
   }
 
+  async function handleAssign(expenseId: string, userId: string | null) {
+    try {
+      await apiFetch(`/api/household-split/assignments/${expenseId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ userId }),
+      });
+      await load(mode ?? undefined);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    }
+  }
+
   if (error && !data) return <p className="text-sm text-red-600">{error}</p>;
 
-  const needsCustomInputs = mode === "POURCENTAGE_CHOISI" || mode === "FORFAIT_FIXE";
+  const needsCustomInputs = mode === "POURCENTAGE_CHOISI" || mode === "FORFAIT_FIXE" || mode === "POT_COMMUN_POURCENTAGE";
 
   return (
     <div className="space-y-6">
@@ -183,10 +208,46 @@ export function Repartition() {
             {data.note && <p className="mt-1 text-xs text-amber-600">{data.note}</p>}
           </div>
 
+          {mode === "A_LA_CARTE" && (
+            <section className="card">
+              <h2 className="font-semibold">Attribuer chaque dépense commune</h2>
+              {(!data.expenses || data.expenses.length === 0) ? (
+                <p className="mt-2 text-sm text-slate-500">Aucune dépense sur un compte joint ce mois-ci.</p>
+              ) : (
+                <ul className="mt-2">
+                  {data.expenses.map((e) => (
+                    <li key={e.id} className="flex items-center justify-between gap-3 border-b border-slate-100 py-2 last:border-0">
+                      <span className="text-sm">{e.poste}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-medium">{currency.format(e.amount)}</span>
+                        <select
+                          value={e.assignedToUserId ?? ""}
+                          onChange={(ev) => handleAssign(e.id, ev.target.value || null)}
+                          className="input px-2 py-1 text-sm"
+                        >
+                          <option value="">Non attribué</option>
+                          {data.members.map((m) => (
+                            <option key={m.userId} value={m.userId}>
+                              {m.firstName}{m.isYou ? " (toi)" : ""}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
+
           {needsCustomInputs && (
             <section className="card">
               <h2 className="font-semibold">
-                {mode === "POURCENTAGE_CHOISI" ? "Pourcentage de chacun·e" : "Montant fixe de chacun·e"}
+                {mode === "POURCENTAGE_CHOISI"
+                  ? "Pourcentage de chacun·e"
+                  : mode === "POT_COMMUN_POURCENTAGE"
+                    ? "% du revenu versé au pot commun"
+                    : "Montant fixe de chacun·e"}
               </h2>
               <div className="mt-3 flex flex-wrap gap-3">
                 {data.members.map((m) => (
@@ -197,7 +258,7 @@ export function Repartition() {
                     <input
                       className="mt-1 w-32 input"
                       inputMode="decimal"
-                      placeholder={mode === "POURCENTAGE_CHOISI" ? "%" : "€"}
+                      placeholder={mode === "FORFAIT_FIXE" ? "€" : "%"}
                       value={customInputs[m.userId] ?? ""}
                       onChange={(e) => setCustomInputs((prev) => ({ ...prev, [m.userId]: e.target.value }))}
                     />

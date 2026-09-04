@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { apiFetch, ApiError } from "../api/client";
 import { QuickAddExpense } from "../components/QuickAddExpense";
 import { ImportStatement } from "../components/ImportStatement";
+import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import type { BankAccountsResponse, BudgetCategory, Expense, ExpensesResponse } from "../api/types";
 
 const MONTH_NAMES = [
@@ -30,8 +31,6 @@ const CATEGORY_TEXT_CLASS: Record<BudgetCategory, string> = {
 
 const CATEGORY_ORDER: BudgetCategory[] = ["BESOINS", "ENVIES", "EPARGNE"];
 
-const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
-
 function shiftMonth(year: number, month: number, delta: number) {
   const zeroBased = month - 1 + delta;
   const newYear = year + Math.floor(zeroBased / 12);
@@ -40,6 +39,7 @@ function shiftMonth(year: number, month: number, delta: number) {
 }
 
 export function BudgetDuMois() {
+  const currency = useCurrencyFormatter();
   const now = new Date();
   const [searchParams] = useSearchParams();
   const urlYear = Number(searchParams.get("year"));
@@ -420,6 +420,7 @@ function ExpenseRow({
   onDelete: (id: string) => void;
   onToggleWasteful: (id: string, wasteful: boolean) => void;
 }) {
+  const currency = useCurrencyFormatter();
   return (
     <li className="flex items-center justify-between border-b border-slate-100 py-2 last:border-0">
       <div>
@@ -464,6 +465,7 @@ function StatTile({ label, value, tone = "default" }: { label: string; value: st
 }
 
 function BudgetVsActualBar({ label, actual, target }: { label: string; actual: number; target: number }) {
+  const currency = useCurrencyFormatter();
   const pct = target > 0 ? actual / target : actual > 0 ? 1 : 0;
   const width = Math.min(pct, 1) * 100;
   const over = actual > target;

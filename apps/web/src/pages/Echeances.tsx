@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
+import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import type { BankAccountsResponse, RecurringChargesResponse } from "../api/types";
 
-const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
-
 export function Echeances() {
+  const currency = useCurrencyFormatter();
   const [data, setData] = useState<RecurringChargesResponse | null>(null);
   const [accounts, setAccounts] = useState<BankAccountsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
+import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import type { DashboardResponse, ExpensesResponse, IncomeSummary, Income } from "../api/types";
 
-const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 const MONTH_LABELS = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
   "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
@@ -31,6 +31,7 @@ function downloadCsv(filename: string, rows: (string | number)[][]) {
 }
 
 export function Export() {
+  const currency = useCurrencyFormatter();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);

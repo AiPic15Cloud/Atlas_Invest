@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
+import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import type { SavingsGoal, SavingsGoalsResponse } from "../api/types";
 
-const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" });
 
 export function Objectifs() {
+  const currency = useCurrencyFormatter();
   const [goals, setGoals] = useState<SavingsGoal[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 

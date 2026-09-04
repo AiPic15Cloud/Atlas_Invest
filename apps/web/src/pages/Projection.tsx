@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
+import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import type { DashboardResponse } from "../api/types";
 
-const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 const MONTH_OPTIONS = [6, 12, 24, 36];
 
 interface ExtraCharge {
@@ -12,6 +12,7 @@ interface ExtraCharge {
 }
 
 export function Projection() {
+  const currency = useCurrencyFormatter();
   const now = new Date();
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [error, setError] = useState<string | null>(null);

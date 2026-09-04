@@ -2,7 +2,20 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch, ApiError } from "../api/client";
 import { useAuth } from "../context/AuthContext";
-import type { TwoFactorSetupResponse, TwoFactorStatus } from "../api/types";
+import type { HouseholdCurrency, TwoFactorSetupResponse, TwoFactorStatus } from "../api/types";
+
+const CURRENCY_LABELS: Record<HouseholdCurrency, string> = {
+  EUR: "€ Euro",
+  USD: "$ Dollar américain",
+  GBP: "£ Livre sterling",
+  CHF: "CHF Franc suisse",
+  CAD: "$ Dollar canadien",
+};
+
+const MONTH_NAMES = [
+  "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+  "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
+];
 
 export function Settings() {
   const { user, household, refresh, logout } = useAuth();
@@ -20,6 +33,11 @@ export function Settings() {
   const [showDisableForm, setShowDisableForm] = useState(false);
   const [twoFactorBusy, setTwoFactorBusy] = useState(false);
   const [twoFactorError, setTwoFactorError] = useState<string | null>(null);
+
+  const [savingHouseholdSettings, setSavingHouseholdSettings] = useState(false);
+  const [resetConfirmName, setResetConfirmName] = useState("");
+  const [resetting, setResetting] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
 
   async function loadTwoFactorStatus() {
     try {
@@ -114,6 +132,40 @@ export function Settings() {
       setError(err instanceof ApiError ? err.message : "Impossible de quitter le foyer.");
     } finally {
       setLeaving(false);
+    }
+  }
+
+  async function updateHouseholdSettings(patch: { currency?: HouseholdCurrency; fiscalYearStartMonth?: number }) {
+    setSavingHouseholdSettings(true);
+    setError(null);
+    try {
+      await apiFetch("/api/households/settings", { method: "PATCH", body: JSON.stringify(patch) });
+      await refresh();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Impossible de mettre à jour ce réglage.");
+    } finally {
+      setSavingHouseholdSettings(false);
+    }
+  }
+
+  async function resetHouseholdData() {
+    if (!household) return;
+    if (resetConfirmName !== household.name) {
+      setResetError("Le nom saisi ne correspond pas au nom du foyer.");
+      return;
+    }
+    if (!confirm("Réinitialiser toutes les données du foyer ? Cette action est irréversible.")) return;
+    setResetting(true);
+    setResetError(null);
+    try {
+      await apiFetch("/api/households/reset", { method: "POST", body: JSON.stringify({ confirmName: resetConfirmName }) });
+      setResetConfirmName("");
+      navigate("/dashboard");
+      window.location.reload();
+    } catch (err) {
+      setResetError(err instanceof ApiError ? err.message : "Impossible de réinitialiser les données.");
+    } finally {
+      setResetting(false);
     }
   }
 
@@ -276,6 +328,44 @@ export function Settings() {
         </button>
       </section>
 
+      {household && (
+        <section className="card">
+          <h2 className="font-semibold">Réglages du foyer</h2>
+          <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <label className="block">
+              <span className="text-xs font-medium text-slate-700">Devise</span>
+              <select
+                className="mt-1 w-full input"
+                value={household.currency}
+                disabled={savingHouseholdSettings}
+                onChange={(e) => updateHouseholdSettings({ currency: e.target.value as HouseholdCurrency })}
+              >
+                {(Object.entries(CURRENCY_LABELS) as [HouseholdCurrency, string][]).map(([code, label]) => (
+                  <option key={code} value={code}>{label}</option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="text-xs font-medium text-slate-700">Mois de début d'année</span>
+              <select
+                className="mt-1 w-full input"
+                value={household.fiscalYearStartMonth}
+                disabled={savingHouseholdSettings}
+                onChange={(e) => updateHouseholdSettings({ fiscalYearStartMonth: Number(e.target.value) })}
+              >
+                {MONTH_NAMES.map((name, index) => (
+                  <option key={name} value={index + 1}>{name}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <p className="mt-2 text-xs text-slate-500">
+            Le mois de début d'année ne s'applique qu'à la fenêtre de 12 mois affichée sur le tableau de bord ;
+            tes données restent classées par mois calendaire.
+          </p>
+        </section>
+      )}
+
       <section className="card p-4 ring-red-300">
         <h2 className="font-semibold text-red-700">Zone de danger</h2>
         <button
@@ -285,6 +375,33 @@ export function Settings() {
           Supprimer mon compte
         </button>
       </section>
+
+      {household && (
+        <section className="card p-4 ring-red-300">
+          <h2 className="font-semibold text-red-700">Réinitialiser les données du foyer</h2>
+          <p className="mt-2 text-sm text-slate-600">
+            Supprime définitivement toutes les dépenses, revenus, budget type, patrimoine, prêts, objectifs,
+            abonnements et l'épargne de précaution du foyer. Le foyer, ses membres et leurs comptes bancaires sont
+            conservés. Pour confirmer, saisis le nom exact du foyer : <span className="font-mono">{household.name}</span>.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <input
+              value={resetConfirmName}
+              onChange={(e) => setResetConfirmName(e.target.value)}
+              placeholder={household.name}
+              className="w-56 input"
+            />
+            <button
+              onClick={resetHouseholdData}
+              disabled={resetting || resetConfirmName !== household.name}
+              className="btn btn-danger disabled:opacity-50"
+            >
+              {resetting ? "..." : "Réinitialiser les données"}
+            </button>
+          </div>
+          {resetError && <p className="mt-2 text-xs text-red-600">{resetError}</p>}
+        </section>
+      )}
     </div>
   );
 }

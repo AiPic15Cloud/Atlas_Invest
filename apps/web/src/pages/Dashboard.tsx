@@ -2,31 +2,35 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiFetch, ApiError } from "../api/client";
 import { AnnualLineChart } from "../components/AnnualLineChart";
+import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import type { DashboardResponse, EmergencyFundProfile, MonthlyGoal, MonthlyGoalsResponse } from "../api/types";
 
-const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 const MONTH_NAMES = [
   "janvier", "février", "mars", "avril", "mai", "juin",
   "juillet", "août", "septembre", "octobre", "novembre", "décembre",
 ];
 
-function defaultMonthIndex(year: number) {
+function defaultMonthIndex(monthly: DashboardResponse["monthly"]) {
   const now = new Date();
-  return year === now.getFullYear() ? now.getMonth() : 11;
+  const currentIndex = monthly.findIndex((m) => m.year === now.getFullYear() && m.month === now.getMonth() + 1);
+  if (currentIndex !== -1) return currentIndex;
+  return now.getFullYear() > (monthly[0]?.year ?? now.getFullYear()) ? 11 : 0;
 }
 
 export function Dashboard() {
+  const currency = useCurrencyFormatter();
   const navigate = useNavigate();
   const [year, setYear] = useState(new Date().getFullYear());
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [selectedMonthIndex, setSelectedMonthIndex] = useState(() => defaultMonthIndex(new Date().getFullYear()));
+  const [selectedMonthIndex, setSelectedMonthIndex] = useState(11);
   const [emergencyFund, setEmergencyFund] = useState<EmergencyFundProfile | null | undefined>(undefined);
 
   async function load() {
     try {
       const res = await apiFetch<DashboardResponse>(`/api/dashboard?year=${year}`);
       setData(res);
+      setSelectedMonthIndex(defaultMonthIndex(res.monthly));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Impossible de charger le tableau de bord.");
     }
@@ -40,7 +44,6 @@ export function Dashboard() {
 
   useEffect(() => {
     load();
-    setSelectedMonthIndex(defaultMonthIndex(year));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [year]);
 
@@ -94,13 +97,13 @@ export function Dashboard() {
 
         <div className="mt-3 rounded-md bg-slate-50 p-3 text-sm text-slate-700">
           <p>
-            <span className="font-medium">En {MONTH_NAMES[selectedMonthIndex]}</span> : revenu de{" "}
+            <span className="font-medium">En {MONTH_NAMES[selected.month - 1]}</span> : revenu de{" "}
             {currency.format(selected.income)}, dépenses de {currency.format(selected.expense)}
             {selected.income > 0 && ` (${Math.round((selected.expense / selected.income) * 100)} % du revenu)`}, reste
             de {currency.format(selected.reste)}.
           </p>
           <button
-            onClick={() => navigate(`/budget-du-mois?year=${year}&month=${selectedMonthIndex + 1}`)}
+            onClick={() => navigate(`/budget-du-mois?year=${selected.year}&month=${selected.month}`)}
             className="mt-1 text-sm link"
           >
             Voir le détail de ce mois
@@ -161,7 +164,7 @@ export function Dashboard() {
         </section>
       </div>
 
-      <MonthlyGoalsSection year={year} month={selectedMonthIndex + 1} />
+      <MonthlyGoalsSection year={selected.year} month={selected.month} />
     </div>
   );
 }

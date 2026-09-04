@@ -21,21 +21,40 @@ dashboardRouter.get("/", async (req, res) => {
   }
   const { year } = parsed.data;
 
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: req.userId! } });
+  const household = user.householdId
+    ? await prisma.household.findUnique({ where: { id: user.householdId } })
+    : null;
+  const fiscalYearStartMonth = household?.fiscalYearStartMonth ?? 1;
+
+  // Fenetre de 12 mois affichee : calendaire (janvier a decembre de `year`)
+  // si le foyer n'a pas de mois de depart personnalise, sinon une fenetre
+  // glissante qui peut chevaucher deux annees civiles.
+  const windowMonths = Array.from({ length: 12 }, (_, i) => {
+    const offset = fiscalYearStartMonth - 1 + i;
+    return { month: (offset % 12) + 1, year: offset < 12 ? year : year + 1 };
+  });
+  const years = [...new Set(windowMonths.map((w) => w.year))];
+
   const accounts = await listAccessibleAccounts(req.userId!);
   const accountIds = accounts.map((a) => a.id);
 
   const [incomes, expenses, template] = await Promise.all([
-    prisma.income.findMany({ where: { year, bankAccountId: { in: accountIds } }, select: { month: true, amount: true } }),
-    prisma.expense.findMany({ where: { year, bankAccountId: { in: accountIds } }, select: { month: true, amount: true } }),
+    prisma.income.findMany({ where: { year: { in: years }, bankAccountId: { in: accountIds } }, select: { year: true, month: true, amount: true } }),
+    prisma.expense.findMany({ where: { year: { in: years }, bankAccountId: { in: accountIds } }, select: { year: true, month: true, amount: true } }),
     prisma.budgetTemplate.findUnique({ where: { userId: req.userId! } }),
   ]);
 
-  const monthly = Array.from({ length: 12 }, (_, i) => ({ month: i + 1, income: 0, expense: 0, reste: 0 }));
+  const monthly = windowMonths.map((w) => ({ month: w.month, year: w.year, income: 0, expense: 0, reste: 0 }));
+  const indexOf = (y: number, m: number) => monthly.findIndex((entry) => entry.year === y && entry.month === m);
+
   for (const income of incomes) {
-    monthly[income.month - 1].income += Number(income.amount);
+    const idx = indexOf(income.year, income.month);
+    if (idx !== -1) monthly[idx].income += Number(income.amount);
   }
   for (const expense of expenses) {
-    monthly[expense.month - 1].expense += Number(expense.amount);
+    const idx = indexOf(expense.year, expense.month);
+    if (idx !== -1) monthly[idx].expense += Number(expense.amount);
   }
   for (const m of monthly) {
     m.reste = m.income - m.expense;
@@ -46,6 +65,7 @@ dashboardRouter.get("/", async (req, res) => {
 
   res.json({
     year,
+    fiscalYearStartMonth,
     totals: {
       income: totalIncome,
       expenses: totalExpenses,

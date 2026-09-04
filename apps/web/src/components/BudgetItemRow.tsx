@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { BudgetItemForm } from "./BudgetItemForm";
+import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import type { BudgetItemNode } from "../api/types";
-
-const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 
 interface BudgetItemRowProps {
   item: BudgetItemNode;
@@ -14,6 +13,7 @@ interface BudgetItemRowProps {
 }
 
 export function BudgetItemRow({ item, depth = 0, onAddChild, onUpdate, onDelete, onMove }: BudgetItemRowProps) {
+  const currency = useCurrencyFormatter();
   const [editing, setEditing] = useState(false);
   const [addingChild, setAddingChild] = useState(false);
 

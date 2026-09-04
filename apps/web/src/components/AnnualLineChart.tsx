@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import type { DashboardMonth } from "../api/types";
 
 const MONTH_NAMES = [
@@ -15,8 +16,6 @@ const SERIES = [
   { key: "expense" as const, label: "Dépenses", color: "#ec4899" },
   { key: "reste" as const, label: "Reste", color: "#8b5cf6" },
 ];
-
-const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 
 const WIDTH = 720;
 const HEIGHT = 260;
@@ -44,6 +43,7 @@ interface AnnualLineChartProps {
 }
 
 export function AnnualLineChart({ monthly, selectedIndex, onSelectMonth }: AnnualLineChartProps) {
+  const currency = useCurrencyFormatter({ maximumFractionDigits: 0 });
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [showTable, setShowTable] = useState(false);
 
@@ -101,7 +101,7 @@ export function AnnualLineChart({ monthly, selectedIndex, onSelectMonth }: Annua
                   onClick={() => onSelectMonth(i)}
                   className={`cursor-pointer border-t border-slate-100 ${i === selectedIndex ? "bg-slate-50" : "hover:bg-slate-50"}`}
                 >
-                  <td className="py-1 pr-3 font-medium">{MONTH_NAMES_FULL[i]}</td>
+                  <td className="py-1 pr-3 font-medium">{MONTH_NAMES_FULL[m.month - 1]}</td>
                   <td className="py-1 pr-3">{currency.format(m.income)}</td>
                   <td className="py-1 pr-3">{currency.format(m.expense)}</td>
                   <td className="py-1">{currency.format(m.reste)}</td>
@@ -122,7 +122,7 @@ export function AnnualLineChart({ monthly, selectedIndex, onSelectMonth }: Annua
               </g>
             ))}
 
-            {monthly.map((_, i) => (
+            {monthly.map((m, i) => (
               <text
                 key={i}
                 x={x(i)}
@@ -132,7 +132,7 @@ export function AnnualLineChart({ monthly, selectedIndex, onSelectMonth }: Annua
                 fontWeight={i === selectedIndex ? 700 : 400}
                 fill={i === selectedIndex ? "#0b0b0b" : "#898781"}
               >
-                {MONTH_NAMES[i]}
+                {MONTH_NAMES[m.month - 1]}
               </text>
             ))}
 
@@ -184,7 +184,7 @@ export function AnnualLineChart({ monthly, selectedIndex, onSelectMonth }: Annua
               className="pointer-events-none absolute top-2 rounded-md bg-pink-600 hover:bg-pink-700 px-3 py-2 text-xs text-white shadow-lg"
               style={{ left: `min(${(x(hoverIndex) / WIDTH) * 100}%, 78%)` }}
             >
-              <p className="font-medium">{MONTH_NAMES_FULL[hoverIndex]}</p>
+              <p className="font-medium">{MONTH_NAMES_FULL[monthly[hoverIndex].month - 1]}</p>
               {SERIES.map((s) => (
                 <p key={s.key} className="flex items-center gap-1.5">
                   <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />

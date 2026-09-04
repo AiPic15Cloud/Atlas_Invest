@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
 import { BudgetItemForm } from "./BudgetItemForm";
 import { BudgetItemCard } from "./BudgetItemCard";
+import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import type { BudgetCategory, BudgetItemNode } from "../api/types";
 
-const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 const percent = new Intl.NumberFormat("fr-FR", { style: "percent", maximumFractionDigits: 0 });
 
 const CATEGORY_TITLE_COLOR: Record<BudgetCategory, string> = {
@@ -47,6 +47,7 @@ export function BudgetCategorySection({
   onDelete,
   onMove,
 }: BudgetCategorySectionProps) {
+  const currency = useCurrencyFormatter();
   const [adding, setAdding] = useState(false);
   const overBudget = showTarget && actual > target;
   const categoryTotal = showTarget ? target : actual;

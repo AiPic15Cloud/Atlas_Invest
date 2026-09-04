@@ -26,10 +26,14 @@ export interface HouseholdMember {
   shareDetailsWithHousehold: boolean;
 }
 
+export type HouseholdCurrency = "EUR" | "USD" | "GBP" | "CHF" | "CAD";
+
 export interface Household {
   id: string;
   name: string;
   inviteCode: string;
+  currency: HouseholdCurrency;
+  fiscalYearStartMonth: number;
   members: HouseholdMember[];
 }
 
@@ -179,6 +183,7 @@ export interface ExpensesResponse {
 
 export interface DashboardMonth {
   month: number;
+  year: number;
   income: number;
   expense: number;
   reste: number;
@@ -197,7 +202,14 @@ export interface Criterion {
 }
 
 export type EmergencyFundCriteria = Record<
-  "jobStability" | "dependentsLoad" | "health" | "alternativeIncome" | "debtLevel",
+  | "jobStability"
+  | "dependentsLoad"
+  | "health"
+  | "alternativeIncome"
+  | "debtLevel"
+  | "safetyNet"
+  | "emotionalComfort"
+  | "assetLiquidity",
   Criterion
 >;
 
@@ -214,6 +226,9 @@ export interface EmergencyFundProfile {
     health: number;
     alternativeIncome: number;
     debtLevel: number;
+    safetyNet: number;
+    emotionalComfort: number;
+    assetLiquidity: number;
   };
   breakdown: EmergencyFundCriterionBreakdown[];
   score: number;
@@ -378,7 +393,14 @@ export interface SavingsGoalsResponse {
   goals: SavingsGoal[];
 }
 
-export type HouseholdSplitMode = "PRORATA_REVENUS" | "PARTS_EGALES" | "RESTE_EGAL" | "POURCENTAGE_CHOISI" | "FORFAIT_FIXE";
+export type HouseholdSplitMode =
+  | "PRORATA_REVENUS"
+  | "PARTS_EGALES"
+  | "RESTE_EGAL"
+  | "POURCENTAGE_CHOISI"
+  | "FORFAIT_FIXE"
+  | "POT_COMMUN_POURCENTAGE"
+  | "A_LA_CARTE";
 
 export interface HouseholdSplitMember {
   userId: string;
@@ -391,12 +413,20 @@ export interface HouseholdSplitMember {
   customValue: number | null;
 }
 
+export interface HouseholdSplitExpense {
+  id: string;
+  poste: string;
+  amount: number;
+  assignedToUserId: string | null;
+}
+
 export interface HouseholdSplitResponse {
   jointExpensesTotal: number;
   totalIncome: number;
   members: HouseholdSplitMember[];
   mode: HouseholdSplitMode;
   customShares: Record<string, number>;
+  expenses?: HouseholdSplitExpense[];
   fallbackToEqual: boolean;
   note: string | null;
 }
@@ -440,6 +470,7 @@ export interface CorrectionHistoryResponse {
 
 export interface DashboardResponse {
   year: number;
+  fiscalYearStartMonth: number;
   totals: { income: number; expenses: number; reste: number };
   averages: { incomePerMonth: number; expensePerMonth: number };
   monthly: DashboardMonth[];

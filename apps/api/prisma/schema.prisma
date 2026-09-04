@@ -27,6 +27,10 @@ model Household {
   splitMode         String @default("PRORATA_REVENUS")
   splitCustomShares Json?
 
+  // Reglages generaux du foyer.
+  currency            String @default("EUR")
+  fiscalYearStartMonth Int   @default(1)
+
   members      User[]
   bankAccounts BankAccount[]
   monthlyGoals MonthlyGoal[]
@@ -81,6 +85,7 @@ model User {
   twoFactorBackupCodes TwoFactorBackupCode[]
   loans                Loan[]
   importCategoryMemory ImportCategoryMemory[]
+  expenseAssignments   ExpenseAssignment[]
 }
 
 model BankAccount {
@@ -192,7 +197,25 @@ model Expense {
   bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
   bankAccountId String
 
+  assignment ExpenseAssignment?
+
   @@index([bankAccountId, year, month])
+}
+
+// Repartition "a la carte" des charges communes : chaque depense sur un
+// compte joint peut etre attribuee explicitement a un membre du foyer
+// plutot que d'etre partagee au prorata.
+model ExpenseAssignment {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  expense   Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  expenseId String  @unique
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@index([userId])
 }
 
 // Regle apprise a partir des corrections de l'utilisateur : quand il
@@ -223,6 +246,9 @@ model EmergencyFundProfile {
   health            Int
   alternativeIncome Int
   debtLevel         Int
+  safetyNet         Int @default(3)
+  emotionalComfort  Int @default(3)
+  assetLiquidity    Int @default(3)
 
   // Nombre de mois cible : si non renseigne, derive automatiquement du score.
   monthsOverride Int?

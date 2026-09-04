@@ -26,6 +26,9 @@ async function serializeProfile(profile: EmergencyFundProfile & { envelopes: Sav
     health: profile.health,
     alternativeIncome: profile.alternativeIncome,
     debtLevel: profile.debtLevel,
+    safetyNet: profile.safetyNet,
+    emotionalComfort: profile.emotionalComfort,
+    assetLiquidity: profile.assetLiquidity,
   };
   const score = computeVulnerabilityScore(answers);
   const recommendedMonths = computeRecommendedMonths(score);
@@ -109,6 +112,9 @@ const criteriaSchema = z.object({
   health: z.union([z.literal(1), z.literal(3), z.literal(5)]),
   alternativeIncome: z.union([z.literal(1), z.literal(3), z.literal(5)]),
   debtLevel: z.union([z.literal(1), z.literal(3), z.literal(5)]),
+  safetyNet: z.union([z.literal(1), z.literal(3), z.literal(5)]),
+  emotionalComfort: z.union([z.literal(1), z.literal(3), z.literal(5)]),
+  assetLiquidity: z.union([z.literal(1), z.literal(3), z.literal(5)]),
 });
 
 emergencyFundRouter.put("/", async (req, res) => {

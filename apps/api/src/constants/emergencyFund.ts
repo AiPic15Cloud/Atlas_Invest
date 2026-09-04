@@ -46,6 +46,30 @@ export const CRITERIA: Record<string, { question: string; options: CriterionOpti
       { value: 1, label: "Endettement lourd" },
     ],
   },
+  safetyNet: {
+    question: "Filet de sécurité",
+    options: [
+      { value: 5, label: "Un proche peut m'aider en cas de coup dur" },
+      { value: 3, label: "Une aide serait possible mais pas garantie" },
+      { value: 1, label: "Aucun filet de sécurité sur qui compter" },
+    ],
+  },
+  emotionalComfort: {
+    question: "Confort émotionnel",
+    options: [
+      { value: 5, label: "Une petite marge me suffit pour me sentir serein·e" },
+      { value: 3, label: "J'ai besoin d'une marge confortable pour être serein·e" },
+      { value: 1, label: "La sérénité financière compte énormément pour moi, je vise large" },
+    ],
+  },
+  assetLiquidity: {
+    question: "Liquidité des actifs",
+    options: [
+      { value: 5, label: "J'ai d'autres actifs liquides mobilisables rapidement" },
+      { value: 3, label: "Quelques actifs, mais pas immédiatement mobilisables" },
+      { value: 1, label: "Mon épargne de précaution est ma seule réserve" },
+    ],
+  },
 };
 
 export const CRITERIA_KEYS = Object.keys(CRITERIA) as (keyof typeof CRITERIA)[];
