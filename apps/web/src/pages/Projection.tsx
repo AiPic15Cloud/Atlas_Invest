@@ -74,7 +74,7 @@ export function Projection() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200">
+      <div className="card p-3">
         <span className="text-lg font-semibold">Projection et simulation</span>
         <p className="mt-1 text-sm text-slate-500">
           Simule l'impact d'un changement de revenu ou d'une nouvelle dépense récurrente sur ton budget des
@@ -82,13 +82,13 @@ export function Projection() {
         </p>
       </div>
 
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <section className="card">
         <h2 className="font-semibold">Hypothèses</h2>
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="block">
             <span className="text-xs text-slate-500">Revenu mensuel de départ</span>
             <input
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="mt-1 w-full input"
               value={baseIncome}
               onChange={(e) => setBaseIncome(e.target.value)}
             />
@@ -96,7 +96,7 @@ export function Projection() {
           <label className="block">
             <span className="text-xs text-slate-500">Dépenses mensuelles de départ</span>
             <input
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="mt-1 w-full input"
               value={baseExpense}
               onChange={(e) => setBaseExpense(e.target.value)}
             />
@@ -104,7 +104,7 @@ export function Projection() {
           <label className="block">
             <span className="text-xs text-slate-500">Changement de revenu simulé (+/-)</span>
             <input
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="mt-1 w-full input"
               value={incomeChange}
               onChange={(e) => setIncomeChange(e.target.value)}
               placeholder="Ex. +200 ou -500"
@@ -113,7 +113,7 @@ export function Projection() {
           <label className="block">
             <span className="text-xs text-slate-500">Mois à projeter</span>
             <select
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="mt-1 w-full input"
               value={monthsToProject}
               onChange={(e) => setMonthsToProject(Number(e.target.value))}
             >
@@ -130,20 +130,20 @@ export function Projection() {
           <span className="text-xs text-slate-500">Nouvelles dépenses récurrentes simulées (+) ou économies (-)</span>
           <div className="mt-2 flex flex-wrap gap-2">
             <input
-              className="min-w-[160px] flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="min-w-[160px] flex-1 input"
               placeholder="Libellé (ex. Crédit voiture)"
               value={newLabel}
               onChange={(e) => setNewLabel(e.target.value)}
             />
             <input
-              className="w-32 rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="w-32 input"
               placeholder="Montant"
               value={newAmount}
               onChange={(e) => setNewAmount(e.target.value)}
             />
             <button
               onClick={handleAddCharge}
-              className="rounded-md bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
+              className="btn btn-secondary"
             >
               Ajouter
             </button>
@@ -166,7 +166,7 @@ export function Projection() {
         </div>
       </section>
 
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <section className="card">
         <h2 className="font-semibold">Résultat de la simulation</h2>
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div>

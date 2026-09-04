@@ -32,7 +32,7 @@ export function Historique() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200">
+      <div className="card p-3">
         <span className="text-lg font-semibold">Historique des corrections</span>
         <p className="mt-1 text-sm text-slate-500">
           Journal de tes corrections manuelles (dépenses marquées utiles/inutiles, statuts d'abonnements changés),
@@ -46,7 +46,7 @@ export function Historique() {
             key={t}
             onClick={() => setFilter(t)}
             className={`rounded-md px-3 py-2 text-sm font-medium ${
-              filter === t ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700"
+              filter === t ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
             }`}
           >
             {t === "ALL" ? "Tout" : TYPE_LABELS[t]}
@@ -59,7 +59,7 @@ export function Historique() {
       ) : (
         <ul className="space-y-2">
           {filtered.map((log) => (
-            <li key={log.id} className="rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200">
+            <li key={log.id} className="card p-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <span className={`mr-2 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${TYPE_COLORS[log.type]}`}>

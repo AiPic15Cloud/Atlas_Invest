@@ -49,7 +49,7 @@ export function EmergencyFundQuestionnaire({ initialAnswers, onSubmit, onCancel 
         figé : tu pourras ajuster le nombre de mois ensuite.
       </p>
       {keys.map((key) => (
-        <fieldset key={key} className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+        <fieldset key={key} className="card">
           <legend className="mb-2 text-sm font-medium text-slate-800">{criteria[key].question}</legend>
           <div className="space-y-1.5">
             {criteria[key].options.map((option) => (
@@ -72,7 +72,7 @@ export function EmergencyFundQuestionnaire({ initialAnswers, onSubmit, onCancel 
         <button
           onClick={handleSubmit}
           disabled={submitting}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="btn btn-primary"
         >
           {submitting ? "Calcul..." : "Calculer mon objectif"}
         </button>

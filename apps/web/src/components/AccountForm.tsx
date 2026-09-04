@@ -51,7 +51,7 @@ export function AccountForm({ variant, onSubmit, onCancel }: AccountFormProps) {
           placeholder={variant === "joint" ? "Ex. Compte joint" : "Ex. Compte courant Boursorama"}
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+          className="w-full input px-3 py-1.5 text-sm"
         />
       </div>
       {variant === "personal" && (
@@ -63,7 +63,7 @@ export function AccountForm({ variant, onSubmit, onCancel }: AccountFormProps) {
             id={`${variant}-account-type`}
             value={type}
             onChange={(e) => setType(e.target.value as BankAccountType)}
-            className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+            className="w-full input px-3 py-1.5 text-sm"
           >
             {PERSONAL_TYPES.map((t) => (
               <option key={t.value} value={t.value}>
@@ -82,7 +82,7 @@ export function AccountForm({ variant, onSubmit, onCancel }: AccountFormProps) {
           inputMode="decimal"
           value={initialBalance}
           onChange={(e) => setInitialBalance(e.target.value)}
-          className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+          className="w-full input px-3 py-1.5 text-sm"
         />
       </div>
       {error && <p className="text-xs text-red-600">{error}</p>}
@@ -90,7 +90,7 @@ export function AccountForm({ variant, onSubmit, onCancel }: AccountFormProps) {
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+          className="rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
         >
           {submitting ? "Ajout..." : "Ajouter"}
         </button>

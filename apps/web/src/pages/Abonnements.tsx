@@ -71,7 +71,7 @@ export function Abonnements() {
         </p>
       </div>
 
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <section className="card">
         <p className="text-xs text-slate-500">Coût annualisé total des abonnements détectés</p>
         <p className="mt-1 text-2xl font-semibold">{currency.format(data.annualTotal)}</p>
       </section>
@@ -104,7 +104,7 @@ function SubscriptionCard({
   const [reminder, setReminder] = useState(sub.cancelReminderAt ? sub.cancelReminderAt.slice(0, 10) : "");
 
   return (
-    <li className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+    <li className="card">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="font-medium">{sub.poste}</p>
@@ -124,7 +124,7 @@ function SubscriptionCard({
           <select
             value={sub.status}
             onChange={(e) => onUpdate(sub.id, { status: e.target.value })}
-            className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+            className="w-full input px-2 py-1.5 text-sm"
           >
             {(Object.entries(STATUS_LABELS) as [SubscriptionStatus, string][]).map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
@@ -136,7 +136,7 @@ function SubscriptionCard({
           <select
             value={sub.usageFrequency ?? ""}
             onChange={(e) => onUpdate(sub.id, { usageFrequency: e.target.value || null })}
-            className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+            className="w-full input px-2 py-1.5 text-sm"
           >
             <option value="">—</option>
             {(Object.entries(USAGE_LABELS) as [UsageFrequency, string][]).map(([value, label]) => (
@@ -153,7 +153,7 @@ function SubscriptionCard({
               setLastUsed(e.target.value);
               onUpdate(sub.id, { lastUsedAt: e.target.value ? new Date(e.target.value).toISOString() : null });
             }}
-            className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+            className="w-full input px-2 py-1.5 text-sm"
           />
         </div>
         <div>
@@ -165,7 +165,7 @@ function SubscriptionCard({
               setReminder(e.target.value);
               onUpdate(sub.id, { cancelReminderAt: e.target.value ? new Date(e.target.value).toISOString() : null });
             }}
-            className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+            className="w-full input px-2 py-1.5 text-sm"
           />
         </div>
       </div>

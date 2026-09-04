@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { ApiError } from "../api/client";
+import { AuthShell } from "../components/AuthShell";
 
 export function Login() {
   const { login, completeTwoFactorLogin } = useAuth();
@@ -48,14 +49,13 @@ export function Login() {
 
   if (pendingToken) {
     return (
-      <div className="mx-auto mt-16 max-w-sm rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200">
-        <h1 className="mb-2 text-xl font-semibold">Vérification en deux étapes</h1>
-        <p className="mb-6 text-sm text-slate-600">
-          Entre le code à 6 chiffres de ton application d'authentification, ou l'un de tes codes de secours.
-        </p>
+      <AuthShell
+        title="Vérification en deux étapes"
+        subtitle="Entre le code à 6 chiffres de ton application d'authentification, ou l'un de tes codes de secours."
+      >
         <form onSubmit={handleTwoFactorSubmit} className="space-y-4">
           <div>
-            <label htmlFor="code" className="mb-1 block text-sm font-medium text-slate-700">
+            <label htmlFor="code" className="label">
               Code
             </label>
             <input
@@ -64,16 +64,12 @@ export function Login() {
               required
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm tracking-widest"
+              className="input text-center text-lg tracking-[0.3em]"
               placeholder="123456"
             />
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-          >
+          <button type="submit" disabled={submitting} className="btn btn-primary w-full">
             {submitting ? "Vérification..." : "Vérifier"}
           </button>
         </form>
@@ -87,16 +83,15 @@ export function Login() {
         >
           Retour
         </button>
-      </div>
+      </AuthShell>
     );
   }
 
   return (
-    <div className="mx-auto mt-16 max-w-sm rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200">
-      <h1 className="mb-6 text-xl font-semibold">Connexion</h1>
+    <AuthShell title="Connexion" subtitle="Content de te revoir.">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="email" className="mb-1 block text-sm font-medium text-slate-700">
+          <label htmlFor="email" className="label">
             Email
           </label>
           <input
@@ -105,11 +100,11 @@ export function Login() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="input"
           />
         </div>
         <div>
-          <label htmlFor="password" className="mb-1 block text-sm font-medium text-slate-700">
+          <label htmlFor="password" className="label">
             Mot de passe
           </label>
           <input
@@ -118,24 +113,20 @@ export function Login() {
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="input"
           />
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-        >
+        <button type="submit" disabled={submitting} className="btn btn-primary w-full">
           {submitting ? "Connexion..." : "Se connecter"}
         </button>
       </form>
-      <p className="mt-4 text-center text-sm text-slate-600">
+      <p className="mt-5 text-center text-sm text-slate-500">
         Pas encore de compte ?{" "}
-        <Link to="/register" className="font-medium text-slate-900 underline">
+        <Link to="/register" className="link">
           Créer un compte
         </Link>
       </p>
-    </div>
+    </AuthShell>
   );
 }

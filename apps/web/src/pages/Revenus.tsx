@@ -101,7 +101,7 @@ export function Revenus() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Revenus</h1>
-        <button onClick={() => setShowYear((v) => !v)} className="text-sm font-medium text-slate-900 underline">
+        <button onClick={() => setShowYear((v) => !v)} className="text-sm link">
           {showYear ? "Voir le mois" : "Voir l'année"}
         </button>
       </div>
@@ -110,7 +110,7 @@ export function Revenus() {
         <YearView year={year} summary={summary} onSelectMonth={(m) => { setMonth(m); setShowYear(false); }} />
       ) : (
         <>
-          <div className="flex items-center justify-between rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200">
+          <div className="flex items-center justify-between card p-3">
             <button onClick={() => goToMonth(-1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100">
               ← Précédent
             </button>
@@ -122,19 +122,19 @@ export function Revenus() {
             </button>
           </div>
 
-          <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+          <section className="card">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">
                 Sources du mois — total {currency.format(total)}
               </h2>
               <div className="flex gap-3">
                 {!copyOpen && (
-                  <button onClick={() => setCopyOpen(true)} className="text-sm font-medium text-slate-900 underline">
+                  <button onClick={() => setCopyOpen(true)} className="text-sm link">
                     Copier un mois
                   </button>
                 )}
                 {!adding && (
-                  <button onClick={() => setAdding(true)} className="text-sm font-medium text-slate-900 underline">
+                  <button onClick={() => setAdding(true)} className="text-sm link">
                     + Ajouter un revenu
                   </button>
                 )}
@@ -211,7 +211,7 @@ function YearView({
 }) {
   const total = summary?.totalsByMonth.reduce((a, b) => a + b, 0) ?? 0;
   return (
-    <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+    <section className="card">
       <h2 className="font-semibold">
         Revenus {year} — total {currency.format(total)}
       </h2>
@@ -276,7 +276,7 @@ function CopyMonthPanel({
         <select
           value={fromMonth}
           onChange={(e) => setFromMonth(Number(e.target.value))}
-          className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+          className="input px-2 py-1.5 text-sm"
         >
           {MONTH_NAMES.map((name, index) => (
             <option key={name} value={index + 1}>
@@ -288,7 +288,7 @@ function CopyMonthPanel({
           type="number"
           value={fromYear}
           onChange={(e) => setFromYear(Number(e.target.value))}
-          className="w-24 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+          className="w-24 input px-2 py-1.5 text-sm"
         />
       </div>
       {error && <p className="text-xs text-red-600">{error}</p>}
@@ -296,7 +296,7 @@ function CopyMonthPanel({
         <button
           onClick={handleConfirm}
           disabled={submitting}
-          className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+          className="rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
         >
           {submitting ? "Copie..." : "Copier"}
         </button>

@@ -175,7 +175,7 @@ export function BudgetDuMois() {
     <div className="space-y-6">
       <h1 className="text-xl font-semibold">Budget du mois</h1>
 
-      <div className="flex items-center justify-between rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200">
+      <div className="flex items-center justify-between card p-3">
         <button onClick={() => goToMonth(-1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100">
           ← Précédent
         </button>
@@ -185,7 +185,7 @@ export function BudgetDuMois() {
         </button>
       </div>
 
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <section className="card">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <StatTile label="Revenu du mois" value={currency.format(summary.totalIncome)} />
           <StatTile label="Dépensé ce mois" value={currency.format(summary.totalSpent)} />
@@ -270,28 +270,28 @@ export function BudgetDuMois() {
 
       <QuickAddExpense accounts={availableAccounts} onSubmit={handleQuickAdd} />
 
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <section className="card">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">Actions rapides</h2>
-          <button onClick={() => setActionsOpen((v) => !v)} className="text-sm font-medium text-slate-900 underline">
+          <button onClick={() => setActionsOpen((v) => !v)} className="text-sm link">
             {actionsOpen ? "Masquer" : "Afficher"}
           </button>
         </div>
         {actionsOpen && (
           <div className="mt-3 flex flex-wrap gap-2">
-            <button onClick={handleCopyTemplate} className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium hover:bg-slate-50">
+            <button onClick={handleCopyTemplate} className="btn btn-outline btn-sm">
               Copier le budget type
             </button>
-            <button onClick={handleCopyPreviousMonth} className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium hover:bg-slate-50">
+            <button onClick={handleCopyPreviousMonth} className="btn btn-outline btn-sm">
               Copier le mois précédent
             </button>
-            <button onClick={() => setCopyOtherOpen((v) => !v)} className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium hover:bg-slate-50">
+            <button onClick={() => setCopyOtherOpen((v) => !v)} className="btn btn-outline btn-sm">
               Copier un autre mois
             </button>
-            <button onClick={() => setImportOpen((v) => !v)} className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium hover:bg-slate-50">
+            <button onClick={() => setImportOpen((v) => !v)} className="btn btn-outline btn-sm">
               Importer un relevé
             </button>
-            <button onClick={handleClearMonth} className="rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50">
+            <button onClick={handleClearMonth} className="btn btn-danger btn-sm">
               Vider le mois
             </button>
           </div>
@@ -303,7 +303,7 @@ export function BudgetDuMois() {
               <select
                 value={copyFromMonth}
                 onChange={(e) => setCopyFromMonth(Number(e.target.value))}
-                className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                className="input px-2 py-1.5 text-sm"
               >
                 {MONTH_NAMES.map((name, index) => (
                   <option key={name} value={index + 1}>{name}</option>
@@ -314,10 +314,10 @@ export function BudgetDuMois() {
               type="number"
               value={copyFromYear}
               onChange={(e) => setCopyFromYear(Number(e.target.value))}
-              className="w-24 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+              className="w-24 input px-2 py-1.5 text-sm"
               aria-label="Année source"
             />
-            <button onClick={handleCopyOtherMonth} className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white">
+            <button onClick={handleCopyOtherMonth} className="rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 text-xs font-medium text-white">
               Copier
             </button>
           </div>
@@ -335,14 +335,14 @@ export function BudgetDuMois() {
         />
       )}
 
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <section className="card">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">Dépenses du mois</h2>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Filtrer par poste..."
-            className="w-48 rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+            className="w-48 input px-3 py-1.5 text-sm"
             aria-label="Filtrer les dépenses par poste"
           />
         </div>

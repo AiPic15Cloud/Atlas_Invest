@@ -67,7 +67,7 @@ export function Patrimoine() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <div className="card">
         <p className="text-xs text-slate-500">Patrimoine net du foyer</p>
         <p className="mt-1 text-2xl font-semibold">{currency.format(data.householdNetWorth)}</p>
         <p className="mt-1 text-sm text-slate-500">
@@ -77,7 +77,7 @@ export function Patrimoine() {
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <section className="card">
         <h2 className="font-semibold">Mon patrimoine</h2>
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div>
@@ -95,17 +95,17 @@ export function Patrimoine() {
         </div>
       </section>
 
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <section className="card">
         <h2 className="font-semibold">Ajouter un bien, placement ou crédit</h2>
         <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-4">
           <input
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-2"
+            className="input sm:col-span-2"
             placeholder="Libellé (ex. Appartement, Crédit auto)"
             value={label}
             onChange={(e) => setLabel(e.target.value)}
           />
           <select
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="input"
             value={category}
             onChange={(e) => setCategory(e.target.value as WealthCategory)}
           >
@@ -116,7 +116,7 @@ export function Patrimoine() {
             ))}
           </select>
           <input
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="input"
             placeholder="Montant (valeur positive)"
             inputMode="decimal"
             value={amount}
@@ -126,13 +126,13 @@ export function Patrimoine() {
         <button
           onClick={handleAdd}
           disabled={submitting}
-          className="mt-3 rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="mt-3 btn btn-primary"
         >
           {submitting ? "..." : "Ajouter"}
         </button>
       </section>
 
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <section className="card">
         <h2 className="font-semibold">Mes biens, placements et crédits</h2>
         {data.mine.wealthItems.length === 0 ? (
           <p className="mt-2 text-sm text-slate-500">Aucun élément déclaré pour l'instant.</p>
@@ -158,7 +158,7 @@ export function Patrimoine() {
       </section>
 
       {data.household.length > 0 && (
-        <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+        <section className="card">
           <h2 className="font-semibold">Reste du foyer</h2>
           <ul className="mt-2">
             {data.household.map((member) => (

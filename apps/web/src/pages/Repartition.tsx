@@ -45,7 +45,7 @@ export function Repartition() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200">
+      <div className="flex items-center justify-between card p-3">
         <button onClick={() => shiftMonth(-1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100">
           ← Précédent
         </button>
@@ -59,7 +59,7 @@ export function Repartition() {
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      <div className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <div className="card">
         <p className="text-sm text-slate-500">
           Répartit le total des dépenses sur vos comptes joints entre les membres du foyer, au prorata de leurs
           revenus du mois ou à parts égales. Le revenu total de chaque membre est utilisé pour ce calcul, même si
@@ -69,7 +69,7 @@ export function Repartition() {
           <button
             onClick={() => setMode("PROPORTIONNEL")}
             className={`rounded-md px-3 py-2 text-sm font-medium ${
-              mode === "PROPORTIONNEL" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700"
+              mode === "PROPORTIONNEL" ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
             }`}
           >
             Proportionnel aux revenus
@@ -77,7 +77,7 @@ export function Repartition() {
           <button
             onClick={() => setMode("EGAL")}
             className={`rounded-md px-3 py-2 text-sm font-medium ${
-              mode === "EGAL" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700"
+              mode === "EGAL" ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
             }`}
           >
             Parts égales
@@ -91,7 +91,7 @@ export function Repartition() {
         <p className="text-sm text-slate-500">Rejoins ou crée un foyer pour utiliser ce calcul.</p>
       ) : (
         <>
-          <div className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+          <div className="card">
             <p className="text-xs text-slate-500">Total des charges communes (comptes joints)</p>
             <p className="mt-1 text-2xl font-semibold">{currency.format(data.jointExpensesTotal)}</p>
             {data.fallbackToEqual && (
@@ -101,7 +101,7 @@ export function Repartition() {
             )}
           </div>
 
-          <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+          <section className="card">
             <h2 className="font-semibold">Part de chacun</h2>
             <ul className="mt-2">
               {data.members.map((m) => (

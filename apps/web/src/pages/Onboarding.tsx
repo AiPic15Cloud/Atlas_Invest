@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch, ApiError } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { AuthShell } from "../components/AuthShell";
 
 export function Onboarding() {
   const { refresh } = useAuth();
@@ -35,24 +36,27 @@ export function Onboarding() {
   }
 
   return (
-    <div className="mx-auto mt-16 max-w-md rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200">
-      <h1 className="mb-2 text-xl font-semibold">Bienvenue !</h1>
-      <p className="mb-6 text-sm text-slate-600">
-        Pour commencer, crée ton foyer ou rejoins celui d'un proche grâce à un code d'invitation.
-      </p>
-
-      <div className="mb-6 flex rounded-md bg-slate-100 p-1 text-sm font-medium">
+    <AuthShell
+      title="Bienvenue !"
+      subtitle="Pour commencer, crée ton foyer ou rejoins celui d'un proche grâce à un code d'invitation."
+      maxWidth="max-w-md"
+    >
+      <div className="mb-6 flex rounded-lg bg-slate-100 p-1 text-sm font-medium">
         <button
           type="button"
           onClick={() => setMode("create")}
-          className={`flex-1 rounded-md py-1.5 ${mode === "create" ? "bg-white shadow-sm" : "text-slate-500"}`}
+          className={`flex-1 rounded-md py-1.5 transition-colors ${
+            mode === "create" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
+          }`}
         >
           Créer un foyer
         </button>
         <button
           type="button"
           onClick={() => setMode("join")}
-          className={`flex-1 rounded-md py-1.5 ${mode === "join" ? "bg-white shadow-sm" : "text-slate-500"}`}
+          className={`flex-1 rounded-md py-1.5 transition-colors ${
+            mode === "join" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
+          }`}
         >
           Rejoindre un foyer
         </button>
@@ -61,7 +65,7 @@ export function Onboarding() {
       <form onSubmit={handleSubmit} className="space-y-4">
         {mode === "create" ? (
           <div>
-            <label htmlFor="householdName" className="mb-1 block text-sm font-medium text-slate-700">
+            <label htmlFor="householdName" className="label">
               Nom du foyer
             </label>
             <input
@@ -70,12 +74,12 @@ export function Onboarding() {
               placeholder="Ex. Famille Dupont"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="input"
             />
           </div>
         ) : (
           <div>
-            <label htmlFor="inviteCode" className="mb-1 block text-sm font-medium text-slate-700">
+            <label htmlFor="inviteCode" className="label">
               Code d'invitation
             </label>
             <input
@@ -84,19 +88,15 @@ export function Onboarding() {
               placeholder="Ex. AB12CD34"
               value={inviteCode}
               onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm uppercase tracking-widest"
+              className="input uppercase tracking-widest"
             />
           </div>
         )}
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-        >
+        <button type="submit" disabled={submitting} className="btn btn-primary w-full">
           {submitting ? "Un instant..." : mode === "create" ? "Créer mon foyer" : "Rejoindre le foyer"}
         </button>
       </form>
-    </div>
+    </AuthShell>
   );
 }

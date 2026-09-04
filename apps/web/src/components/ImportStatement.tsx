@@ -100,7 +100,7 @@ export function ImportStatement({ year, month, accounts, onDone, onClose }: Impo
   }
 
   return (
-    <div className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+    <div className="card">
       <div className="flex items-center justify-between">
         <h2 className="font-semibold">Importer un relevé</h2>
         <button onClick={onClose} className="text-sm font-medium text-slate-600 hover:underline">
@@ -120,14 +120,14 @@ export function ImportStatement({ year, month, accounts, onDone, onClose }: Impo
             onChange={(e) => setText(e.target.value)}
             rows={8}
             placeholder={"Date;Libellé;Montant\n12/09/2026;CARREFOUR MARKET;-42,50\n13/09/2026;NETFLIX.COM;-13,49"}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-xs"
+            className="w-full input px-3 py-2 font-mono text-xs"
           />
           <div className="flex items-center gap-2">
             <input ref={fileInputRef} type="file" accept=".csv,.txt" onChange={handleFileChange} className="text-xs" />
             <button
               onClick={handleAnalyze}
               disabled={!text.trim()}
-              className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className="btn btn-primary"
             >
               Analyser
             </button>
@@ -148,7 +148,7 @@ export function ImportStatement({ year, month, accounts, onDone, onClose }: Impo
                 id="import-account"
                 value={bankAccountId}
                 onChange={(e) => setBankAccountId(e.target.value)}
-                className="rounded-md border border-slate-300 px-2 py-1 text-xs"
+                className="input px-2 py-1 text-xs"
               >
                 {accounts.map((a) => (
                   <option key={a.id} value={a.id}>{a.name}</option>
@@ -212,7 +212,7 @@ export function ImportStatement({ year, month, accounts, onDone, onClose }: Impo
             <button
               onClick={handleConfirm}
               disabled={submitting}
-              className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className="btn btn-primary"
             >
               {submitting ? "Import..." : `Valider et intégrer ${totalToImport} dépense(s)`}
             </button>

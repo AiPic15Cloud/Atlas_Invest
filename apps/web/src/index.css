@@ -3,5 +3,72 @@
 @tailwind utilities;
 
 body {
-  @apply bg-slate-50 text-slate-900;
+  @apply bg-slate-50 text-slate-900 antialiased;
+  font-feature-settings: "cv11", "ss01";
+}
+
+@layer components {
+  /* Cards */
+  .card {
+    @apply rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80;
+  }
+  .card-warn {
+    @apply rounded-xl bg-amber-50 p-5 ring-1 ring-amber-200;
+  }
+  .card-danger {
+    @apply rounded-xl bg-red-50 p-5 ring-1 ring-red-200;
+  }
+  .card-success {
+    @apply rounded-xl bg-emerald-50 p-5 ring-1 ring-emerald-200;
+  }
+
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-indigo-600 text-white shadow-sm hover:bg-indigo-700;
+  }
+  .btn-secondary {
+    @apply btn bg-slate-100 text-slate-700 hover:bg-slate-200;
+  }
+  .btn-outline {
+    @apply btn border border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
+  }
+  .btn-danger {
+    @apply btn border border-red-300 bg-white text-red-700 hover:bg-red-50;
+  }
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+
+  /* Form controls */
+  .input {
+    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500;
+  }
+  .label {
+    @apply mb-1 block text-sm font-medium text-slate-700;
+  }
+  .link {
+    @apply font-medium text-indigo-600 underline decoration-indigo-200 underline-offset-2 hover:text-indigo-700 hover:decoration-indigo-400;
+  }
+
+  /* Text */
+  .page-title {
+    @apply text-xl font-semibold tracking-tight text-slate-900;
+  }
+  .section-title {
+    @apply font-semibold text-slate-900;
+  }
+  .stat-label {
+    @apply text-xs font-medium uppercase tracking-wide text-slate-500;
+  }
+  .stat-value {
+    @apply mt-1 text-2xl font-semibold tracking-tight text-slate-900;
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
 }

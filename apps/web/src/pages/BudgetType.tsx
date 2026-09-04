@@ -102,16 +102,16 @@ export function BudgetType() {
           <h1 className="text-xl font-semibold">Budget type</h1>
           <p className="text-sm text-slate-500">{method.label}</p>
         </div>
-        <button onClick={() => setChangingMethod(true)} className="text-sm font-medium text-slate-900 underline">
+        <button onClick={() => setChangingMethod(true)} className="text-sm link">
           Changer de méthode
         </button>
       </div>
 
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <section className="card">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">Revenu de référence</h2>
           {!editingIncome && (
-            <button onClick={() => setEditingIncome(true)} className="text-sm font-medium text-slate-900 underline">
+            <button onClick={() => setEditingIncome(true)} className="text-sm link">
               Modifier
             </button>
           )}
@@ -242,14 +242,14 @@ function IncomeOnlyForm({ initial, onCancel, onSubmit }: { initial: number; onCa
           inputMode="decimal"
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          className="w-40 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+          className="w-40 input px-2 py-1.5 text-sm"
         />
       </div>
       {error && <p className="text-xs text-red-600">{error}</p>}
       <button
         onClick={handleSubmit}
         disabled={submitting}
-        className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+        className="rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
       >
         Enregistrer
       </button>
@@ -324,7 +324,7 @@ function MethodPicker({
         )}
       </div>
 
-      <div className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <div className="card">
         <label htmlFor="picker-income" className="mb-1 block text-sm font-medium text-slate-700">
           Revenu mensuel de référence (€)
         </label>
@@ -334,14 +334,14 @@ function MethodPicker({
           value={income}
           onChange={(e) => setIncome(e.target.value)}
           placeholder="Ex. 3000"
-          className="w-48 rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="w-48 input"
         />
         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
         <div className="mt-4 flex gap-2">
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+            className="btn btn-primary"
           >
             {submitting ? "Enregistrement..." : initialMethod ? "Enregistrer" : "Créer mon budget type"}
           </button>

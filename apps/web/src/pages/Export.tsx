@@ -106,7 +106,7 @@ export function Export() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200">
+      <div className="flex items-center justify-between card p-3">
         <button onClick={() => shiftMonth(-1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100">
           ← Précédent
         </button>
@@ -122,7 +122,7 @@ export function Export() {
         <p className="text-sm text-slate-500">Chargement...</p>
       ) : (
         <>
-          <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+          <section className="card">
             <h2 className="font-semibold">Rapport du mois</h2>
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div>
@@ -146,13 +146,13 @@ export function Export() {
             </p>
             <button
               onClick={handleDownloadMonth}
-              className="mt-3 rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white"
+              className="mt-3 rounded-md bg-indigo-600 hover:bg-indigo-700 px-4 py-2 text-sm font-medium text-white"
             >
               Télécharger le rapport du mois (CSV)
             </button>
           </section>
 
-          <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+          <section className="card">
             <h2 className="font-semibold">Rapport annuel {year}</h2>
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div>

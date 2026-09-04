@@ -84,13 +84,13 @@ export function Accounts() {
         </p>
       </div>
 
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <section className="card">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">Mes comptes</h2>
           {!addingPersonal && (
             <button
               onClick={() => setAddingPersonal(true)}
-              className="text-sm font-medium text-slate-900 underline"
+              className="text-sm link"
             >
               + Ajouter un compte
             </button>
@@ -109,11 +109,11 @@ export function Accounts() {
         )}
       </section>
 
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <section className="card">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">Compte(s) joint(s) du foyer</h2>
           {!addingJoint && (
-            <button onClick={() => setAddingJoint(true)} className="text-sm font-medium text-slate-900 underline">
+            <button onClick={() => setAddingJoint(true)} className="text-sm link">
               + Ajouter un compte joint
             </button>
           )}
@@ -132,7 +132,7 @@ export function Accounts() {
       </section>
 
       {data.household.length > 0 && (
-        <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+        <section className="card">
           <h2 className="font-semibold">Autres membres du foyer</h2>
           <div className="mt-2 space-y-4">
             {data.household.map((member) => (

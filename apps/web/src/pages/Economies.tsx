@@ -58,7 +58,7 @@ export function Economies() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200">
+      <div className="flex items-center justify-between card p-3">
         <button onClick={() => setYear((y) => y - 1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100">
           ← {year - 1}
         </button>
@@ -68,7 +68,7 @@ export function Economies() {
         </button>
       </div>
 
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <section className="card">
         <p className="text-xs text-slate-500">Total identifié sur l'année</p>
         <p className="mt-1 text-2xl font-semibold">{currency.format(data.totalAnnual)}</p>
         <p className="mt-1 text-sm text-slate-500">
@@ -94,7 +94,7 @@ export function Economies() {
               <button
                 onClick={handleReallocate}
                 disabled={reallocating || data.totalMonthlyEquivalent === 0}
-                className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                className="btn btn-primary"
               >
                 {reallocating
                   ? "..."
@@ -112,7 +112,7 @@ export function Economies() {
         )}
       </section>
 
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <section className="card">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">Dépenses jugées inutiles</h2>
           <span className="text-sm font-semibold">{currency.format(data.wasteful.total)}</span>
@@ -131,12 +131,12 @@ export function Economies() {
             ))}
           </ul>
         )}
-        <Link to="/budget-du-mois" className="mt-3 inline-block text-sm font-medium text-slate-900 underline">
+        <Link to="/budget-du-mois" className="mt-3 inline-block text-sm link">
           Revoir ces dépenses
         </Link>
       </section>
 
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <section className="card">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">Abonnements à résilier</h2>
           <span className="text-sm font-semibold">{currency.format(data.subscriptionsAnnualTotal)} / an</span>
@@ -157,7 +157,7 @@ export function Economies() {
             ))}
           </ul>
         )}
-        <Link to="/abonnements" className="mt-3 inline-block text-sm font-medium text-slate-900 underline">
+        <Link to="/abonnements" className="mt-3 inline-block text-sm link">
           Voir mes abonnements
         </Link>
       </section>

@@ -57,7 +57,7 @@ export function EpargnePrecaution() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Épargne de précaution</h1>
-        <button onClick={() => setRetaking(true)} className="text-sm font-medium text-slate-900 underline">
+        <button onClick={() => setRetaking(true)} className="text-sm link">
           Refaire le questionnaire
         </button>
       </div>
@@ -109,7 +109,7 @@ function ObjectiveSection({
   }
 
   return (
-    <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+    <section className="card">
       <h2 className="font-semibold">Ton objectif</h2>
       <p className="mt-2 text-sm text-slate-600">
         Score de vulnérabilité : <span className="font-medium">{profile.score.toFixed(1)}/5</span> —{" "}
@@ -126,9 +126,9 @@ function ObjectiveSection({
                 type="number"
                 value={monthsInput}
                 onChange={(e) => setMonthsInput(e.target.value)}
-                className="w-20 rounded-md border border-slate-300 px-2 py-1 text-sm"
+                className="w-20 input px-2 py-1 text-sm"
               />
-              <button onClick={saveMonths} className="rounded-md bg-slate-900 px-2 py-1 text-xs font-medium text-white">
+              <button onClick={saveMonths} className="rounded-md bg-indigo-600 hover:bg-indigo-700 px-2 py-1 text-xs font-medium text-white">
                 Valider
               </button>
               <button onClick={() => setEditingMonths(false)} className="text-xs text-slate-500 underline">
@@ -209,7 +209,7 @@ function ProgressSection({
   const pct = Math.round(profile.progressRatio * 100);
 
   return (
-    <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+    <section className="card">
       <h2 className="font-semibold">Progression</h2>
 
       <div className="mt-3">
@@ -232,9 +232,9 @@ function ProgressSection({
               id="saved-amount"
               value={savedInput}
               onChange={(e) => setSavedInput(e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+              className="w-full input px-2 py-1.5 text-sm"
             />
-            <button onClick={saveSaved} className="rounded-md bg-slate-900 px-2 py-1.5 text-xs font-medium text-white">
+            <button onClick={saveSaved} className="rounded-md bg-indigo-600 hover:bg-indigo-700 px-2 py-1.5 text-xs font-medium text-white">
               OK
             </button>
           </div>
@@ -249,9 +249,9 @@ function ProgressSection({
               value={capacityInput}
               onChange={(e) => setCapacityInput(e.target.value)}
               placeholder={String(profile.defaultMonthlySavingsCapacity)}
-              className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+              className="w-full input px-2 py-1.5 text-sm"
             />
-            <button onClick={saveCapacity} className="rounded-md bg-slate-900 px-2 py-1.5 text-xs font-medium text-white">
+            <button onClick={saveCapacity} className="rounded-md bg-indigo-600 hover:bg-indigo-700 px-2 py-1.5 text-xs font-medium text-white">
               OK
             </button>
           </div>
@@ -315,11 +315,11 @@ function EnvelopesSection({
   const overAllocated = profile.envelopesTotal > profile.monthlySavingsCapacity;
 
   return (
-    <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+    <section className="card">
       <div className="flex items-center justify-between">
         <h2 className="font-semibold">Répartir la capacité d'épargne mensuelle</h2>
         {!adding && (
-          <button onClick={() => setAdding(true)} className="text-sm font-medium text-slate-900 underline">
+          <button onClick={() => setAdding(true)} className="text-sm link">
             + Ajouter une enveloppe
           </button>
         )}
@@ -355,7 +355,7 @@ function EnvelopesSection({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ex. Livret A"
-              className="w-36 rounded-md border border-slate-300 px-2 py-1 text-sm"
+              className="w-36 input px-2 py-1 text-sm"
             />
           </div>
           <div>
@@ -363,10 +363,10 @@ function EnvelopesSection({
             <input
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-28 rounded-md border border-slate-300 px-2 py-1 text-sm"
+              className="w-28 input px-2 py-1 text-sm"
             />
           </div>
-          <button onClick={handleAdd} className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white">
+          <button onClick={handleAdd} className="rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 text-xs font-medium text-white">
             Ajouter
           </button>
           <button onClick={() => setAdding(false)} className="rounded-md px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-200">

@@ -51,7 +51,7 @@ export function IncomeForm({ accounts, onSubmit, onCancel }: IncomeFormProps) {
           placeholder="Ex. Salaire"
           value={source}
           onChange={(e) => setSource(e.target.value)}
-          className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+          className="w-full input px-3 py-1.5 text-sm"
         />
         <datalist id="income-sources">
           {COMMON_SOURCES.map((s) => (
@@ -67,7 +67,7 @@ export function IncomeForm({ accounts, onSubmit, onCancel }: IncomeFormProps) {
           id="income-account"
           value={bankAccountId}
           onChange={(e) => setBankAccountId(e.target.value)}
-          className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+          className="w-full input px-3 py-1.5 text-sm"
         >
           {accounts.map((account) => (
             <option key={account.id} value={account.id}>
@@ -86,7 +86,7 @@ export function IncomeForm({ accounts, onSubmit, onCancel }: IncomeFormProps) {
           required
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+          className="w-full input px-3 py-1.5 text-sm"
         />
       </div>
       {error && <p className="text-xs text-red-600">{error}</p>}
@@ -94,7 +94,7 @@ export function IncomeForm({ accounts, onSubmit, onCancel }: IncomeFormProps) {
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+          className="rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
         >
           {submitting ? "Ajout..." : "Ajouter"}
         </button>

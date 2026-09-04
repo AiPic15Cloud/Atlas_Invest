@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { ApiError } from "../api/client";
+import { AuthShell } from "../components/AuthShell";
 
 export function Register() {
   const { register } = useAuth();
@@ -27,23 +28,16 @@ export function Register() {
   }
 
   return (
-    <div className="mx-auto mt-16 max-w-sm rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200">
-      <h1 className="mb-6 text-xl font-semibold">Créer un compte</h1>
+    <AuthShell title="Créer un compte" subtitle="Pour suivre le budget de ton foyer, en quelques minutes.">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="firstName" className="mb-1 block text-sm font-medium text-slate-700">
+          <label htmlFor="firstName" className="label">
             Prénom
           </label>
-          <input
-            id="firstName"
-            required
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-          />
+          <input id="firstName" required value={firstName} onChange={(e) => setFirstName(e.target.value)} className="input" />
         </div>
         <div>
-          <label htmlFor="email" className="mb-1 block text-sm font-medium text-slate-700">
+          <label htmlFor="email" className="label">
             Email
           </label>
           <input
@@ -52,11 +46,11 @@ export function Register() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="input"
           />
         </div>
         <div>
-          <label htmlFor="password" className="mb-1 block text-sm font-medium text-slate-700">
+          <label htmlFor="password" className="label">
             Mot de passe
           </label>
           <input
@@ -66,25 +60,21 @@ export function Register() {
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="input"
           />
           <p className="mt-1 text-xs text-slate-500">Au moins 8 caractères.</p>
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-        >
+        <button type="submit" disabled={submitting} className="btn btn-primary w-full">
           {submitting ? "Création..." : "Créer mon compte"}
         </button>
       </form>
-      <p className="mt-4 text-center text-sm text-slate-600">
+      <p className="mt-5 text-center text-sm text-slate-500">
         Déjà un compte ?{" "}
-        <Link to="/login" className="font-medium text-slate-900 underline">
+        <Link to="/login" className="link">
           Se connecter
         </Link>
       </p>
-    </div>
+    </AuthShell>
   );
 }

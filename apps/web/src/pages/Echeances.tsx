@@ -91,7 +91,7 @@ export function Echeances() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200">
+      <div className="card p-3">
         <span className="text-lg font-semibold">Calendrier des échéances</span>
         <p className="mt-1 text-sm text-slate-500">
           Loyer, crédits, factures... déclare tes prélèvements récurrents pour les voir classés par date et
@@ -120,24 +120,24 @@ export function Echeances() {
         </section>
       )}
 
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <section className="card">
         <h2 className="font-semibold">Ajouter une échéance</h2>
         <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-5">
           <input
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-2"
+            className="input sm:col-span-2"
             placeholder="Libellé (ex. Loyer)"
             value={label}
             onChange={(e) => setLabel(e.target.value)}
           />
           <input
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="input"
             placeholder="Montant"
             inputMode="decimal"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
           />
           <input
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="input"
             type="number"
             min={1}
             max={31}
@@ -146,7 +146,7 @@ export function Echeances() {
             onChange={(e) => setDayOfMonth(e.target.value)}
           />
           <select
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="input"
             value={bankAccountId}
             onChange={(e) => setBankAccountId(e.target.value)}
           >
@@ -160,7 +160,7 @@ export function Echeances() {
         <button
           onClick={handleAdd}
           disabled={submitting || availableAccounts.length === 0}
-          className="mt-3 rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="mt-3 btn btn-primary"
         >
           {submitting ? "..." : "Ajouter"}
         </button>
@@ -169,7 +169,7 @@ export function Echeances() {
         )}
       </section>
 
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <section className="card">
         <h2 className="font-semibold">Échéances du mois, par date</h2>
         {sortedCharges.length === 0 ? (
           <p className="mt-2 text-sm text-slate-500">Aucune échéance déclarée pour l'instant.</p>
@@ -205,7 +205,7 @@ export function Echeances() {
       </section>
 
       {data.subscriptionsWithoutDate.length > 0 && (
-        <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+        <section className="card">
           <h2 className="font-semibold">Abonnements actifs (date de prélèvement non précisée)</h2>
           <p className="mt-1 text-xs text-slate-400">
             Détectés automatiquement via tes dépenses (voir Abonnements) mais sans date fixe déclarée : ils ne

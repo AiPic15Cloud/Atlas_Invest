@@ -37,7 +37,7 @@ export function BudgetCategorySection({
   const overBudget = showTarget && actual > target;
 
   return (
-    <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+    <section className="card">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="font-semibold">{title}</h2>
@@ -53,7 +53,7 @@ export function BudgetCategorySection({
           </p>
         </div>
         {!adding && (
-          <button onClick={() => setAdding(true)} className="text-sm font-medium text-slate-900 underline">
+          <button onClick={() => setAdding(true)} className="text-sm link">
             + Ajouter un poste
           </button>
         )}

@@ -50,7 +50,7 @@ export function BudgetItemForm({
           placeholder="Ex. Loyer"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-40 rounded-md border border-slate-300 px-2 py-1 text-sm"
+          className="w-40 input px-2 py-1 text-sm"
         />
       </div>
       <div>
@@ -60,7 +60,7 @@ export function BudgetItemForm({
           required
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          className="w-28 rounded-md border border-slate-300 px-2 py-1 text-sm"
+          className="w-28 input px-2 py-1 text-sm"
         />
       </div>
       <label className="mb-1 flex items-center gap-1 text-xs text-slate-700">
@@ -71,7 +71,7 @@ export function BudgetItemForm({
       <button
         type="submit"
         disabled={submitting}
-        className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+        className="rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
       >
         {submitting ? "..." : submitLabel}
       </button>

@@ -134,13 +134,13 @@ export function Settings() {
       <h1 className="text-xl font-semibold">Réglages</h1>
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <section className="card">
         <h2 className="font-semibold">Profil</h2>
         <p className="mt-2 text-sm text-slate-600">Prénom : {user?.firstName}</p>
         <p className="text-sm text-slate-600">Email : {user?.email}</p>
       </section>
 
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <section className="card">
         <h2 className="font-semibold">Confidentialité</h2>
         <p className="mt-2 text-sm text-slate-600">
           Choisis si le reste de ton foyer voit le détail de tes comptes bancaires personnels, ou seulement
@@ -157,7 +157,7 @@ export function Settings() {
         </label>
       </section>
 
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <section className="card">
         <h2 className="font-semibold">Double authentification (2FA)</h2>
         <p className="mt-2 text-sm text-slate-600">
           Protège ton compte avec un code généré par une application comme Google Authenticator ou Authy, en plus
@@ -195,12 +195,12 @@ export function Settings() {
                 value={setupCode}
                 onChange={(e) => setSetupCode(e.target.value)}
                 placeholder="Code à 6 chiffres"
-                className="w-40 rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="w-40 input"
               />
               <button
                 onClick={handleConfirmSetup}
                 disabled={twoFactorBusy}
-                className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+                className="rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
               >
                 Confirmer et activer
               </button>
@@ -217,7 +217,7 @@ export function Settings() {
             {!showDisableForm ? (
               <button
                 onClick={() => setShowDisableForm(true)}
-                className="mt-2 rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                className="mt-2 btn btn-outline"
               >
                 Désactiver la 2FA
               </button>
@@ -228,19 +228,19 @@ export function Settings() {
                   value={disablePassword}
                   onChange={(e) => setDisablePassword(e.target.value)}
                   placeholder="Mot de passe"
-                  className="block w-full max-w-xs rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  className="block w-full max-w-xs input"
                 />
                 <input
                   value={disableCode}
                   onChange={(e) => setDisableCode(e.target.value)}
                   placeholder="Code 2FA ou code de secours"
-                  className="block w-full max-w-xs rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  className="block w-full max-w-xs input"
                 />
                 <div className="flex gap-2">
                   <button
                     onClick={handleDisable}
                     disabled={twoFactorBusy}
-                    className="rounded-md border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+                    className="btn btn-danger disabled:opacity-50"
                   >
                     Confirmer la désactivation
                   </button>
@@ -255,14 +255,14 @@ export function Settings() {
           <button
             onClick={handleStartSetup}
             disabled={twoFactorBusy}
-            className="mt-3 rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+            className="mt-3 btn btn-primary"
           >
             Activer la double authentification
           </button>
         )}
       </section>
 
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <section className="card">
         <h2 className="font-semibold">Foyer</h2>
         <p className="mt-2 text-sm text-slate-600">
           {household?.name} — code d'invitation : <span className="font-mono">{household?.inviteCode}</span>
@@ -270,17 +270,17 @@ export function Settings() {
         <button
           onClick={leaveHousehold}
           disabled={leaving}
-          className="mt-3 rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+          className="mt-3 btn btn-outline"
         >
           Quitter le foyer
         </button>
       </section>
 
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-red-200">
+      <section className="card p-4 ring-red-300">
         <h2 className="font-semibold text-red-700">Zone de danger</h2>
         <button
           onClick={deleteAccount}
-          className="mt-3 rounded-md border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50"
+          className="mt-3 btn btn-danger"
         >
           Supprimer mon compte
         </button>

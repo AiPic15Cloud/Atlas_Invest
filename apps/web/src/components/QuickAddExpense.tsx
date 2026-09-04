@@ -44,7 +44,7 @@ export function QuickAddExpense({ accounts, onSubmit }: QuickAddExpenseProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+    <form onSubmit={handleSubmit} className="card">
       <label htmlFor="quick-expense" className="mb-1 block text-sm font-medium text-slate-700">
         Ajout rapide
       </label>
@@ -54,12 +54,12 @@ export function QuickAddExpense({ accounts, onSubmit }: QuickAddExpenseProps) {
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Ex. courses 42€"
-          className="min-w-[180px] flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="min-w-[180px] flex-1 input"
         />
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value as BudgetCategory)}
-          className="rounded-md border border-slate-300 px-2 py-2 text-sm"
+          className="input px-2 py-2 text-sm"
           aria-label="Catégorie"
         >
           {(Object.entries(CATEGORY_LABELS) as [BudgetCategory, string][]).map(([value, label]) => (
@@ -72,7 +72,7 @@ export function QuickAddExpense({ accounts, onSubmit }: QuickAddExpenseProps) {
           <select
             value={bankAccountId}
             onChange={(e) => setBankAccountId(e.target.value)}
-            className="rounded-md border border-slate-300 px-2 py-2 text-sm"
+            className="input px-2 py-2 text-sm"
             aria-label="Compte bancaire"
           >
             {accounts.map((a) => (
@@ -85,7 +85,7 @@ export function QuickAddExpense({ accounts, onSubmit }: QuickAddExpenseProps) {
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="btn btn-primary"
         >
           Ajouter
         </button>
