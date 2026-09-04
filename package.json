@@ -1,0 +1,21 @@
+{
+  "name": "budget-foyer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Application de suivi budgetaire personnel et familial",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@10.34.5",
+  "scripts": {
+    "dev:api": "pnpm --filter @budget/api dev",
+    "dev:web": "pnpm --filter @budget/web dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "prisma:generate": "pnpm --filter @budget/api prisma:generate",
+    "prisma:migrate": "pnpm --filter @budget/api prisma:migrate",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down"
+  }
+}
