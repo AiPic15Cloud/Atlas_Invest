@@ -57,6 +57,9 @@ export function Layout() {
             <NavLink to="/historique" className={linkClass}>
               Historique
             </NavLink>
+            <NavLink to="/projection" className={linkClass}>
+              Projection
+            </NavLink>
             <NavLink to="/settings" className={linkClass}>
               Réglages
             </NavLink>
