@@ -3,7 +3,7 @@ import QRCode from "qrcode";
 import crypto from "node:crypto";
 import bcrypt from "bcrypt";
 
-const ISSUER = "Budget Foyer";
+const ISSUER = "Atlas Invest";
 const BACKUP_CODE_COUNT = 10;
 
 export function generateTwoFactorSecret(): string {

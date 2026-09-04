@@ -17,7 +17,7 @@ export function AuthShell({
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 text-lg shadow-sm">
           💰
         </div>
-        <span className="text-lg font-bold tracking-tight text-slate-900">Budget Foyer</span>
+        <span className="text-lg font-bold tracking-tight text-slate-900">Atlas Invest</span>
       </div>
       <div className={`w-full ${maxWidth} rounded-2xl bg-white p-7 shadow-sm ring-1 ring-slate-200/80`}>
         <h1 className="text-xl font-semibold tracking-tight text-slate-900">{title}</h1>

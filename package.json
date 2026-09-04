@@ -1,8 +1,8 @@
 {
-  "name": "budget-foyer",
+  "name": "atlas-invest",
   "version": "0.1.0",
   "private": true,
-  "description": "Application de suivi budgetaire personnel et familial",
+  "description": "Atlas Invest - Application de suivi budgetaire personnel et familial",
   "license": "UNLICENSED",
   "engines": {
     "node": ">=20"

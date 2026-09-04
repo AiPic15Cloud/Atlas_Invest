@@ -1,4 +1,4 @@
-# Budget Foyer
+# Atlas Invest
 
 Application de suivi budgétaire personnel et familial.
 

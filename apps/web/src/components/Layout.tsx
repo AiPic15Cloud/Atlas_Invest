@@ -68,7 +68,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           💰
         </div>
         <div className="leading-tight">
-          <p className="text-base font-bold tracking-tight text-slate-900">Budget Foyer</p>
+          <p className="text-base font-bold tracking-tight text-slate-900">Atlas Invest</p>
           <p className="text-xs text-slate-400">mon budget</p>
         </div>
       </div>
@@ -139,7 +139,7 @@ export function Layout() {
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-pink-500 text-sm shadow-sm">
             💰
           </div>
-          <span className="text-sm font-bold text-slate-900">Budget Foyer</span>
+          <span className="text-sm font-bold text-slate-900">Atlas Invest</span>
         </div>
         <button
           onClick={() => setMobileOpen(true)}
