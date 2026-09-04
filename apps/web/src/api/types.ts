@@ -243,6 +243,15 @@ export interface SubscriptionsResponse {
   annualTotal: number;
 }
 
+export interface SavingsOpportunities {
+  year: number;
+  wasteful: { total: number; byPoste: { poste: string; count: number; total: number }[] };
+  subscriptionsToCancel: { id: string; poste: string; monthlyAmount: number; annualCost: number }[];
+  subscriptionsAnnualTotal: number;
+  totalAnnual: number;
+  totalMonthlyEquivalent: number;
+}
+
 export interface DashboardResponse {
   year: number;
   totals: { income: number; expenses: number; reste: number };
