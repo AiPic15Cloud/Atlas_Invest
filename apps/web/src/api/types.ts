@@ -155,3 +155,18 @@ export interface ExpensesResponse {
   expenses: Expense[];
   summary: ExpensesSummary;
 }
+
+export interface DashboardMonth {
+  month: number;
+  income: number;
+  expense: number;
+  reste: number;
+}
+
+export interface DashboardResponse {
+  year: number;
+  totals: { income: number; expenses: number; reste: number };
+  averages: { incomePerMonth: number; expensePerMonth: number };
+  monthly: DashboardMonth[];
+  budgetTemplate: { method: BudgetMethodKey; label: string } | null;
+}

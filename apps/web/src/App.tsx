@@ -5,6 +5,7 @@ import { Layout } from "./components/Layout";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
 import { Onboarding } from "./pages/Onboarding";
+import { Dashboard } from "./pages/Dashboard";
 import { Accounts } from "./pages/Accounts";
 import { Revenus } from "./pages/Revenus";
 import { BudgetType } from "./pages/BudgetType";
@@ -55,7 +56,8 @@ export default function App() {
           </RequireAuth>
         }
       >
-        <Route path="/" element={<Accounts />} />
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/comptes" element={<Accounts />} />
         <Route path="/revenus" element={<Revenus />} />
         <Route path="/budget-type" element={<BudgetType />} />
         <Route path="/budget-du-mois" element={<BudgetDuMois />} />
