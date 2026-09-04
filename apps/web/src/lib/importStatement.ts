@@ -28,6 +28,16 @@ function isInternalTransfer(description: string, ownAccountNames: string[]): boo
   return ownAccountNames.some((name) => name.trim().length > 0 && upper.includes(name.trim().toUpperCase()));
 }
 
+// Certains relevés (notamment issus d'un PDF ou d'une image scannée par OCR)
+// affichent les débits sans signe négatif. Ces mots-clés permettent de les
+// reconnaître comme dépenses malgré tout, plutôt que de les écarter à tort
+// comme crédits.
+const DEBIT_KEYWORDS = /\b(PAIEMENT|PRLV|PRELEVEMENT|PRÉLÈVEMENT|ACHAT|RETRAIT|COTISATION|FACTURE|\bCB\b)/i;
+
+function looksLikeDebit(description: string): boolean {
+  return DEBIT_KEYWORDS.test(description);
+}
+
 const DELIMITERS = [";", ",", "\t"];
 
 function detectDelimiter(firstLines: string[]): string {
@@ -110,22 +120,39 @@ export function parseStatementText(text: string, ownAccountNames: string[] = [])
     // Pas d'en-tete detecte : on suppose Date, Libelle, Montant.
     amountIdx = 2;
   } else {
-    // Format libre "libelle montant" par ligne.
+    // Format libre "libelle montant" par ligne (relevé collé, PDF/OCR sans
+    // structure en colonnes).
     for (const line of lines) {
+      // Une ligne qui n'est qu'une référence de carte masquée (ex. "CARTE
+      // 3060", fragment de ligne coupée par une extraction PDF/OCR) n'est pas
+      // une transaction : le nombre à 4 chiffres sans décimales n'est pas un
+      // montant.
+      if (/\bcarte\s+\d{3,4}$/i.test(line.trim()) && !/\d[.,]\d/.test(line)) {
+        skippedUnparsable++;
+        continue;
+      }
+
       const match = line.match(/^(.*?)(-?\d+(?:[.,]\d{1,2})?)\s*€?$/);
       if (!match) {
         skippedUnparsable++;
         continue;
       }
       const description = match[1].trim() || "Dépense";
-      const amount = parseAmount(match[2]);
+      let amount = parseAmount(match[2]);
       if (amount === null) {
         skippedUnparsable++;
         continue;
       }
       if (amount >= 0) {
-        skippedCredits++;
-        continue;
+        // Certains relevés (notamment issus d'un PDF/OCR) affichent les
+        // débits en positif, sans signe ; on se fie alors aux mots-clés de
+        // paiement pour ne pas les classer à tort en crédit.
+        if (looksLikeDebit(description)) {
+          amount = -amount;
+        } else {
+          skippedCredits++;
+          continue;
+        }
       }
       if (isInternalTransfer(description, ownAccountNames)) {
         skippedTransfers++;
@@ -206,8 +233,11 @@ const NOISE_PREFIXES = /^(CB|PRLV|PRELEVEMENT|SEPA|VIR|VIREMENT|ACHAT|PAIEMENT|T
 
 function normalizeMerchant(description: string): string {
   let cleaned = description.toUpperCase();
+  // Colonnes de date/séparateurs "|" issues d'un tableau OCR/PDF non
+  // structuré (ex. "29/12/2025 | 29/12/2025 | PAIEMENT ...").
+  cleaned = cleaned.replace(/\b\d{2}[/.-]\d{2}([/.-]\d{2,4})?\b/g, "").replace(/\|/g, " ");
+  cleaned = cleaned.replace(/\s+/g, " ").trim();
   cleaned = cleaned.replace(NOISE_PREFIXES, "").replace(NOISE_PREFIXES, "");
-  cleaned = cleaned.replace(/\b\d{2}[/.-]\d{2}([/.-]\d{2,4})?\b/g, "");
   cleaned = cleaned.replace(/\b\d{4,}\b/g, "");
   cleaned = cleaned.replace(/\s+/g, " ").trim();
   return cleaned || description.trim().toUpperCase();
