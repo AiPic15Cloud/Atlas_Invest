@@ -44,6 +44,7 @@ model User {
   emergencyFundProfile EmergencyFundProfile?
   wastefulRules        WastefulRule[]
   subscriptions        Subscription[]
+  recurringCharges     RecurringCharge[]
 }
 
 model BankAccount {
@@ -61,8 +62,9 @@ model BankAccount {
   household   Household @relation(fields: [householdId], references: [id])
   householdId String
 
-  incomes  Income[]
-  expenses Expense[]
+  incomes          Income[]
+  expenses         Expense[]
+  recurringCharges RecurringCharge[]
 }
 
 model Income {
@@ -252,4 +254,24 @@ model Subscription {
   updatedAt DateTime @updatedAt
 
   @@unique([userId, posteKey])
+}
+
+// Echeance recurrente declaree manuellement (loyer, credit, facture...) :
+// utilisee pour le calendrier des echeances et la projection de solde.
+model RecurringCharge {
+  id         String   @id @default(cuid())
+  label      String
+  amount     Decimal  @db.Decimal(12, 2)
+  dayOfMonth Int
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+  bankAccountId String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@index([bankAccountId])
+  @@index([userId])
 }

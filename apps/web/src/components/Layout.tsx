@@ -39,6 +39,9 @@ export function Layout() {
             <NavLink to="/economies" className={linkClass}>
               Économies
             </NavLink>
+            <NavLink to="/echeances" className={linkClass}>
+              Échéances
+            </NavLink>
             <NavLink to="/settings" className={linkClass}>
               Réglages
             </NavLink>

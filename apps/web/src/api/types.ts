@@ -252,6 +252,38 @@ export interface SavingsOpportunities {
   totalMonthlyEquivalent: number;
 }
 
+export interface RecurringCharge {
+  id: string;
+  label: string;
+  amount: string;
+  dayOfMonth: number;
+  active: boolean;
+  bankAccountId: string;
+  bankAccountName: string;
+  createdAt: string;
+}
+
+export interface RecurringChargeTimelineEntry {
+  dayOfMonth: number;
+  label: string;
+  amount: number;
+  projectedBalance: number;
+}
+
+export interface RecurringChargeAccountProjection {
+  id: string;
+  name: string;
+  currentBalance: number;
+  timeline: RecurringChargeTimelineEntry[];
+  alert: { dayOfMonth: number; projectedBalance: number } | null;
+}
+
+export interface RecurringChargesResponse {
+  charges: RecurringCharge[];
+  accounts: RecurringChargeAccountProjection[];
+  subscriptionsWithoutDate: { id: string; poste: string; amount: number }[];
+}
+
 export interface DashboardResponse {
   year: number;
   totals: { income: number; expenses: number; reste: number };

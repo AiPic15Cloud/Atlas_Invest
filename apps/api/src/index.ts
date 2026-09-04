@@ -13,6 +13,7 @@ import { dashboardRouter } from "./routes/dashboard.js";
 import { emergencyFundRouter } from "./routes/emergencyFund.js";
 import { subscriptionsRouter } from "./routes/subscriptions.js";
 import { savingsOpportunitiesRouter } from "./routes/savingsOpportunities.js";
+import { recurringChargesRouter } from "./routes/recurringCharges.js";
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use("/api/dashboard", dashboardRouter);
 app.use("/api/emergency-fund", emergencyFundRouter);
 app.use("/api/subscriptions", subscriptionsRouter);
 app.use("/api/savings-opportunities", savingsOpportunitiesRouter);
+app.use("/api/recurring-charges", recurringChargesRouter);
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);
