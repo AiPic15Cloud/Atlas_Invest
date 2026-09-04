@@ -20,6 +20,8 @@ import { householdSplitRouter } from "./routes/householdSplit.js";
 import { correctionHistoryRouter } from "./routes/correctionHistory.js";
 import { twoFactorRouter } from "./routes/twoFactor.js";
 import { loansRouter } from "./routes/loans.js";
+import { monthlyGoalsRouter } from "./routes/monthlyGoals.js";
+import { importMemoryRouter } from "./routes/importMemory.js";
 
 const app = express();
 
@@ -48,6 +50,8 @@ app.use("/api/household-split", householdSplitRouter);
 app.use("/api/correction-history", correctionHistoryRouter);
 app.use("/api/2fa", twoFactorRouter);
 app.use("/api/loans", loansRouter);
+app.use("/api/monthly-goals", monthlyGoalsRouter);
+app.use("/api/import-memory", importMemoryRouter);
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);

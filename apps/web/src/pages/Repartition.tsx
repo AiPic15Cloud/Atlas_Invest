@@ -8,20 +8,60 @@ const MONTH_LABELS = [
   "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
 ];
 
+const MODE_LABELS: Record<HouseholdSplitMode, string> = {
+  PRORATA_REVENUS: "Prorata des revenus",
+  PARTS_EGALES: "Parts égales",
+  RESTE_EGAL: "À reste égal",
+  POURCENTAGE_CHOISI: "% au choix",
+  FORFAIT_FIXE: "Forfait fixe",
+};
+
+const MODE_EXPLAINERS: Record<HouseholdSplitMode, { avantage: string; angleMort: string; pourQui: string }> = {
+  PRORATA_REVENUS: {
+    avantage: "Équitable : chacun·e contribue en proportion de son revenu, l'effort pèse pareil sur les deux budgets.",
+    angleMort: "Il faut accepter de partager le montant de ses revenus, pas toujours évident.",
+    pourQui: "Les couples avec un écart de revenus qui veulent un partage juste.",
+  },
+  PARTS_EGALES: {
+    avantage: "Simple et symétrique : chacun·e paie exactement la même somme.",
+    angleMort: "Peut peser plus lourd sur la personne qui gagne le moins.",
+    pourQui: "Les couples aux revenus proches, ou qui préfèrent la simplicité.",
+  },
+  RESTE_EGAL: {
+    avantage: "Une fois les charges communes payées, il reste exactement la même somme à chacun·e pour vivre.",
+    angleMort: "La personne qui gagne le plus paie une part plus importante des charges.",
+    pourQui: "Les couples qui veulent égaliser le confort de vie plutôt que l'effort financier.",
+  },
+  POURCENTAGE_CHOISI: {
+    avantage: "Vous décidez vous-mêmes de la clé de répartition, sur mesure.",
+    angleMort: "Demande de se mettre d'accord, et de la mettre à jour si la situation change.",
+    pourQui: "Les couples avec un accord spécifique (ex. l'un paie plus pour telle raison).",
+  },
+  FORFAIT_FIXE: {
+    avantage: "Prévisible : chacun·e sait à l'avance combien il ou elle verse chaque mois.",
+    angleMort: "Ne s'ajuste pas automatiquement si le montant des charges communes varie.",
+    pourQui: "Les couples qui préfèrent un montant fixe, façon pot commun.",
+  },
+};
+
 export function Repartition() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
-  const [mode, setMode] = useState<HouseholdSplitMode>("PROPORTIONNEL");
+  const [mode, setMode] = useState<HouseholdSplitMode | null>(null);
   const [data, setData] = useState<HouseholdSplitResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [customInputs, setCustomInputs] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
-  async function load() {
+  async function load(previewMode?: HouseholdSplitMode) {
     try {
-      const res = await apiFetch<HouseholdSplitResponse>(
-        `/api/household-split?year=${year}&month=${month}&mode=${mode}`,
-      );
+      const query = `year=${year}&month=${month}${previewMode ? `&mode=${previewMode}` : ""}`;
+      const res = await apiFetch<HouseholdSplitResponse>(`/api/household-split?${query}`);
       setData(res);
+      setMode(res.mode);
+      setCustomInputs(Object.fromEntries(res.members.map((m) => [m.userId, m.customValue !== null ? String(m.customValue) : ""])));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Impossible de charger la répartition.");
     }
@@ -30,7 +70,7 @@ export function Repartition() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [year, month, mode]);
+  }, [year, month]);
 
   function shiftMonth(delta: number) {
     let m = month + delta;
@@ -41,7 +81,42 @@ export function Repartition() {
     setYear(y);
   }
 
+  async function handleSelectMode(newMode: HouseholdSplitMode) {
+    setMode(newMode);
+    setSaveMessage(null);
+    await load(newMode);
+  }
+
+  async function handleSave() {
+    if (!mode || !data) return;
+    setSaving(true);
+    setError(null);
+    setSaveMessage(null);
+    try {
+      const needsCustom = mode === "POURCENTAGE_CHOISI" || mode === "FORFAIT_FIXE";
+      const customShares = needsCustom
+        ? Object.fromEntries(
+            data.members
+              .map((m) => [m.userId, Number((customInputs[m.userId] ?? "").replace(",", "."))])
+              .filter(([, v]) => Number.isFinite(v as number) && (v as number) >= 0),
+          )
+        : undefined;
+      await apiFetch("/api/household-split/settings", {
+        method: "PATCH",
+        body: JSON.stringify({ mode, customShares }),
+      });
+      setSaveMessage("Réglage enregistré pour ton foyer.");
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   if (error && !data) return <p className="text-sm text-red-600">{error}</p>;
+
+  const needsCustomInputs = mode === "POURCENTAGE_CHOISI" || mode === "FORFAIT_FIXE";
 
   return (
     <div className="space-y-6">
@@ -61,29 +136,40 @@ export function Repartition() {
 
       <div className="card">
         <p className="text-sm text-slate-500">
-          Répartit le total des dépenses sur vos comptes joints entre les membres du foyer, au prorata de leurs
-          revenus du mois ou à parts égales. Le revenu total de chaque membre est utilisé pour ce calcul, même si
-          le détail des comptes n'est pas partagé.
+          Comment vous répartissez les charges communes (dépenses sur vos comptes joints) entre les membres du foyer.
+          Choisis la méthode qui vous correspond le mieux.
         </p>
-        <div className="mt-3 flex gap-2">
-          <button
-            onClick={() => setMode("PROPORTIONNEL")}
-            className={`rounded-md px-3 py-2 text-sm font-medium ${
-              mode === "PROPORTIONNEL" ? "bg-pink-600 text-white" : "bg-slate-100 text-slate-700"
-            }`}
-          >
-            Proportionnel aux revenus
-          </button>
-          <button
-            onClick={() => setMode("EGAL")}
-            className={`rounded-md px-3 py-2 text-sm font-medium ${
-              mode === "EGAL" ? "bg-pink-600 text-white" : "bg-slate-100 text-slate-700"
-            }`}
-          >
-            Parts égales
-          </button>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {(Object.keys(MODE_LABELS) as HouseholdSplitMode[]).map((m) => (
+            <button
+              key={m}
+              onClick={() => handleSelectMode(m)}
+              className={`rounded-md px-3 py-2 text-sm font-medium ${
+                mode === m ? "bg-pink-600 text-white" : "bg-slate-100 text-slate-700"
+              }`}
+            >
+              {MODE_LABELS[m]}
+            </button>
+          ))}
         </div>
       </div>
+
+      {mode && (
+        <div className="card grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+          <div>
+            <p className="text-xs font-semibold uppercase text-emerald-600">Avantage</p>
+            <p className="mt-1 text-slate-600">{MODE_EXPLAINERS[mode].avantage}</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase text-amber-600">Angle mort</p>
+            <p className="mt-1 text-slate-600">{MODE_EXPLAINERS[mode].angleMort}</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase text-pink-600">Pour qui</p>
+            <p className="mt-1 text-slate-600">{MODE_EXPLAINERS[mode].pourQui}</p>
+          </div>
+        </div>
+      )}
 
       {!data ? (
         <p className="text-sm text-slate-500">Chargement...</p>
@@ -94,31 +180,80 @@ export function Repartition() {
           <div className="card">
             <p className="text-xs text-slate-500">Total des charges communes (comptes joints)</p>
             <p className="mt-1 text-2xl font-semibold">{currency.format(data.jointExpensesTotal)}</p>
-            {data.fallbackToEqual && (
-              <p className="mt-1 text-xs text-slate-400">
-                Aucun revenu déclaré ce mois-ci : répartition à parts égales appliquée par défaut.
-              </p>
-            )}
+            {data.note && <p className="mt-1 text-xs text-amber-600">{data.note}</p>}
           </div>
 
+          {needsCustomInputs && (
+            <section className="card">
+              <h2 className="font-semibold">
+                {mode === "POURCENTAGE_CHOISI" ? "Pourcentage de chacun·e" : "Montant fixe de chacun·e"}
+              </h2>
+              <div className="mt-3 flex flex-wrap gap-3">
+                {data.members.map((m) => (
+                  <label key={m.userId} className="block">
+                    <span className="text-xs text-slate-500">
+                      {m.firstName} {m.isYou && "(toi)"}
+                    </span>
+                    <input
+                      className="mt-1 w-32 input"
+                      inputMode="decimal"
+                      placeholder={mode === "POURCENTAGE_CHOISI" ? "%" : "€"}
+                      value={customInputs[m.userId] ?? ""}
+                      onChange={(e) => setCustomInputs((prev) => ({ ...prev, [m.userId]: e.target.value }))}
+                    />
+                  </label>
+                ))}
+              </div>
+              <button onClick={handleSave} disabled={saving} className="mt-3 btn btn-primary">
+                {saving ? "..." : "Enregistrer"}
+              </button>
+              {saveMessage && <p className="mt-2 text-xs text-emerald-600">{saveMessage}</p>}
+            </section>
+          )}
+          {!needsCustomInputs && (
+            <div className="flex items-center gap-3">
+              <button onClick={handleSave} disabled={saving} className="btn btn-secondary">
+                {saving ? "..." : "Utiliser ce mode par défaut pour le foyer"}
+              </button>
+              {saveMessage && <p className="text-xs text-emerald-600">{saveMessage}</p>}
+            </div>
+          )}
+
           <section className="card">
-            <h2 className="font-semibold">Part de chacun</h2>
-            <ul className="mt-2">
+            <h2 className="font-semibold">Part de chacun·e</h2>
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
               {data.members.map((m) => (
-                <li key={m.userId} className="flex items-center justify-between border-b border-slate-100 py-2 last:border-0">
-                  <span className="text-sm">
+                <div key={m.userId} className="rounded-md border border-slate-200 p-3">
+                  <p className="font-medium">
                     {m.firstName} {m.isYou && <span className="text-slate-400">(toi)</span>}
-                    {mode === "PROPORTIONNEL" && !data.fallbackToEqual && (
-                      <span className="text-slate-400"> — revenus {currency.format(m.income)}</span>
-                    )}
-                  </span>
-                  <span className="text-sm font-medium">
-                    {currency.format(m.amountDue)} <span className="text-slate-400">({Math.round(m.share * 100)}%)</span>
-                  </span>
-                </li>
+                  </p>
+                  <p className="mt-1 text-xl font-semibold">
+                    {currency.format(m.amountDue)}
+                    <span className="ml-1 text-sm font-normal text-slate-400">/mois</span>
+                  </p>
+                  <p className="text-xs text-slate-500">{Math.round(m.share * 100)}% des dépenses</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    reste à vivre : <span className={m.resteAVivre < 0 ? "font-medium text-red-600" : "font-medium"}>{currency.format(m.resteAVivre)}</span>
+                  </p>
+                </div>
               ))}
-            </ul>
+            </div>
           </section>
+
+          {data.members.length === 2 && (
+            <section className="card">
+              <h2 className="font-semibold">Ce que ça donne pour vous deux</h2>
+              <p className="mt-2 text-sm text-slate-600">
+                {data.members[0].firstName} verse {currency.format(data.members[0].amountDue)}
+                {data.totalIncome > 0 && ` (soit ${Math.round((data.members[0].amountDue / Math.max(data.members[0].income, 1)) * 100)}% de son revenu)`}
+                , {data.members[1].firstName} verse {currency.format(data.members[1].amountDue)}
+                {data.totalIncome > 0 && ` (soit ${Math.round((data.members[1].amountDue / Math.max(data.members[1].income, 1)) * 100)}% du sien)`}.
+                Une fois les charges communes payées, il reste{" "}
+                {currency.format(data.members[0].resteAVivre)} à {data.members[0].firstName} et{" "}
+                {currency.format(data.members[1].resteAVivre)} à {data.members[1].firstName}, à dépenser ou épargner librement.
+              </p>
+            </section>
+          )}
         </>
       )}
     </div>

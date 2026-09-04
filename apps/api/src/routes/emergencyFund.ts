@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
-import { CRITERIA, computeRecommendedMonths, computeVulnerabilityScore } from "../constants/emergencyFund.js";
+import { CRITERIA, CRITERIA_KEYS, computeRecommendedMonths, computeVulnerabilityScore } from "../constants/emergencyFund.js";
 import { computeEssentialMonthlyExpense } from "../utils/essentialExpense.js";
 import { computeBudgetBreakdown, type BudgetMethodKey } from "../constants/budgetMethods.js";
 import type { EmergencyFundProfile, SavingsEnvelope } from "@prisma/client";
@@ -54,8 +54,23 @@ async function serializeProfile(profile: EmergencyFundProfile & { envelopes: Sav
 
   const envelopesTotal = profile.envelopes.reduce((sum, e) => sum + Number(e.monthlyAllocation), 0);
 
+  const breakdown = CRITERIA_KEYS.map((key) => {
+    const value = (answers as Record<string, number>)[key];
+    const criterion = CRITERIA[key];
+    const chosenOption = criterion.options.find((o) => o.value === value);
+    return {
+      key,
+      question: criterion.question,
+      value,
+      maxValue: 5,
+      label: chosenOption?.label ?? "",
+      options: criterion.options,
+    };
+  });
+
   return {
     answers,
+    breakdown,
     score,
     recommendedMonths,
     monthsOverride: profile.monthsOverride,
@@ -107,6 +122,36 @@ emergencyFundRouter.put("/", async (req, res) => {
     where: { userId: req.userId! },
     create: { userId: req.userId!, ...parsed.data },
     update: { ...parsed.data },
+    include: { envelopes: true },
+  });
+
+  res.json({ profile: await serializeProfile(profile, req.userId!) });
+});
+
+const criterionKeySchema = z.enum(CRITERIA_KEYS as [string, ...string[]]);
+const criterionValueSchema = z.union([z.literal(1), z.literal(3), z.literal(5)]);
+
+emergencyFundRouter.patch("/criteria/:key", async (req, res) => {
+  const keyParsed = criterionKeySchema.safeParse(req.params.key);
+  if (!keyParsed.success) {
+    res.status(400).json({ error: "Critère inconnu." });
+    return;
+  }
+  const valueParsed = criterionValueSchema.safeParse(req.body.value);
+  if (!valueParsed.success) {
+    res.status(400).json({ error: "Réponse invalide." });
+    return;
+  }
+
+  const existing = await prisma.emergencyFundProfile.findUnique({ where: { userId: req.userId! } });
+  if (!existing) {
+    res.status(409).json({ error: "Réponds d'abord au questionnaire de vulnérabilité." });
+    return;
+  }
+
+  const profile = await prisma.emergencyFundProfile.update({
+    where: { userId: req.userId! },
+    data: { [keyParsed.data]: valueParsed.data },
     include: { envelopes: true },
   });
 

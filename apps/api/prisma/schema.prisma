@@ -21,8 +21,32 @@ model Household {
   inviteCode String   @unique
   createdAt  DateTime @default(now())
 
+  // Reglage de repartition des charges communes : mode choisi et valeurs
+  // personnalisees (pourcentages ou montants fixes par membre) pour les
+  // modes qui en ont besoin. Cle = userId, valeur = pourcentage ou montant.
+  splitMode         String @default("PRORATA_REVENUS")
+  splitCustomShares Json?
+
   members      User[]
   bankAccounts BankAccount[]
+  monthlyGoals MonthlyGoal[]
+}
+
+// Petits objectifs que le foyer se fixe pour le mois ("Nos victoires"),
+// coches au fur et a mesure. Partages entre les membres du foyer.
+model MonthlyGoal {
+  id        String   @id @default(cuid())
+  year      Int
+  month     Int
+  label     String
+  emoji     String?
+  done      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  householdId String
+
+  @@index([householdId, year, month])
 }
 
 model User {
@@ -56,6 +80,7 @@ model User {
   correctionLogs       CorrectionLog[]
   twoFactorBackupCodes TwoFactorBackupCode[]
   loans                Loan[]
+  importCategoryMemory ImportCategoryMemory[]
 }
 
 model BankAccount {
@@ -365,6 +390,22 @@ model TwoFactorBackupCode {
   userId String
 
   @@index([userId])
+}
+
+// Memorise, par marchand normalise, le poste et la categorie choisis par
+// l'utilisateur lors d'un import de releve, pour les reappliquer
+// automatiquement la prochaine fois sans qu'il ait a les ressaisir.
+model ImportCategoryMemory {
+  id          String        @id @default(cuid())
+  merchantKey String
+  poste       String
+  category    BudgetCategory
+  updatedAt   DateTime      @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@unique([userId, merchantKey])
 }
 
 // Objectif d'epargne nomme (ex. "Voyage au Japon", "Apport immobilier"),

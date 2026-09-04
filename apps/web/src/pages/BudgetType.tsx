@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { BudgetCategorySection } from "../components/BudgetCategorySection";
+import { parseQuickExpense } from "../lib/parseQuickExpense";
 import type { BudgetCategory, BudgetMethodKey, BudgetTemplateResponse } from "../api/types";
 
 const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
@@ -10,6 +11,10 @@ export function BudgetType() {
   const [error, setError] = useState<string | null>(null);
   const [changingMethod, setChangingMethod] = useState(false);
   const [editingIncome, setEditingIncome] = useState(false);
+  const [search, setSearch] = useState("");
+  const [quickAddText, setQuickAddText] = useState("");
+  const [quickAddCategory, setQuickAddCategory] = useState<BudgetCategory>("BESOINS");
+  const [quickAddError, setQuickAddError] = useState<string | null>(null);
 
   async function load() {
     try {
@@ -73,6 +78,17 @@ export function BudgetType() {
   async function moveItem(id: string, direction: "up" | "down") {
     await apiFetch(`/api/budget-template/items/${id}/move`, { method: "POST", body: JSON.stringify({ direction }) });
     await load();
+  }
+
+  async function handleQuickAdd() {
+    setQuickAddError(null);
+    const parsed = parseQuickExpense(quickAddText);
+    if (!parsed) {
+      setQuickAddError("Indique un montant, ex. « courses 280€ ».");
+      return;
+    }
+    await addItem(quickAddCategory, { name: parsed.poste, monthlyAmount: parsed.amount, essential: true });
+    setQuickAddText("");
   }
 
   if (error) return <p className="text-sm text-red-600">{error}</p>;
@@ -140,6 +156,38 @@ export function BudgetType() {
         )}
       </section>
 
+      <section className="card">
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Rechercher un poste..."
+            className="min-w-[160px] flex-1 input"
+            aria-label="Rechercher un poste"
+          />
+          <select
+            value={quickAddCategory}
+            onChange={(e) => setQuickAddCategory(e.target.value as BudgetCategory)}
+            className="input px-2 py-2 text-sm"
+            aria-label="Catégorie du nouveau poste"
+          >
+            <option value="BESOINS">Besoins</option>
+            <option value="ENVIES">Envies</option>
+            <option value="EPARGNE">Épargne</option>
+          </select>
+          <input
+            value={quickAddText}
+            onChange={(e) => setQuickAddText(e.target.value)}
+            placeholder="Ajoutez un poste, ex. : courses 280€"
+            className="min-w-[200px] flex-1 input"
+          />
+          <button onClick={handleQuickAdd} className="btn btn-primary">
+            Ajouter
+          </button>
+        </div>
+        {quickAddError && <p className="mt-2 text-xs text-red-600">{quickAddError}</p>}
+      </section>
+
       <BudgetCategorySection
         category="BESOINS"
         title="Besoins"
@@ -147,6 +195,7 @@ export function BudgetType() {
         target={breakdown.besoinsTarget}
         actual={breakdown.besoinsActual}
         showTarget={showTargets}
+        search={search}
         onAddItem={addItem}
         onAddChild={addChild}
         onUpdate={updateItem}
@@ -160,6 +209,7 @@ export function BudgetType() {
         target={breakdown.enviesTarget}
         actual={breakdown.enviesActual}
         showTarget={showTargets}
+        search={search}
         onAddItem={addItem}
         onAddChild={addChild}
         onUpdate={updateItem}
@@ -173,6 +223,7 @@ export function BudgetType() {
         target={breakdown.epargneTarget}
         actual={breakdown.epargneActual}
         showTarget={showTargets}
+        search={search}
         onAddItem={addItem}
         onAddChild={addChild}
         onUpdate={updateItem}

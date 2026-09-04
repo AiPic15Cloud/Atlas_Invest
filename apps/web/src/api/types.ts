@@ -215,6 +215,7 @@ export interface EmergencyFundProfile {
     alternativeIncome: number;
     debtLevel: number;
   };
+  breakdown: EmergencyFundCriterionBreakdown[];
   score: number;
   recommendedMonths: number;
   monthsOverride: number | null;
@@ -377,7 +378,7 @@ export interface SavingsGoalsResponse {
   goals: SavingsGoal[];
 }
 
-export type HouseholdSplitMode = "EGAL" | "PROPORTIONNEL";
+export type HouseholdSplitMode = "PRORATA_REVENUS" | "PARTS_EGALES" | "RESTE_EGAL" | "POURCENTAGE_CHOISI" | "FORFAIT_FIXE";
 
 export interface HouseholdSplitMember {
   userId: string;
@@ -386,13 +387,41 @@ export interface HouseholdSplitMember {
   income: number;
   share: number;
   amountDue: number;
+  resteAVivre: number;
+  customValue: number | null;
 }
 
 export interface HouseholdSplitResponse {
   jointExpensesTotal: number;
+  totalIncome: number;
   members: HouseholdSplitMember[];
   mode: HouseholdSplitMode;
+  customShares: Record<string, number>;
   fallbackToEqual: boolean;
+  note: string | null;
+}
+
+export interface MonthlyGoal {
+  id: string;
+  year: number;
+  month: number;
+  label: string;
+  emoji: string | null;
+  done: boolean;
+  createdAt: string;
+}
+
+export interface MonthlyGoalsResponse {
+  goals: MonthlyGoal[];
+}
+
+export interface EmergencyFundCriterionBreakdown {
+  key: string;
+  question: string;
+  value: number;
+  maxValue: number;
+  label: string;
+  options: { value: number; label: string }[];
 }
 
 export type CorrectionType = "WASTEFUL_EXPENSE" | "SUBSCRIPTION_STATUS";

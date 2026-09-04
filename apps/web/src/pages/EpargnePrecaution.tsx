@@ -63,6 +63,7 @@ export function EpargnePrecaution() {
       </div>
 
       <ObjectiveSection profile={profile} onUpdated={setProfile} />
+      <ScoreDetailSection profile={profile} onUpdated={setProfile} />
       <ProgressSection profile={profile} onUpdated={setProfile} />
       <EnvelopesSection profile={profile} onUpdated={setProfile} />
     </div>
@@ -161,6 +162,87 @@ function ObjectiveSection({
           " (renseigne ton budget type ou tes dépenses du mois pour affiner ce montant)"}
         .
       </p>
+    </section>
+  );
+}
+
+function ScoreDetailSection({
+  profile,
+  onUpdated,
+}: {
+  profile: EmergencyFundProfile;
+  onUpdated: (p: EmergencyFundProfile) => void;
+}) {
+  const [expanded, setExpanded] = useState(true);
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function handleChange(key: string, value: number) {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await apiFetch<{ profile: EmergencyFundProfile }>(`/api/emergency-fund/criteria/${key}`, {
+        method: "PATCH",
+        body: JSON.stringify({ value }),
+      });
+      onUpdated(res.profile);
+      setEditingKey(null);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="card">
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold">Le détail de ton score</h2>
+        <button onClick={() => setExpanded((v) => !v)} className="text-sm link">
+          {expanded ? "Réduire" : "Afficher"}
+        </button>
+      </div>
+      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+      {expanded && (
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {profile.breakdown.map((crit) => (
+            <div key={crit.key} className="rounded-md border border-slate-200 p-3">
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-sm font-medium">{crit.question}</p>
+                <button
+                  onClick={() => setEditingKey(editingKey === crit.key ? null : crit.key)}
+                  className="shrink-0 text-xs text-slate-400 hover:text-pink-600"
+                  aria-label={`Modifier ${crit.question}`}
+                >
+                  ✎
+                </button>
+              </div>
+              <p className="mt-1 text-lg font-semibold">
+                {crit.value}
+                <span className="text-sm font-normal text-slate-400">/{crit.maxValue}</span>
+              </p>
+              <p className="mt-1 text-xs text-slate-500">{crit.label}</p>
+
+              {editingKey === crit.key && (
+                <div className="mt-2 space-y-1 border-t border-slate-100 pt-2">
+                  {crit.options.map((opt) => (
+                    <label key={opt.value} className="flex items-center gap-2 text-xs text-slate-700">
+                      <input
+                        type="radio"
+                        checked={crit.value === opt.value}
+                        disabled={busy}
+                        onChange={() => handleChange(crit.key, opt.value)}
+                      />
+                      {opt.label}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

@@ -1,7 +1,7 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { parseStatementText, type ImportGroup } from "../lib/importStatement";
-import type { BankAccount, BudgetCategory } from "../api/types";
+import type { BankAccount, BudgetCategory, Expense, ExpensesResponse } from "../api/types";
 
 const CATEGORY_LABELS: Record<BudgetCategory, string> = {
   BESOINS: "Besoins",
@@ -15,6 +15,8 @@ interface EditableGroup extends ImportGroup {
   poste: string;
   category: BudgetCategory;
   include: boolean;
+  possibleDuplicate: boolean;
+  fromMemory: boolean;
 }
 
 interface ImportStatementProps {
@@ -25,25 +27,49 @@ interface ImportStatementProps {
   onClose: () => void;
 }
 
+type ImportMemory = Record<string, { poste: string; category: BudgetCategory }>;
+
 export function ImportStatement({ year, month, accounts, onDone, onClose }: ImportStatementProps) {
   const [text, setText] = useState("");
   const [groups, setGroups] = useState<EditableGroup[] | null>(null);
-  const [skipped, setSkipped] = useState<{ credits: number; unparsable: number } | null>(null);
+  const [skipped, setSkipped] = useState<{ credits: number; unparsable: number; transfers: number } | null>(null);
   const [bankAccountId, setBankAccountId] = useState(accounts[0]?.id ?? "");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [memory, setMemory] = useState<ImportMemory>({});
+  const [existingExpenses, setExistingExpenses] = useState<Expense[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    apiFetch<{ memory: ImportMemory }>("/api/import-memory")
+      .then((res) => setMemory(res.memory))
+      .catch(() => setMemory({}));
+    apiFetch<ExpensesResponse>(`/api/expenses?year=${year}&month=${month}`)
+      .then((res) => setExistingExpenses(res.expenses))
+      .catch(() => setExistingExpenses([]));
+  }, [year, month]);
 
   function handleAnalyze() {
     setError(null);
-    const result = parseStatementText(text);
+    const ownAccountNames = accounts.map((a) => a.name);
+    const result = parseStatementText(text, ownAccountNames);
     if (result.groups.length === 0) {
       setError("Aucune dépense détectée dans le texte collé. Vérifie le format (CSV avec Date/Libellé/Montant, ou une ligne « libellé montant » par transaction).");
       setGroups(null);
       return;
     }
-    setGroups(result.groups.map((g) => ({ ...g, poste: g.suggestedPoste, category: g.suggestedCategory, include: true })));
-    setSkipped({ credits: result.skippedCredits, unparsable: result.skippedUnparsable });
+    setGroups(
+      result.groups.map((g) => {
+        const remembered = memory[g.merchantKey];
+        const poste = remembered?.poste ?? g.suggestedPoste;
+        const category = remembered?.category ?? g.suggestedCategory;
+        const possibleDuplicate = existingExpenses.some(
+          (e) => e.poste.trim().toLowerCase() === poste.trim().toLowerCase() && Math.abs(Number(e.amount) - g.total) < 0.01,
+        );
+        return { ...g, poste, category, include: !possibleDuplicate, possibleDuplicate, fromMemory: Boolean(remembered) };
+      }),
+    );
+    setSkipped({ credits: result.skippedCredits, unparsable: result.skippedUnparsable, transfers: result.skippedTransfers });
   }
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -89,6 +115,12 @@ export function ImportStatement({ year, month, accounts, onDone, onClose }: Impo
         method: "POST",
         body: JSON.stringify({ year, month, bankAccountId, items }),
       });
+      const memoryEntries = groups
+        .filter((g) => g.include)
+        .map((g) => ({ merchantKey: g.merchantKey, poste: g.poste.trim() || "Autre", category: g.category }));
+      if (memoryEntries.length > 0) {
+        await apiFetch("/api/import-memory/bulk", { method: "POST", body: JSON.stringify({ entries: memoryEntries }) }).catch(() => {});
+      }
       await onDone();
       alert(`${res.created} dépense(s) importée(s).`);
       onClose();
@@ -140,6 +172,7 @@ export function ImportStatement({ year, month, accounts, onDone, onClose }: Impo
             <span>
               {groups.length} marchand(s) détecté(s), {totalToImport} transaction(s) prête(s) à importer
               {skipped && skipped.credits > 0 && ` · ${skipped.credits} crédit(s) ignoré(s)`}
+              {skipped && skipped.transfers > 0 && ` · ${skipped.transfers} virement(s) interne(s) écarté(s)`}
               {skipped && skipped.unparsable > 0 && ` · ${skipped.unparsable} ligne(s) non reconnue(s)`}
             </span>
             <div className="flex items-center gap-2">
@@ -170,7 +203,7 @@ export function ImportStatement({ year, month, accounts, onDone, onClose }: Impo
               </thead>
               <tbody>
                 {groups.map((g) => (
-                  <tr key={g.merchantKey} className="border-t border-slate-100">
+                  <tr key={g.merchantKey} className={`border-t border-slate-100 ${g.possibleDuplicate ? "bg-amber-50" : ""}`}>
                     <td className="px-2 py-1.5">
                       <input
                         type="checkbox"
@@ -185,6 +218,16 @@ export function ImportStatement({ year, month, accounts, onDone, onClose }: Impo
                         onChange={(e) => updateGroup(g.merchantKey, { poste: e.target.value })}
                         className="w-32 rounded border border-slate-200 px-1.5 py-1 text-xs"
                       />
+                      {g.possibleDuplicate && (
+                        <span className="ml-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                          doublon probable
+                        </span>
+                      )}
+                      {!g.possibleDuplicate && g.fromMemory && (
+                        <span className="ml-1 rounded-full bg-pink-50 px-1.5 py-0.5 text-[10px] font-medium text-pink-600">
+                          mémorisé
+                        </span>
+                      )}
                     </td>
                     <td className="px-2 py-1.5">
                       <select

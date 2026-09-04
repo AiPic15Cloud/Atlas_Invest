@@ -50,7 +50,7 @@ export function BudgetDuMois() {
   const [accounts, setAccounts] = useState<BankAccountsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [actionsOpen, setActionsOpen] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<BudgetCategory | "ALL">("ALL");
   const [actionError, setActionError] = useState<string | null>(null);
   const [copyOtherOpen, setCopyOtherOpen] = useState(false);
   const [copyFromYear, setCopyFromYear] = useState(year);
@@ -84,10 +84,12 @@ export function BudgetDuMois() {
 
   const filteredExpenses = useMemo(() => {
     if (!data) return [];
-    if (!search.trim()) return data.expenses;
+    let list = data.expenses;
+    if (categoryFilter !== "ALL") list = list.filter((e) => e.category === categoryFilter);
     const q = search.trim().toLowerCase();
-    return data.expenses.filter((e) => e.poste.toLowerCase().includes(q));
-  }, [data, search]);
+    if (q) list = list.filter((e) => e.poste.toLowerCase().includes(q));
+    return list;
+  }, [data, search, categoryFilter]);
 
   const expensesByCategory = useMemo(() => {
     const groups = new Map<BudgetCategory, Expense[]>();
@@ -285,35 +287,39 @@ export function BudgetDuMois() {
         )}
       </section>
 
-      <QuickAddExpense accounts={availableAccounts} onSubmit={handleQuickAdd} />
-
-      <section className="card">
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold">Actions rapides</h2>
-          <button onClick={() => setActionsOpen((v) => !v)} className="text-sm link">
-            {actionsOpen ? "Masquer" : "Afficher"}
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="flex-1">
+          <QuickAddExpense accounts={availableAccounts} onSubmit={handleQuickAdd} />
+        </div>
+        <div className="card flex flex-col justify-center sm:w-64">
+          <p className="text-sm font-medium text-slate-700">Pas envie de tout saisir à la main ?</p>
+          <p className="mt-1 text-xs text-slate-500">
+            Importe ton relevé bancaire : les dépenses sont classées automatiquement, les doublons et virements
+            internes écartés.
+          </p>
+          <button onClick={() => setImportOpen((v) => !v)} className="mt-3 btn btn-primary">
+            📥 Importer un relevé
           </button>
         </div>
-        {actionsOpen && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button onClick={handleCopyTemplate} className="btn btn-outline btn-sm">
-              Copier le budget type
-            </button>
-            <button onClick={handleCopyPreviousMonth} className="btn btn-outline btn-sm">
-              Copier le mois précédent
-            </button>
-            <button onClick={() => setCopyOtherOpen((v) => !v)} className="btn btn-outline btn-sm">
-              Copier un autre mois
-            </button>
-            <button onClick={() => setImportOpen((v) => !v)} className="btn btn-outline btn-sm">
-              Importer un relevé
-            </button>
-            <button onClick={handleClearMonth} className="btn btn-danger btn-sm">
-              Vider le mois
-            </button>
-          </div>
-        )}
-        {actionsOpen && copyOtherOpen && (
+      </div>
+
+      <section className="card">
+        <h2 className="font-semibold">Actions rapides</h2>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button onClick={handleCopyTemplate} className="btn btn-outline btn-sm">
+            Copier le budget type
+          </button>
+          <button onClick={handleCopyPreviousMonth} className="btn btn-outline btn-sm">
+            Copier le mois précédent
+          </button>
+          <button onClick={() => setCopyOtherOpen((v) => !v)} className="btn btn-outline btn-sm">
+            Copier un autre mois
+          </button>
+          <button onClick={handleClearMonth} className="btn btn-danger btn-sm">
+            Vider le mois
+          </button>
+        </div>
+        {copyOtherOpen && (
           <div className="mt-3 flex items-end gap-2 rounded-md border border-slate-200 bg-slate-50 p-2">
             <div>
               <label className="mb-1 block text-xs font-medium text-slate-700">Mois source</label>
@@ -353,15 +359,28 @@ export function BudgetDuMois() {
       )}
 
       <section className="card">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-semibold">Dépenses du mois</h2>
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Filtrer par poste..."
-            className="w-48 input px-3 py-1.5 text-sm"
-            aria-label="Filtrer les dépenses par poste"
-          />
+          <div className="flex gap-2">
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value as BudgetCategory | "ALL")}
+              className="input px-2 py-1.5 text-sm"
+              aria-label="Filtrer par catégorie"
+            >
+              <option value="ALL">Tous les postes</option>
+              {CATEGORY_ORDER.map((cat) => (
+                <option key={cat} value={cat}>{CATEGORY_LABELS[cat]}</option>
+              ))}
+            </select>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Rechercher une dépense..."
+              className="w-48 input px-3 py-1.5 text-sm"
+              aria-label="Rechercher une dépense"
+            />
+          </div>
         </div>
         {filteredExpenses.length === 0 ? (
           <p className="mt-2 text-sm text-slate-500">Aucune dépense.</p>

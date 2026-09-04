@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiFetch, ApiError } from "../api/client";
 import { AnnualLineChart } from "../components/AnnualLineChart";
-import type { DashboardResponse, EmergencyFundProfile } from "../api/types";
+import type { DashboardResponse, EmergencyFundProfile, MonthlyGoal, MonthlyGoalsResponse } from "../api/types";
 
 const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 const MONTH_NAMES = [
@@ -160,7 +160,125 @@ export function Dashboard() {
           )}
         </section>
       </div>
+
+      <MonthlyGoalsSection year={year} month={selectedMonthIndex + 1} />
     </div>
+  );
+}
+
+function MonthlyGoalsSection({ year, month }: { year: number; month: number }) {
+  const [goals, setGoals] = useState<MonthlyGoal[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [emoji, setEmoji] = useState("🎯");
+  const [label, setLabel] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function load() {
+    try {
+      const res = await apiFetch<MonthlyGoalsResponse>(`/api/monthly-goals?year=${year}&month=${month}`);
+      setGoals(res.goals);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Impossible de charger les objectifs du mois.");
+    }
+  }
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [year, month]);
+
+  async function handleAdd() {
+    if (!label.trim()) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await apiFetch("/api/monthly-goals", {
+        method: "POST",
+        body: JSON.stringify({ label: label.trim(), emoji: emoji.trim() || null, year, month }),
+      });
+      setLabel("");
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleToggle(goal: MonthlyGoal) {
+    try {
+      await apiFetch(`/api/monthly-goals/${goal.id}`, { method: "PATCH", body: JSON.stringify({ done: !goal.done }) });
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    }
+  }
+
+  async function handleDelete(id: string) {
+    try {
+      await apiFetch(`/api/monthly-goals/${id}`, { method: "DELETE" });
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    }
+  }
+
+  const doneCount = goals?.filter((g) => g.done).length ?? 0;
+
+  return (
+    <section className="card">
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold">🏆 Nos victoires</h2>
+        {goals && <span className="text-sm text-slate-400">{doneCount}/{goals.length}</span>}
+      </div>
+      <p className="mt-1 text-sm text-slate-500">
+        Notez ce que vous voulez accomplir ce mois, puis cochez chaque réussite, même les plus petites.
+      </p>
+      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+
+      <div className="mt-3 flex gap-2">
+        <input
+          value={emoji}
+          onChange={(e) => setEmoji(e.target.value)}
+          className="w-12 input px-2 py-1.5 text-center text-sm"
+          maxLength={4}
+          aria-label="Emoji"
+        />
+        <input
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          placeholder="ex. Mettre 200 € de côté"
+          className="flex-1 input"
+          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+        />
+        <button onClick={handleAdd} disabled={submitting} className="btn btn-primary">
+          Ajouter
+        </button>
+      </div>
+
+      {!goals ? (
+        <p className="mt-3 text-sm text-slate-500">Chargement...</p>
+      ) : goals.length === 0 ? (
+        <p className="mt-3 text-sm text-slate-500">Aucun objectif pour ce mois. Choisissez un emoji et ajoutez-en un.</p>
+      ) : (
+        <ul className="mt-3 space-y-1">
+          {goals.map((goal) => (
+            <li key={goal.id} className="flex items-center justify-between gap-2 border-b border-slate-100 py-1.5 last:border-0">
+              <label className="flex flex-1 items-center gap-2 text-sm">
+                <input type="checkbox" checked={goal.done} onChange={() => handleToggle(goal)} />
+                <span className={goal.done ? "text-slate-400 line-through" : ""}>
+                  {goal.emoji ? `${goal.emoji} ` : ""}
+                  {goal.label}
+                </span>
+              </label>
+              <button onClick={() => handleDelete(goal.id)} className="text-xs text-slate-400 hover:text-red-600">
+                Supprimer
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 

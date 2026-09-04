@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { BudgetItemForm } from "./BudgetItemForm";
-import { BudgetItemRow } from "./BudgetItemRow";
+import { BudgetItemCard } from "./BudgetItemCard";
 import type { BudgetCategory, BudgetItemNode } from "../api/types";
 
 const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
@@ -12,6 +12,12 @@ const CATEGORY_TITLE_COLOR: Record<BudgetCategory, string> = {
   EPARGNE: "text-violet-600",
 };
 
+const CATEGORY_BAR_COLOR: Record<BudgetCategory, string> = {
+  BESOINS: "bg-amber-500",
+  ENVIES: "bg-pink-500",
+  EPARGNE: "bg-violet-500",
+};
+
 interface BudgetCategorySectionProps {
   category: BudgetCategory;
   title: string;
@@ -19,6 +25,7 @@ interface BudgetCategorySectionProps {
   target: number;
   actual: number;
   showTarget: boolean;
+  search?: string;
   onAddItem: (category: BudgetCategory, data: { name: string; monthlyAmount: number; essential: boolean }) => Promise<void>;
   onAddChild: (parentId: string, data: { name: string; monthlyAmount: number; essential: boolean }) => Promise<void>;
   onUpdate: (id: string, data: { name: string; monthlyAmount: number; essential: boolean }) => Promise<void>;
@@ -33,6 +40,7 @@ export function BudgetCategorySection({
   target,
   actual,
   showTarget,
+  search,
   onAddItem,
   onAddChild,
   onUpdate,
@@ -41,6 +49,13 @@ export function BudgetCategorySection({
 }: BudgetCategorySectionProps) {
   const [adding, setAdding] = useState(false);
   const overBudget = showTarget && actual > target;
+  const categoryTotal = showTarget ? target : actual;
+
+  const visibleItems = useMemo(() => {
+    const q = search?.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter((item) => item.name.toLowerCase().includes(q) || item.children.some((c) => c.name.toLowerCase().includes(q)));
+  }, [items, search]);
 
   return (
     <section className="card">
@@ -78,19 +93,23 @@ export function BudgetCategorySection({
 
       {items.length === 0 && !adding ? (
         <p className="mt-2 text-sm text-slate-500">Aucun poste pour l'instant.</p>
+      ) : visibleItems.length === 0 ? (
+        <p className="mt-2 text-sm text-slate-500">Aucun poste ne correspond à la recherche.</p>
       ) : (
-        <ul className="mt-2">
-          {items.map((item) => (
-            <BudgetItemRow
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {visibleItems.map((item) => (
+            <BudgetItemCard
               key={item.id}
               item={item}
+              categoryTotal={categoryTotal}
+              barColorClass={CATEGORY_BAR_COLOR[category]}
               onAddChild={onAddChild}
               onUpdate={onUpdate}
               onDelete={onDelete}
               onMove={onMove}
             />
           ))}
-        </ul>
+        </div>
       )}
     </section>
   );

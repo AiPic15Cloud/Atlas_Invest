@@ -18,6 +18,14 @@ export interface ParseResult {
   groups: ImportGroup[];
   skippedCredits: number;
   skippedUnparsable: number;
+  skippedTransfers: number;
+}
+
+function isInternalTransfer(description: string, ownAccountNames: string[]): boolean {
+  if (!ownAccountNames.length) return false;
+  const upper = description.toUpperCase();
+  if (!/\bVIR/.test(upper)) return false;
+  return ownAccountNames.some((name) => name.trim().length > 0 && upper.includes(name.trim().toUpperCase()));
 }
 
 const DELIMITERS = [";", ",", "\t"];
@@ -65,7 +73,7 @@ function findColumnIndex(header: string[], candidates: string[]): number {
  * depenses (montants negatifs ou colonne debit) ; les revenus/credits sont
  * comptes a part et ignores.
  */
-export function parseStatementText(text: string): ParseResult {
+export function parseStatementText(text: string, ownAccountNames: string[] = []): ParseResult {
   const lines = text
     .split(/\r?\n/)
     .map((l) => l.trim())
@@ -74,9 +82,10 @@ export function parseStatementText(text: string): ParseResult {
   const transactions: ParsedTransaction[] = [];
   let skippedCredits = 0;
   let skippedUnparsable = 0;
+  let skippedTransfers = 0;
 
   if (lines.length === 0) {
-    return { groups: [], skippedCredits: 0, skippedUnparsable: 0 };
+    return { groups: [], skippedCredits: 0, skippedUnparsable: 0, skippedTransfers: 0 };
   }
 
   const delimiter = detectDelimiter(lines.slice(0, 5));
@@ -118,9 +127,13 @@ export function parseStatementText(text: string): ParseResult {
         skippedCredits++;
         continue;
       }
+      if (isInternalTransfer(description, ownAccountNames)) {
+        skippedTransfers++;
+        continue;
+      }
       transactions.push({ date: "", description, amount: Math.abs(amount) });
     }
-    return buildResult(transactions, skippedCredits, skippedUnparsable);
+    return buildResult(transactions, skippedCredits, skippedUnparsable, skippedTransfers);
   }
 
   for (const row of dataRows) {
@@ -151,13 +164,17 @@ export function parseStatementText(text: string): ParseResult {
       skippedCredits++;
       continue;
     }
+    if (isInternalTransfer(description, ownAccountNames)) {
+      skippedTransfers++;
+      continue;
+    }
     transactions.push({ date, description, amount: Math.abs(amount) });
   }
 
-  return buildResult(transactions, skippedCredits, skippedUnparsable);
+  return buildResult(transactions, skippedCredits, skippedUnparsable, skippedTransfers);
 }
 
-function buildResult(transactions: ParsedTransaction[], skippedCredits: number, skippedUnparsable: number): ParseResult {
+function buildResult(transactions: ParsedTransaction[], skippedCredits: number, skippedUnparsable: number, skippedTransfers: number): ParseResult {
   const groups = new Map<string, ImportGroup>();
   for (const tx of transactions) {
     const key = normalizeMerchant(tx.description);
@@ -181,6 +198,7 @@ function buildResult(transactions: ParsedTransaction[], skippedCredits: number, 
     groups: [...groups.values()].sort((a, b) => b.total - a.total),
     skippedCredits,
     skippedUnparsable,
+    skippedTransfers,
   };
 }
 
