@@ -17,6 +17,7 @@ import { Echeances } from "./pages/Echeances";
 import { Patrimoine } from "./pages/Patrimoine";
 import { Objectifs } from "./pages/Objectifs";
 import { Repartition } from "./pages/Repartition";
+import { Export } from "./pages/Export";
 import { Settings } from "./pages/Settings";
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -75,6 +76,7 @@ export default function App() {
         <Route path="/patrimoine" element={<Patrimoine />} />
         <Route path="/objectifs" element={<Objectifs />} />
         <Route path="/repartition" element={<Repartition />} />
+        <Route path="/export" element={<Export />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

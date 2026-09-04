@@ -51,6 +51,9 @@ export function Layout() {
             <NavLink to="/repartition" className={linkClass}>
               Répartition
             </NavLink>
+            <NavLink to="/export" className={linkClass}>
+              Export
+            </NavLink>
             <NavLink to="/settings" className={linkClass}>
               Réglages
             </NavLink>
