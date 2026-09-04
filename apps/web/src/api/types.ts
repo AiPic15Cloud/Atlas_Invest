@@ -221,6 +221,28 @@ export interface EmergencyFundProfile {
   updatedAt: string;
 }
 
+export type SubscriptionStatus = "NON_EVALUE" | "A_GARDER" | "A_SURVEILLER" | "A_RESILIER";
+export type UsageFrequency = "QUOTIDIEN" | "HEBDOMADAIRE" | "MENSUEL" | "RARE" | "JAMAIS";
+
+export interface Subscription {
+  id: string;
+  poste: string;
+  amount: string;
+  annualCost: number;
+  status: SubscriptionStatus;
+  lastUsedAt: string | null;
+  usageFrequency: UsageFrequency | null;
+  cancelReminderAt: string | null;
+  firstSeen: { year: number; month: number };
+  lastSeen: { year: number; month: number };
+  occurrences: number;
+}
+
+export interface SubscriptionsResponse {
+  subscriptions: Subscription[];
+  annualTotal: number;
+}
+
 export interface DashboardResponse {
   year: number;
   totals: { income: number; expenses: number; reste: number };

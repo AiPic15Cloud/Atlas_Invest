@@ -33,6 +33,9 @@ export function Layout() {
             <NavLink to="/epargne" className={linkClass}>
               Épargne
             </NavLink>
+            <NavLink to="/abonnements" className={linkClass}>
+              Abonnements
+            </NavLink>
             <NavLink to="/settings" className={linkClass}>
               Réglages
             </NavLink>

@@ -43,6 +43,7 @@ model User {
   budgetTemplate       BudgetTemplate?
   emergencyFundProfile EmergencyFundProfile?
   wastefulRules        WastefulRule[]
+  subscriptions        Subscription[]
 }
 
 model BankAccount {
@@ -207,4 +208,48 @@ model SavingsEnvelope {
 
   profile   EmergencyFundProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
   profileId String
+}
+
+enum SubscriptionStatus {
+  NON_EVALUE
+  A_GARDER
+  A_SURVEILLER
+  A_RESILIER
+}
+
+enum UsageFrequency {
+  QUOTIDIEN
+  HEBDOMADAIRE
+  MENSUEL
+  RARE
+  JAMAIS
+}
+
+// Abonnement derive des depenses recurrentes (meme poste, montant stable,
+// plusieurs mois consecutifs) : detecte automatiquement, puis enrichi par
+// l'utilisateur (usage reel, statut, rappel de resiliation).
+model Subscription {
+  id            String  @id @default(cuid())
+  userId        String
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  posteKey      String
+  merchantLabel String
+  amount        Decimal @db.Decimal(12, 2)
+
+  status         SubscriptionStatus @default(NON_EVALUE)
+  lastUsedAt     DateTime?
+  usageFrequency UsageFrequency?
+  cancelReminderAt DateTime?
+  dismissed      Boolean            @default(false)
+
+  firstSeenMonth Int
+  firstSeenYear  Int
+  lastSeenMonth  Int
+  lastSeenYear   Int
+  occurrences    Int      @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, posteKey])
 }
