@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { parseStatementText, type ImportGroup } from "../lib/importStatement";
 import { extractPdfText, PdfPasswordRequiredError } from "../lib/pdfText";
+import { extractExcelText } from "../lib/excelText";
+import { extractImageText } from "../lib/imageText";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import type { BankAccount, BudgetCategory, Expense, ExpensesResponse } from "../api/types";
 
@@ -37,7 +39,7 @@ export function ImportStatement({ year, month, accounts, onDone, onClose }: Impo
   const [bankAccountId, setBankAccountId] = useState(accounts[0]?.id ?? "");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [extractingPdf, setExtractingPdf] = useState(false);
+  const [extractionLabel, setExtractionLabel] = useState<string | null>(null);
   const [memory, setMemory] = useState<ImportMemory>({});
   const [existingExpenses, setExistingExpenses] = useState<Expense[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -78,8 +80,10 @@ export function ImportStatement({ year, month, accounts, onDone, onClose }: Impo
     const file = e.target.files?.[0];
     if (!file) return;
     setError(null);
-    if (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
-      setExtractingPdf(true);
+    const name = file.name.toLowerCase();
+
+    if (file.type === "application/pdf" || name.endsWith(".pdf")) {
+      setExtractionLabel("Lecture du PDF...");
       try {
         const content = await extractPdfText(file);
         if (!content.trim()) {
@@ -94,10 +98,47 @@ export function ImportStatement({ year, month, accounts, onDone, onClose }: Impo
           setError("Impossible de lire ce PDF. Essaie d'exporter ton relevé en CSV, ou colle-le directement en texte.");
         }
       } finally {
-        setExtractingPdf(false);
+        setExtractionLabel(null);
       }
       return;
     }
+
+    if (name.endsWith(".xlsx") || name.endsWith(".xls")) {
+      setExtractionLabel("Lecture du fichier Excel...");
+      try {
+        const content = await extractExcelText(file);
+        if (!content.trim()) {
+          setError("Aucune donnée trouvée dans ce fichier Excel.");
+          return;
+        }
+        setText(content);
+      } catch {
+        setError("Impossible de lire ce fichier Excel. Vérifie qu'il s'agit bien d'un .xlsx ou .xls valide.");
+      } finally {
+        setExtractionLabel(null);
+      }
+      return;
+    }
+
+    if (file.type.startsWith("image/") || /\.(jpe?g|png)$/.test(name)) {
+      setExtractionLabel("Reconnaissance de texte dans l'image...");
+      try {
+        const content = await extractImageText(file, (ratio) =>
+          setExtractionLabel(`Reconnaissance de texte dans l'image... (${Math.round(ratio * 100)} %)`),
+        );
+        if (!content.trim()) {
+          setError("Aucun texte n'a pu être reconnu dans cette image. Essaie une photo plus nette, ou colle le texte directement.");
+          return;
+        }
+        setText(content);
+      } catch {
+        setError("Impossible de lire cette image. Essaie une autre photo, ou colle le texte directement.");
+      } finally {
+        setExtractionLabel(null);
+      }
+      return;
+    }
+
     const content = await file.text();
     setText(content);
   }
@@ -167,8 +208,9 @@ export function ImportStatement({ year, month, accounts, onDone, onClose }: Impo
         <div className="mt-3 space-y-3">
           <p className="text-xs text-slate-500">
             Colle le contenu de ton relevé (export CSV de ta banque, ou une ligne « libellé montant » par
-            transaction), ou choisis un fichier .csv/.txt/.pdf. Seules les dépenses (montants négatifs ou colonne
-            débit) sont détectées. Pour un PDF, le texte est extrait directement dans ton navigateur.
+            transaction), ou choisis un fichier .csv/.txt/.pdf/.xlsx/.xls/.jpg/.png. Seules les dépenses (montants
+            négatifs ou colonne débit) sont détectées. Pour un PDF, un Excel ou une image, le texte est extrait
+            directement dans ton navigateur.
           </p>
           <textarea
             value={text}
@@ -177,19 +219,19 @@ export function ImportStatement({ year, month, accounts, onDone, onClose }: Impo
             placeholder={"Date;Libellé;Montant\n12/09/2026;CARREFOUR MARKET;-42,50\n13/09/2026;NETFLIX.COM;-13,49"}
             className="w-full input px-3 py-2 font-mono text-xs"
           />
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <input
               ref={fileInputRef}
               type="file"
-              accept=".csv,.txt,.pdf,application/pdf"
+              accept=".csv,.txt,.pdf,application/pdf,.xlsx,.xls,.jpg,.jpeg,.png,image/jpeg,image/png"
               onChange={handleFileChange}
-              disabled={extractingPdf}
+              disabled={extractionLabel !== null}
               className="text-xs"
             />
-            {extractingPdf && <span className="text-xs text-slate-500">Lecture du PDF...</span>}
+            {extractionLabel && <span className="text-xs text-slate-500">{extractionLabel}</span>}
             <button
               onClick={handleAnalyze}
-              disabled={!text.trim() || extractingPdf}
+              disabled={!text.trim() || extractionLabel !== null}
               className="btn btn-primary"
             >
               Analyser
