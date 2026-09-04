@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { parseStatementText, type ImportGroup } from "../lib/importStatement";
+import { extractPdfText } from "../lib/pdfText";
 import type { BankAccount, BudgetCategory, Expense, ExpensesResponse } from "../api/types";
 
 const CATEGORY_LABELS: Record<BudgetCategory, string> = {
@@ -36,6 +37,7 @@ export function ImportStatement({ year, month, accounts, onDone, onClose }: Impo
   const [bankAccountId, setBankAccountId] = useState(accounts[0]?.id ?? "");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [extractingPdf, setExtractingPdf] = useState(false);
   const [memory, setMemory] = useState<ImportMemory>({});
   const [existingExpenses, setExistingExpenses] = useState<Expense[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -75,6 +77,23 @@ export function ImportStatement({ year, month, accounts, onDone, onClose }: Impo
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    setError(null);
+    if (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
+      setExtractingPdf(true);
+      try {
+        const content = await extractPdfText(file);
+        if (!content.trim()) {
+          setError("Aucun texte n'a pu être extrait de ce PDF (relevé scanné en image, par exemple).");
+          return;
+        }
+        setText(content);
+      } catch {
+        setError("Impossible de lire ce PDF. Essaie d'exporter ton relevé en CSV, ou colle-le directement en texte.");
+      } finally {
+        setExtractingPdf(false);
+      }
+      return;
+    }
     const content = await file.text();
     setText(content);
   }
@@ -144,8 +163,8 @@ export function ImportStatement({ year, month, accounts, onDone, onClose }: Impo
         <div className="mt-3 space-y-3">
           <p className="text-xs text-slate-500">
             Colle le contenu de ton relevé (export CSV de ta banque, ou une ligne « libellé montant » par
-            transaction), ou choisis un fichier .csv/.txt. Seules les dépenses (montants négatifs ou colonne
-            débit) sont détectées.
+            transaction), ou choisis un fichier .csv/.txt/.pdf. Seules les dépenses (montants négatifs ou colonne
+            débit) sont détectées. Pour un PDF, le texte est extrait directement dans ton navigateur.
           </p>
           <textarea
             value={text}
@@ -155,10 +174,18 @@ export function ImportStatement({ year, month, accounts, onDone, onClose }: Impo
             className="w-full input px-3 py-2 font-mono text-xs"
           />
           <div className="flex items-center gap-2">
-            <input ref={fileInputRef} type="file" accept=".csv,.txt" onChange={handleFileChange} className="text-xs" />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,.txt,.pdf,application/pdf"
+              onChange={handleFileChange}
+              disabled={extractingPdf}
+              className="text-xs"
+            />
+            {extractingPdf && <span className="text-xs text-slate-500">Lecture du PDF...</span>}
             <button
               onClick={handleAnalyze}
-              disabled={!text.trim()}
+              disabled={!text.trim() || extractingPdf}
               className="btn btn-primary"
             >
               Analyser
