@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { QuickAddExpense } from "../components/QuickAddExpense";
+import { ImportStatement } from "../components/ImportStatement";
 import type { BankAccountsResponse, BudgetCategory, Expense, ExpensesResponse } from "../api/types";
 
 const MONTH_NAMES = [
@@ -42,6 +43,7 @@ export function BudgetDuMois() {
   const [copyOtherOpen, setCopyOtherOpen] = useState(false);
   const [copyFromYear, setCopyFromYear] = useState(year);
   const [copyFromMonth, setCopyFromMonth] = useState(month);
+  const [importOpen, setImportOpen] = useState(false);
 
   async function loadMonth() {
     try {
@@ -267,6 +269,9 @@ export function BudgetDuMois() {
             <button onClick={() => setCopyOtherOpen((v) => !v)} className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium hover:bg-slate-50">
               Copier un autre mois
             </button>
+            <button onClick={() => setImportOpen((v) => !v)} className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium hover:bg-slate-50">
+              Importer un relevé
+            </button>
             <button onClick={handleClearMonth} className="rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50">
               Vider le mois
             </button>
@@ -300,6 +305,16 @@ export function BudgetDuMois() {
         )}
         {actionError && <p className="mt-2 text-xs text-red-600">{actionError}</p>}
       </section>
+
+      {importOpen && (
+        <ImportStatement
+          year={year}
+          month={month}
+          accounts={availableAccounts}
+          onDone={loadMonth}
+          onClose={() => setImportOpen(false)}
+        />
+      )}
 
       <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
         <div className="flex items-center justify-between">

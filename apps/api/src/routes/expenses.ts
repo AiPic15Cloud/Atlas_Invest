@@ -174,6 +174,54 @@ expensesRouter.post("/", async (req, res) => {
   res.status(201).json({ expense: serializeExpense(expense, false) });
 });
 
+const bulkCreateSchema = z.object({
+  year: z.number().int().min(2000).max(2100),
+  month: z.number().int().min(1).max(12),
+  bankAccountId: z.string().min(1),
+  items: z
+    .array(
+      z.object({
+        poste: z.string().trim().min(1).max(80),
+        category: z.enum(CATEGORY_VALUES),
+        amount: z.number().finite().positive("Le montant doit être positif."),
+        note: z.string().trim().max(200).optional(),
+      }),
+    )
+    .min(1)
+    .max(500),
+});
+
+// Utilise par l'import de releve : integre en une fois toutes les lignes
+// validees par l'utilisateur (une par transaction detectee).
+expensesRouter.post("/bulk", async (req, res) => {
+  const parsed = bulkCreateSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Données invalides." });
+    return;
+  }
+  const { year, month, bankAccountId, items } = parsed.data;
+
+  const accountResult = await loadAccessibleAccount(req.userId!, bankAccountId);
+  if ("error" in accountResult) {
+    res.status(accountResult.error).json({ error: "Compte bancaire introuvable ou non accessible." });
+    return;
+  }
+
+  const { count } = await prisma.expense.createMany({
+    data: items.map((item) => ({
+      year,
+      month,
+      bankAccountId,
+      poste: item.poste,
+      category: item.category,
+      amount: item.amount,
+      note: item.note || null,
+    })),
+  });
+
+  res.status(201).json({ created: count });
+});
+
 async function loadOwnExpense(userId: string, expenseId: string) {
   const expense = await prisma.expense.findUnique({ where: { id: expenseId } });
   if (!expense) return { error: 404 as const };
