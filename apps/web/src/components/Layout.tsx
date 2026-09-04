@@ -21,6 +21,9 @@ export function Layout() {
             <NavLink to="/revenus" className={linkClass}>
               Revenus
             </NavLink>
+            <NavLink to="/budget-type" className={linkClass}>
+              Budget type
+            </NavLink>
             <NavLink to="/settings" className={linkClass}>
               Réglages
             </NavLink>

@@ -39,7 +39,8 @@ model User {
   household   Household? @relation(fields: [householdId], references: [id])
   householdId String?
 
-  bankAccounts BankAccount[]
+  bankAccounts   BankAccount[]
+  budgetTemplate BudgetTemplate?
 }
 
 model BankAccount {
@@ -72,4 +73,56 @@ model Income {
   bankAccountId String
 
   @@index([bankAccountId, year, month])
+}
+
+enum BudgetMethod {
+  CONFORTABLE_50_30_20
+  TENDUE_60_25_15
+  TRES_TENDUE_70_20_10
+  BASE_ZERO
+  QUATRE_VINGT_VINGT
+  CASCADES_3
+}
+
+enum BudgetCategory {
+  BESOINS
+  ENVIES
+  EPARGNE
+}
+
+// Budget de reference (un par utilisateur), construit une fois et utilise
+// comme comparaison pour le budget reel du mois (fonctionnalite a venir).
+model BudgetTemplate {
+  id            String       @id @default(cuid())
+  method        BudgetMethod
+  monthlyIncome Decimal      @db.Decimal(12, 2)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @unique
+
+  items BudgetItem[]
+}
+
+// Poste de depense type. Un poste peut avoir des sous-depenses (parentId) :
+// dans ce cas son montant affiche est la somme de ses enfants plutot que
+// monthlyAmount.
+model BudgetItem {
+  id            String         @id @default(cuid())
+  category      BudgetCategory
+  name          String
+  monthlyAmount Decimal        @default(0) @db.Decimal(12, 2)
+  essential     Boolean        @default(true)
+  sortOrder     Int            @default(0)
+  createdAt     DateTime       @default(now())
+
+  template   BudgetTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  templateId String
+
+  parent   BudgetItem?  @relation("SubItems", fields: [parentId], references: [id], onDelete: Cascade)
+  parentId String?
+  children BudgetItem[] @relation("SubItems")
+
+  @@index([templateId, category])
 }

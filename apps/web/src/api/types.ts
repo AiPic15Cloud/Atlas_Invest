@@ -62,3 +62,62 @@ export interface IncomeSummary {
   year: number;
   totalsByMonth: number[];
 }
+
+export type BudgetMethodKey =
+  | "CONFORTABLE_50_30_20"
+  | "TENDUE_60_25_15"
+  | "TRES_TENDUE_70_20_10"
+  | "BASE_ZERO"
+  | "QUATRE_VINGT_VINGT"
+  | "CASCADES_3";
+
+export interface BudgetMethodDefinition {
+  splitMode: "FIXED" | "CASCADE" | "ZERO_BASED";
+  label: string;
+  description: string;
+  besoinsPct?: number;
+  enviesPct?: number;
+  epargnePct?: number;
+}
+
+export type BudgetCategory = "BESOINS" | "ENVIES" | "EPARGNE";
+
+export interface BudgetItemNode {
+  id: string;
+  category: BudgetCategory;
+  name: string;
+  monthlyAmount: number;
+  displayedAmount: number;
+  essential: boolean;
+  sortOrder: number;
+  parentId: string | null;
+  children: BudgetItemNode[];
+}
+
+export interface BudgetBreakdown {
+  besoinsTarget: number;
+  enviesTarget: number;
+  epargneTarget: number;
+  besoinsActual: number;
+  enviesActual: number;
+  epargneActual: number;
+  resteAVivre: number;
+  capaciteEpargne: number;
+}
+
+export interface BudgetTemplate {
+  id: string;
+  method: BudgetMethodKey;
+  monthlyIncome: number;
+  breakdown: BudgetBreakdown;
+  items: {
+    besoins: BudgetItemNode[];
+    envies: BudgetItemNode[];
+    epargne: BudgetItemNode[];
+  };
+}
+
+export interface BudgetTemplateResponse {
+  template: BudgetTemplate | null;
+  methods: Record<BudgetMethodKey, BudgetMethodDefinition>;
+}
