@@ -75,7 +75,7 @@ export function Projection() {
   return (
     <div className="space-y-6">
       <div className="card p-3">
-        <span className="text-lg font-semibold">Projection et simulation</span>
+        <span className="text-lg font-semibold">🔮 Projection et simulation</span>
         <p className="mt-1 text-sm text-slate-500">
           Simule l'impact d'un changement de revenu ou d'une nouvelle dépense récurrente sur ton budget des
           prochains mois. Point de départ : ta moyenne mensuelle {now.getFullYear()}, modifiable ci-dessous.

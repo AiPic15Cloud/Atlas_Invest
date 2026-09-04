@@ -71,7 +71,7 @@ export function BudgetItemForm({
       <button
         type="submit"
         disabled={submitting}
-        className="rounded-md bg-pink-600 hover:bg-pink-700 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+        className="btn btn-primary px-3 py-1.5 text-xs disabled:opacity-50"
       >
         {submitting ? "..." : submitLabel}
       </button>

@@ -62,7 +62,7 @@ export function Economies() {
         <button onClick={() => setYear((y) => y - 1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100">
           ← {year - 1}
         </button>
-        <span className="text-lg font-semibold">Recommandations d'économies — {year}</span>
+        <span className="text-lg font-semibold">✂️ Recommandations d'économies — {year}</span>
         <button onClick={() => setYear((y) => y + 1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100">
           {year + 1} →
         </button>

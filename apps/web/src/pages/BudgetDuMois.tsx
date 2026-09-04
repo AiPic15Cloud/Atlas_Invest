@@ -190,7 +190,7 @@ export function BudgetDuMois() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold">Budget du mois</h1>
+      <h1 className="text-xl font-semibold">🗓️ Budget du mois</h1>
 
       <div className="flex items-center justify-between card p-3">
         <button onClick={() => goToMonth(-1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100">

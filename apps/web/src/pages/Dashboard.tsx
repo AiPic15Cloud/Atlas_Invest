@@ -52,7 +52,7 @@ export function Dashboard() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="page-title">Vue d'ensemble</h1>
+        <h1 className="page-title">📊 Vue d'ensemble</h1>
         <div className="flex items-center gap-1 rounded-lg bg-white p-1 shadow-sm ring-1 ring-slate-200/80">
           <button
             onClick={() => setYear((y) => y - 1)}

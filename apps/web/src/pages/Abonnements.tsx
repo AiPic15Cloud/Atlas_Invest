@@ -64,7 +64,7 @@ export function Abonnements() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold">Audit des abonnements</h1>
+        <h1 className="text-xl font-semibold">🔁 Audit des abonnements</h1>
         <p className="mt-1 text-sm text-slate-500">
           Détectés automatiquement à partir des dépenses qui reviennent sur au moins deux mois avec un montant
           stable, sur les 12 derniers mois.

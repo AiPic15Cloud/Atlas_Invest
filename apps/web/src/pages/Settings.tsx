@@ -131,7 +131,7 @@ export function Settings() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold">Réglages</h1>
+      <h1 className="text-xl font-semibold">⚙️ Réglages</h1>
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       <section className="card">

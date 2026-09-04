@@ -111,7 +111,7 @@ export function Export() {
           ← Précédent
         </button>
         <span className="text-lg font-semibold">
-          Export et rapport — {MONTH_LABELS[month - 1]} {year}
+          📤 Export et rapport — {MONTH_LABELS[month - 1]} {year}
         </span>
         <button onClick={() => shiftMonth(1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100">
           Suivant →

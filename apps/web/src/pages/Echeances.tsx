@@ -92,7 +92,7 @@ export function Echeances() {
   return (
     <div className="space-y-6">
       <div className="card p-3">
-        <span className="text-lg font-semibold">Calendrier des échéances</span>
+        <span className="text-lg font-semibold">⏰ Calendrier des échéances</span>
         <p className="mt-1 text-sm text-slate-500">
           Loyer, crédits, factures... déclare tes prélèvements récurrents pour les voir classés par date et
           repérer un risque de découvert avant qu'il arrive.

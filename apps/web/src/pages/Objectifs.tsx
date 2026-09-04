@@ -87,7 +87,7 @@ export function Objectifs() {
   return (
     <div className="space-y-6">
       <div className="card p-3">
-        <span className="text-lg font-semibold">Objectifs d'épargne</span>
+        <span className="text-lg font-semibold">🎯 Objectifs d'épargne</span>
         <p className="mt-1 text-sm text-slate-500">
           Donne un nom à tes projets (voyage, apport immobilier, mariage...) et suis leur progression, en plus de
           ton épargne de précaution.

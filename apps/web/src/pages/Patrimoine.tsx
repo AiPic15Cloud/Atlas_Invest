@@ -67,6 +67,7 @@ export function Patrimoine() {
 
   return (
     <div className="space-y-6">
+      <h1 className="page-title">🏛️ Patrimoine</h1>
       <div className="card">
         <p className="text-xs text-slate-500">Patrimoine net du foyer</p>
         <p className="mt-1 text-2xl font-semibold">{currency.format(data.householdNetWorth)}</p>

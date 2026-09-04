@@ -33,7 +33,7 @@ export function Historique() {
   return (
     <div className="space-y-6">
       <div className="card p-3">
-        <span className="text-lg font-semibold">Historique des corrections</span>
+        <span className="text-lg font-semibold">🕒 Historique des corrections</span>
         <p className="mt-1 text-sm text-slate-500">
           Journal de tes corrections manuelles (dépenses marquées utiles/inutiles, statuts d'abonnements changés),
           pour garder une trace de ce qui a été ajusté et quand.

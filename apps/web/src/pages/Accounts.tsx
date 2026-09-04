@@ -78,7 +78,7 @@ export function Accounts() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold">Comptes bancaires — {household?.name}</h1>
+        <h1 className="text-xl font-semibold">🏦 Comptes bancaires — {household?.name}</h1>
         <p className="text-sm text-slate-500">
           Code d'invitation du foyer : <span className="font-mono font-semibold">{household?.inviteCode}</span>
         </p>

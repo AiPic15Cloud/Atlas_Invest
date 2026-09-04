@@ -43,7 +43,7 @@ export function EpargnePrecaution() {
   if (!profile || retaking) {
     return (
       <div className="space-y-4">
-        <h1 className="text-xl font-semibold">Épargne de précaution</h1>
+        <h1 className="text-xl font-semibold">🛡️ Épargne de précaution</h1>
         <EmergencyFundQuestionnaire
           initialAnswers={profile?.answers}
           onSubmit={handleQuestionnaireSubmit}
@@ -56,7 +56,7 @@ export function EpargnePrecaution() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Épargne de précaution</h1>
+        <h1 className="text-xl font-semibold">🛡️ Épargne de précaution</h1>
         <button onClick={() => setRetaking(true)} className="text-sm link">
           Refaire le questionnaire
         </button>

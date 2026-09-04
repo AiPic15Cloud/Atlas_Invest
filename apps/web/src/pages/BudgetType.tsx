@@ -99,7 +99,7 @@ export function BudgetType() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold">Budget type</h1>
+          <h1 className="text-xl font-semibold">📁 Budget type</h1>
           <p className="text-sm text-slate-500">{method.label}</p>
         </div>
         <button onClick={() => setChangingMethod(true)} className="text-sm link">
@@ -301,7 +301,7 @@ function MethodPicker({
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">
-        {initialMethod ? "Changer de méthode de budget" : "Construis ton budget type"}
+        {initialMethod ? "📁 Changer de méthode de budget" : "📁 Construis ton budget type"}
       </h1>
       <p className="text-sm text-slate-600">
         Choisis la méthode de budgétisation qui te servira de référence pour comparer tes dépenses réelles.
