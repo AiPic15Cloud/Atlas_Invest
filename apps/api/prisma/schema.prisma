@@ -47,6 +47,7 @@ model User {
   recurringCharges     RecurringCharge[]
   wealthItems          WealthItem[]
   savingsGoals         SavingsGoal[]
+  correctionLogs       CorrectionLog[]
 }
 
 model BankAccount {
@@ -302,6 +303,27 @@ model WealthItem {
   userId String
 
   @@index([userId])
+}
+
+enum CorrectionType {
+  WASTEFUL_EXPENSE
+  SUBSCRIPTION_STATUS
+}
+
+// Journal des corrections manuelles de l'utilisateur (marquage
+// utile/inutile, changement de statut d'abonnement...), pour transparence
+// et audit : rien ici n'est modifiable, seulement consultable.
+model CorrectionLog {
+  id        String         @id @default(cuid())
+  type      CorrectionType
+  label     String
+  detail    String?
+  createdAt DateTime       @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@index([userId, createdAt])
 }
 
 // Objectif d'epargne nomme (ex. "Voyage au Japon", "Apport immobilier"),

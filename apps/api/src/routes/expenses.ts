@@ -468,6 +468,14 @@ expensesRouter.patch("/:id/wasteful", async (req, res) => {
       },
       data: { wasteful: parsed.data.wasteful },
     }),
+    prisma.correctionLog.create({
+      data: {
+        userId: req.userId!,
+        type: "WASTEFUL_EXPENSE",
+        label: `${result.expense.poste} marqué comme ${parsed.data.wasteful ? "inutile" : "utile"}`,
+        detail: `${result.expense.amount.toString()} € — ${result.expense.month}/${result.expense.year}`,
+      },
+    }),
   ]);
 
   const expense = await prisma.expense.findUniqueOrThrow({

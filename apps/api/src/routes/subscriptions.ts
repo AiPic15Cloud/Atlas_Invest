@@ -12,6 +12,12 @@ subscriptionsRouter.use(requireAuth);
 
 const STATUS_VALUES = ["NON_EVALUE", "A_GARDER", "A_SURVEILLER", "A_RESILIER"] as const;
 const USAGE_VALUES = ["QUOTIDIEN", "HEBDOMADAIRE", "MENSUEL", "RARE", "JAMAIS"] as const;
+const STATUS_LABELS: Record<(typeof STATUS_VALUES)[number], string> = {
+  NON_EVALUE: "Non évalué",
+  A_GARDER: "À garder",
+  A_SURVEILLER: "À surveiller",
+  A_RESILIER: "À résilier",
+};
 
 const AMOUNT_TOLERANCE_RATIO = 0.05; // +/- 5%
 const AMOUNT_TOLERANCE_MIN = 1; // au moins 1 euro de marge
@@ -164,7 +170,23 @@ subscriptionsRouter.patch("/:id", async (req, res) => {
   if (data.lastUsedAt) data.lastUsedAt = new Date(data.lastUsedAt as string);
   if (data.cancelReminderAt) data.cancelReminderAt = new Date(data.cancelReminderAt as string);
 
-  const sub = await prisma.subscription.update({ where: { id: result.sub.id }, data });
+  const statusChanged = parsed.data.status && parsed.data.status !== result.sub.status;
+
+  const [sub] = await prisma.$transaction([
+    prisma.subscription.update({ where: { id: result.sub.id }, data }),
+    ...(statusChanged
+      ? [
+          prisma.correctionLog.create({
+            data: {
+              userId: req.userId!,
+              type: "SUBSCRIPTION_STATUS" as const,
+              label: `${result.sub.merchantLabel} : statut changé en « ${STATUS_LABELS[parsed.data.status!]} »`,
+              detail: `Précédemment : ${STATUS_LABELS[result.sub.status]}`,
+            },
+          }),
+        ]
+      : []),
+  ]);
   res.json({ subscription: serializeSubscription(sub) });
 });
 

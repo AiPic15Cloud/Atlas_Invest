@@ -17,6 +17,7 @@ import { recurringChargesRouter } from "./routes/recurringCharges.js";
 import { wealthRouter } from "./routes/wealth.js";
 import { savingsGoalsRouter } from "./routes/savingsGoals.js";
 import { householdSplitRouter } from "./routes/householdSplit.js";
+import { correctionHistoryRouter } from "./routes/correctionHistory.js";
 
 const app = express();
 
@@ -42,6 +43,7 @@ app.use("/api/recurring-charges", recurringChargesRouter);
 app.use("/api/wealth", wealthRouter);
 app.use("/api/savings-goals", savingsGoalsRouter);
 app.use("/api/household-split", householdSplitRouter);
+app.use("/api/correction-history", correctionHistoryRouter);
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);

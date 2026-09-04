@@ -54,6 +54,9 @@ export function Layout() {
             <NavLink to="/export" className={linkClass}>
               Export
             </NavLink>
+            <NavLink to="/historique" className={linkClass}>
+              Historique
+            </NavLink>
             <NavLink to="/settings" className={linkClass}>
               Réglages
             </NavLink>

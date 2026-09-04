@@ -361,6 +361,20 @@ export interface HouseholdSplitResponse {
   fallbackToEqual: boolean;
 }
 
+export type CorrectionType = "WASTEFUL_EXPENSE" | "SUBSCRIPTION_STATUS";
+
+export interface CorrectionLogEntry {
+  id: string;
+  type: CorrectionType;
+  label: string;
+  detail: string | null;
+  createdAt: string;
+}
+
+export interface CorrectionHistoryResponse {
+  logs: CorrectionLogEntry[];
+}
+
 export interface DashboardResponse {
   year: number;
   totals: { income: number; expenses: number; reste: number };
