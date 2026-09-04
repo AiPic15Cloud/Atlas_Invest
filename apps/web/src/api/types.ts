@@ -343,6 +343,24 @@ export interface SavingsGoalsResponse {
   goals: SavingsGoal[];
 }
 
+export type HouseholdSplitMode = "EGAL" | "PROPORTIONNEL";
+
+export interface HouseholdSplitMember {
+  userId: string;
+  firstName: string;
+  isYou: boolean;
+  income: number;
+  share: number;
+  amountDue: number;
+}
+
+export interface HouseholdSplitResponse {
+  jointExpensesTotal: number;
+  members: HouseholdSplitMember[];
+  mode: HouseholdSplitMode;
+  fallbackToEqual: boolean;
+}
+
 export interface DashboardResponse {
   year: number;
   totals: { income: number; expenses: number; reste: number };
