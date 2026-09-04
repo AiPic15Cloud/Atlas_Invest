@@ -133,6 +133,8 @@ export interface Expense {
   bankAccountId: string;
   bankAccountName: string;
   unusual: boolean;
+  wasteful: boolean;
+  wastefulReviewed: boolean;
   createdAt: string;
 }
 
@@ -147,8 +149,15 @@ export interface BudgetComparison {
 export interface ExpensesSummary {
   totalSpent: number;
   totalIncome: number;
+  wastefulTotal: number;
   byCategory: { besoins: number; envies: number; epargne: number };
   budgetComparison: BudgetComparison | null;
+}
+
+export interface WastefulSummary {
+  year: number;
+  total: number;
+  byPoste: { poste: string; count: number; total: number }[];
 }
 
 export interface ExpensesResponse {

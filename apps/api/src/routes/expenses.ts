@@ -6,6 +6,7 @@ import { loadAccessibleAccount, listAccessibleAccounts } from "../utils/accountA
 import { shiftMonth } from "../utils/dateMath.js";
 import { buildItemTree, flattenLeafItems } from "../utils/budgetItemTree.js";
 import { computeBudgetBreakdown, type BudgetMethodKey } from "../constants/budgetMethods.js";
+import { normalizePosteKey, computeAutoWasteful } from "../constants/wastefulRules.js";
 import type { Expense } from "@prisma/client";
 
 export const expensesRouter = Router();
@@ -26,8 +27,24 @@ function serializeExpense(expense: Expense & { bankAccount: { name: string } }, 
     bankAccountId: expense.bankAccountId,
     bankAccountName: expense.bankAccount.name,
     unusual,
+    wasteful: expense.wasteful,
+    wastefulReviewed: expense.wastefulReviewed,
     createdAt: expense.createdAt,
   };
+}
+
+/** Regle apprise sur le poste (si l'utilisateur l'a deja corrige), sinon regle automatique V1. */
+async function resolveWasteful(
+  userId: string,
+  poste: string,
+  amount: number,
+  category: "BESOINS" | "ENVIES" | "EPARGNE",
+): Promise<boolean> {
+  const rule = await prisma.wastefulRule.findUnique({
+    where: { userId_posteKey: { userId, posteKey: normalizePosteKey(poste) } },
+  });
+  if (rule) return rule.wasteful;
+  return computeAutoWasteful(poste, amount, category);
 }
 
 async function computeUnusualIds(
@@ -100,6 +117,7 @@ expensesRouter.get("/", async (req, res) => {
 
   const totalSpent = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
   const totalIncome = incomes.reduce((sum, i) => sum + Number(i.amount), 0);
+  const wastefulTotal = expenses.filter((e) => e.wasteful).reduce((sum, e) => sum + Number(e.amount), 0);
   const byCategory = { besoins: 0, envies: 0, epargne: 0 };
   for (const e of expenses) {
     if (e.category === "BESOINS") byCategory.besoins += Number(e.amount);
@@ -139,7 +157,7 @@ expensesRouter.get("/", async (req, res) => {
 
   res.json({
     expenses: expenses.map((e) => serializeExpense(e, unusualIds.has(e.id))),
-    summary: { totalSpent, totalIncome, byCategory, budgetComparison },
+    summary: { totalSpent, totalIncome, wastefulTotal, byCategory, budgetComparison },
   });
 });
 
@@ -166,8 +184,10 @@ expensesRouter.post("/", async (req, res) => {
     return;
   }
 
+  const wasteful = await resolveWasteful(req.userId!, parsed.data.poste, parsed.data.amount, parsed.data.category);
+
   const expense = await prisma.expense.create({
-    data: { ...parsed.data, note: parsed.data.note || null },
+    data: { ...parsed.data, note: parsed.data.note || null, wasteful },
     include: { bankAccount: { select: { name: true } } },
   });
 
@@ -207,6 +227,9 @@ expensesRouter.post("/bulk", async (req, res) => {
     return;
   }
 
+  const rules = await prisma.wastefulRule.findMany({ where: { userId: req.userId! } });
+  const ruleMap = new Map(rules.map((r) => [r.posteKey, r.wasteful]));
+
   const { count } = await prisma.expense.createMany({
     data: items.map((item) => ({
       year,
@@ -216,6 +239,7 @@ expensesRouter.post("/bulk", async (req, res) => {
       category: item.category,
       amount: item.amount,
       note: item.note || null,
+      wasteful: ruleMap.get(normalizePosteKey(item.poste)) ?? computeAutoWasteful(item.poste, item.amount, item.category),
     })),
   });
 
@@ -311,6 +335,8 @@ expensesRouter.post("/copy-month", async (req, res) => {
         amount: e.amount,
         note: e.note,
         bankAccountId: e.bankAccountId,
+        wasteful: e.wasteful,
+        wastefulReviewed: e.wastefulReviewed,
       })),
     }),
   ]);
@@ -354,6 +380,9 @@ expensesRouter.post("/copy-budget-template", async (req, res) => {
   const accounts = await listAccessibleAccounts(req.userId!);
   const accountIds = accounts.map((a) => a.id);
 
+  const rules = await prisma.wastefulRule.findMany({ where: { userId: req.userId! } });
+  const ruleMap = new Map(rules.map((r) => [r.posteKey, r.wasteful]));
+
   await prisma.$transaction([
     prisma.expense.deleteMany({ where: { year, month, bankAccountId: { in: accountIds } } }),
     prisma.expense.createMany({
@@ -364,6 +393,9 @@ expensesRouter.post("/copy-budget-template", async (req, res) => {
         category: leaf.category as "BESOINS" | "ENVIES" | "EPARGNE",
         amount: leaf.displayedAmount,
         bankAccountId,
+        wasteful:
+          ruleMap.get(normalizePosteKey(leaf.name)) ??
+          computeAutoWasteful(leaf.name, leaf.displayedAmount, leaf.category as "BESOINS" | "ENVIES" | "EPARGNE"),
       })),
     }),
   ]);
@@ -390,4 +422,91 @@ expensesRouter.post("/clear-month", async (req, res) => {
   });
 
   res.json({ deleted: count });
+});
+
+const wastefulSchema = z.object({
+  wasteful: z.boolean(),
+});
+
+// Correction manuelle du marquage "inutile" : l'utilisateur valide ou
+// corrige la depense, et ce choix est retenu (WastefulRule) pour etre
+// applique automatiquement aux futures depenses du meme poste, ainsi qu'aux
+// depenses existantes du meme poste qui n'ont pas deja ete corrigees
+// individuellement.
+expensesRouter.patch("/:id/wasteful", async (req, res) => {
+  const result = await loadOwnExpense(req.userId!, req.params.id);
+  if ("error" in result) {
+    res.status(result.error).json({ error: result.error === 404 ? "Dépense introuvable." : "Accès refusé." });
+    return;
+  }
+  const parsed = wastefulSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Données invalides." });
+    return;
+  }
+
+  const posteKey = normalizePosteKey(result.expense.poste);
+  const accounts = await listAccessibleAccounts(req.userId!);
+  const accountIds = accounts.map((a) => a.id);
+
+  await prisma.$transaction([
+    prisma.expense.update({
+      where: { id: result.expense.id },
+      data: { wasteful: parsed.data.wasteful, wastefulReviewed: true },
+    }),
+    prisma.wastefulRule.upsert({
+      where: { userId_posteKey: { userId: req.userId!, posteKey } },
+      create: { userId: req.userId!, posteKey, wasteful: parsed.data.wasteful },
+      update: { wasteful: parsed.data.wasteful },
+    }),
+    prisma.expense.updateMany({
+      where: {
+        bankAccountId: { in: accountIds },
+        poste: { equals: result.expense.poste, mode: "insensitive" },
+        wastefulReviewed: false,
+        id: { not: result.expense.id },
+      },
+      data: { wasteful: parsed.data.wasteful },
+    }),
+  ]);
+
+  const expense = await prisma.expense.findUniqueOrThrow({
+    where: { id: result.expense.id },
+    include: { bankAccount: { select: { name: true } } },
+  });
+  res.json({ expense: serializeExpense(expense, false) });
+});
+
+const wastefulSummaryQuerySchema = z.object({
+  year: z.coerce.number().int().min(2000).max(2100),
+});
+
+expensesRouter.get("/wasteful-summary", async (req, res) => {
+  const parsed = wastefulSummaryQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Année invalide." });
+    return;
+  }
+  const accounts = await listAccessibleAccounts(req.userId!);
+  const accountIds = accounts.map((a) => a.id);
+
+  const expenses = await prisma.expense.findMany({
+    where: { year: parsed.data.year, wasteful: true, bankAccountId: { in: accountIds } },
+    select: { poste: true, amount: true },
+  });
+
+  const byPoste = new Map<string, { poste: string; count: number; total: number }>();
+  for (const e of expenses) {
+    const key = normalizePosteKey(e.poste);
+    const entry = byPoste.get(key) ?? { poste: e.poste, count: 0, total: 0 };
+    entry.count += 1;
+    entry.total += Number(e.amount);
+    byPoste.set(key, entry);
+  }
+
+  res.json({
+    year: parsed.data.year,
+    total: expenses.reduce((sum, e) => sum + Number(e.amount), 0),
+    byPoste: [...byPoste.values()].sort((a, b) => b.total - a.total),
+  });
 });

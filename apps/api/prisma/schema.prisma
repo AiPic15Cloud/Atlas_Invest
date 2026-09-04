@@ -39,9 +39,10 @@ model User {
   household   Household? @relation(fields: [householdId], references: [id])
   householdId String?
 
-  bankAccounts        BankAccount[]
-  budgetTemplate      BudgetTemplate?
+  bankAccounts         BankAccount[]
+  budgetTemplate       BudgetTemplate?
   emergencyFundProfile EmergencyFundProfile?
+  wastefulRules        WastefulRule[]
 }
 
 model BankAccount {
@@ -142,10 +143,32 @@ model Expense {
   note      String?
   createdAt DateTime       @default(now())
 
+  // Marquage "depense inutile" (achat impulsif / faible valeur percue).
+  // wastefulReviewed = l'utilisateur a explicitement valide/corrige ce
+  // marquage pour cette depense precise (elle n'est alors plus recalculee
+  // par une regle apprise sur le poste).
+  wasteful         Boolean @default(false)
+  wastefulReviewed Boolean @default(false)
+
   bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
   bankAccountId String
 
   @@index([bankAccountId, year, month])
+}
+
+// Regle apprise a partir des corrections de l'utilisateur : quand il
+// marque un poste comme utile/inutile, on retient ce choix pour l'appliquer
+// automatiquement aux prochaines depenses du meme poste.
+model WastefulRule {
+  id       String  @id @default(cuid())
+  userId   String
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  posteKey String
+  wasteful Boolean
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, posteKey])
 }
 
 // Reponses au questionnaire de vulnerabilite financiere (une par utilisateur)

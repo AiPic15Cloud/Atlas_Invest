@@ -98,6 +98,11 @@ export function BudgetDuMois() {
     await loadMonth();
   }
 
+  async function handleToggleWasteful(id: string, wasteful: boolean) {
+    await apiFetch(`/api/expenses/${id}/wasteful`, { method: "PATCH", body: JSON.stringify({ wasteful }) });
+    await loadMonth();
+  }
+
   async function handleCopyTemplate() {
     const account = availableAccounts[0];
     if (!account) {
@@ -207,6 +212,16 @@ export function BudgetDuMois() {
                 </li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {summary.wastefulTotal > 0 && (
+          <div className="mt-3 rounded-md bg-orange-50 p-3 text-sm text-orange-700">
+            <p>
+              <span className="font-medium">{currency.format(summary.wastefulTotal)}</span> de dépenses jugées
+              inutiles ce mois — autant de gain potentiel si elles étaient évitées. Corrige les marquages qui ne te
+              semblent pas justes directement sur chaque dépense ci-dessous.
+            </p>
           </div>
         )}
 
@@ -336,7 +351,7 @@ export function BudgetDuMois() {
         ) : (
           <ul className="mt-2">
             {filteredExpenses.map((expense) => (
-              <ExpenseRow key={expense.id} expense={expense} onDelete={handleDelete} />
+              <ExpenseRow key={expense.id} expense={expense} onDelete={handleDelete} onToggleWasteful={handleToggleWasteful} />
             ))}
           </ul>
         )}
@@ -345,7 +360,15 @@ export function BudgetDuMois() {
   );
 }
 
-function ExpenseRow({ expense, onDelete }: { expense: Expense; onDelete: (id: string) => void }) {
+function ExpenseRow({
+  expense,
+  onDelete,
+  onToggleWasteful,
+}: {
+  expense: Expense;
+  onDelete: (id: string) => void;
+  onToggleWasteful: (id: string, wasteful: boolean) => void;
+}) {
   return (
     <li className="flex items-center justify-between border-b border-slate-100 py-2 last:border-0">
       <div>
@@ -356,6 +379,11 @@ function ExpenseRow({ expense, onDelete }: { expense: Expense; onDelete: (id: st
               inhabituelle
             </span>
           )}
+          {expense.wasteful && (
+            <span className="ml-2 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-normal text-orange-700">
+              inutile
+            </span>
+          )}
         </p>
         <p className="text-xs text-slate-500">
           {CATEGORY_LABELS[expense.category]} · {expense.bankAccountName}
@@ -363,6 +391,12 @@ function ExpenseRow({ expense, onDelete }: { expense: Expense; onDelete: (id: st
       </div>
       <div className="flex items-center gap-3">
         <span className="text-sm font-semibold">{currency.format(Number(expense.amount))}</span>
+        <button
+          onClick={() => onToggleWasteful(expense.id, !expense.wasteful)}
+          className="text-xs text-slate-400 hover:text-slate-700"
+        >
+          {expense.wasteful ? "Marquer utile" : "Marquer inutile"}
+        </button>
         <button onClick={() => onDelete(expense.id)} className="text-xs text-slate-400 hover:text-red-600">
           Supprimer
         </button>
