@@ -7,6 +7,7 @@ export function toPublicUser(user: User) {
     firstName: user.firstName,
     householdId: user.householdId,
     shareDetailsWithHousehold: user.shareDetailsWithHousehold,
+    twoFactorEnabled: user.twoFactorEnabled,
     createdAt: user.createdAt,
   };
 }

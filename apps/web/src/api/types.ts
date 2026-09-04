@@ -4,7 +4,19 @@ export interface PublicUser {
   firstName: string;
   householdId: string | null;
   shareDetailsWithHousehold: boolean;
+  twoFactorEnabled: boolean;
   createdAt: string;
+}
+
+export interface TwoFactorStatus {
+  enabled: boolean;
+  remainingBackupCodes: number;
+}
+
+export interface TwoFactorSetupResponse {
+  secret: string;
+  otpAuthUrl: string;
+  qrCodeDataUrl: string;
 }
 
 export interface HouseholdMember {

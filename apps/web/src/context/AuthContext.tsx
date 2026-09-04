@@ -2,12 +2,15 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { apiFetch, getAuthToken, setAuthToken } from "../api/client";
 import type { Household, PublicUser } from "../api/types";
 
+export type LoginResult = { requiresTwoFactor: false } | { requiresTwoFactor: true; pendingToken: string };
+
 interface AuthContextValue {
   user: PublicUser | null;
   household: Household | null;
   loading: boolean;
   register: (email: string, password: string, firstName: string) => Promise<void>;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<LoginResult>;
+  completeTwoFactorLogin: (pendingToken: string, code: string) => Promise<void>;
   logout: () => void;
   refresh: () => Promise<void>;
 }
@@ -56,14 +59,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const login = useCallback(async (email: string, password: string) => {
-    const data = await apiFetch<{ token: string; user: PublicUser }>("/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    });
-    setAuthToken(data.token);
-    await refresh();
-  }, [refresh]);
+  const login = useCallback(
+    async (email: string, password: string): Promise<LoginResult> => {
+      const data = await apiFetch<
+        { token: string; user: PublicUser } | { requiresTwoFactor: true; pendingToken: string }
+      >("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+      if ("requiresTwoFactor" in data && data.requiresTwoFactor) {
+        return { requiresTwoFactor: true, pendingToken: data.pendingToken };
+      }
+      setAuthToken((data as { token: string }).token);
+      await refresh();
+      return { requiresTwoFactor: false };
+    },
+    [refresh],
+  );
+
+  const completeTwoFactorLogin = useCallback(
+    async (pendingToken: string, code: string) => {
+      const data = await apiFetch<{ token: string; user: PublicUser }>("/api/auth/2fa-login", {
+        method: "POST",
+        body: JSON.stringify({ pendingToken, code }),
+      });
+      setAuthToken(data.token);
+      await refresh();
+    },
+    [refresh],
+  );
 
   const logout = useCallback(() => {
     setAuthToken(null);
@@ -72,7 +96,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, household, loading, register, login, logout, refresh }}>
+    <AuthContext.Provider
+      value={{ user, household, loading, register, login, completeTwoFactorLogin, logout, refresh }}
+    >
       {children}
     </AuthContext.Provider>
   );

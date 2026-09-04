@@ -36,6 +36,12 @@ model User {
   // individuels avec le reste du foyer, ou seulement les totaux consolides.
   shareDetailsWithHousehold Boolean @default(true)
 
+  // Authentification a deux facteurs (TOTP). twoFactorSecret est renseigne
+  // des l'etape de configuration mais twoFactorEnabled ne passe a true
+  // qu'une fois le premier code verifie.
+  twoFactorSecret  String?
+  twoFactorEnabled Boolean @default(false)
+
   household   Household? @relation(fields: [householdId], references: [id])
   householdId String?
 
@@ -48,6 +54,7 @@ model User {
   wealthItems          WealthItem[]
   savingsGoals         SavingsGoal[]
   correctionLogs       CorrectionLog[]
+  twoFactorBackupCodes TwoFactorBackupCode[]
 }
 
 model BankAccount {
@@ -324,6 +331,20 @@ model CorrectionLog {
   userId String
 
   @@index([userId, createdAt])
+}
+
+// Code de secours 2FA (usage unique) : genere en meme temps que
+// l'activation, stocke hache (jamais en clair).
+model TwoFactorBackupCode {
+  id        String    @id @default(cuid())
+  codeHash  String
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@index([userId])
 }
 
 // Objectif d'epargne nomme (ex. "Voyage au Japon", "Apport immobilier"),
