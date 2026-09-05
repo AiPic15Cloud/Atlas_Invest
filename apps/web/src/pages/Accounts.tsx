@@ -14,25 +14,36 @@ const TYPE_LABELS: Record<BankAccountType, string> = {
   AUTRE: "Autre",
 };
 
-function AccountRow({ account, onDelete }: { account: BankAccount; onDelete: (id: string) => void }) {
+// Un dégradé fixe par type de compte (pas de couleur aléatoire) — repère
+// visuel constant, dans l'esprit des visuels de carte bancaire des
+// références (dégradé plein, chiffres en clair).
+const TYPE_GRADIENT: Record<BankAccountType, string> = {
+  COURANT: "from-violet-600 to-indigo-500",
+  LIVRET: "from-emerald-600 to-teal-500",
+  PRO: "from-slate-700 to-slate-500",
+  JOINT: "from-pink-600 to-rose-500",
+  AUTRE: "from-amber-600 to-orange-500",
+};
+
+function AccountCard({ account, onDelete }: { account: BankAccount; onDelete: (id: string) => void }) {
   const currency = useCurrencyFormatter();
   return (
-    <li className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 py-2 last:border-0">
-      <div>
-        <p className="text-sm font-medium">{account.name}</p>
-        <p className="text-xs text-slate-500">{TYPE_LABELS[account.type]}</p>
-      </div>
-      <div className="flex items-center gap-3">
-        <span className="text-sm font-semibold">{currency.format(Number(account.initialBalance))}</span>
+    <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-br p-4 text-white shadow-sm ${TYPE_GRADIENT[account.type]}`}>
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm font-semibold">{account.name}</p>
+          <p className="text-xs text-white/70">{TYPE_LABELS[account.type]}</p>
+        </div>
         <button
           onClick={() => onDelete(account.id)}
-          className="text-xs text-slate-400 hover:text-red-600"
+          className="rounded-md px-1.5 py-0.5 text-xs text-white/70 hover:bg-white/10 hover:text-white"
           aria-label={`Supprimer ${account.name}`}
         >
           Supprimer
         </button>
       </div>
-    </li>
+      <p className="mt-5 text-2xl font-bold tracking-tight">{currency.format(Number(account.initialBalance))}</p>
+    </div>
   );
 }
 
@@ -104,11 +115,11 @@ export function Accounts() {
         {data.mine.length === 0 && !addingPersonal && (
           <p className="mt-2 text-sm text-slate-500">Aucun compte pour l'instant.</p>
         )}
-        <ul className="mt-2">
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
           {data.mine.map((account) => (
-            <AccountRow key={account.id} account={account} onDelete={handleDelete} />
+            <AccountCard key={account.id} account={account} onDelete={handleDelete} />
           ))}
-        </ul>
+        </div>
         {addingPersonal && (
           <AccountForm variant="personal" onSubmit={handleCreate} onCancel={() => setAddingPersonal(false)} />
         )}
@@ -126,11 +137,11 @@ export function Accounts() {
         {data.joint.length === 0 && !addingJoint && (
           <p className="mt-2 text-sm text-slate-500">Aucun compte joint pour l'instant.</p>
         )}
-        <ul className="mt-2">
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
           {data.joint.map((account) => (
-            <AccountRow key={account.id} account={account} onDelete={handleDelete} />
+            <AccountCard key={account.id} account={account} onDelete={handleDelete} />
           ))}
-        </ul>
+        </div>
         {addingJoint && (
           <AccountForm variant="joint" onSubmit={handleCreate} onCancel={() => setAddingJoint(false)} />
         )}

@@ -46,6 +46,17 @@ const CATEGORY_TEXT_CLASS: Record<ExpenseCategory, string> = {
 
 const CATEGORY_ORDER: ExpenseCategory[] = ["BESOINS", "ENVIES", "EPARGNE", "INVESTISSEMENT", "REMBOURSEMENT_DETTE"];
 
+// Avatar circulaire par poste (spec design : puce colorée devant chaque
+// ligne, dans l'esprit des listes de transactions des références) —
+// mêmes couleurs que CATEGORY_TEXT_CLASS, juste en fond teinté.
+const CATEGORY_AVATAR_CLASS: Record<ExpenseCategory, string> = {
+  BESOINS: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400",
+  ENVIES: "bg-pink-100 text-pink-700 dark:bg-pink-500/15 dark:text-pink-400",
+  EPARGNE: "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-400",
+  INVESTISSEMENT: "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-400",
+  REMBOURSEMENT_DETTE: "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300",
+};
+
 function shiftMonth(year: number, month: number, delta: number) {
   const zeroBased = month - 1 + delta;
   const newYear = year + Math.floor(zeroBased / 12);
@@ -432,21 +443,29 @@ function ExpenseRow({
   const currency = useCurrencyFormatter();
   return (
     <li className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 py-2 last:border-0">
-      <div>
-        <p className="text-sm font-medium">
-          {expense.poste}
-          {expense.unusual && (
-            <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-normal text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
-              inhabituelle
-            </span>
-          )}
-          {expense.feeling === "REGRET" && (
-            <span className="ml-2 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-normal text-orange-700 dark:bg-orange-900/50 dark:text-orange-300">
-              regrettée
-            </span>
-          )}
-        </p>
-        <p className="text-xs text-slate-500">{expense.bankAccountName}</p>
+      <div className="flex items-center gap-3">
+        <div
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${CATEGORY_AVATAR_CLASS[expense.category]}`}
+          aria-hidden="true"
+        >
+          {expense.poste.charAt(0).toUpperCase()}
+        </div>
+        <div>
+          <p className="text-sm font-medium">
+            {expense.poste}
+            {expense.unusual && (
+              <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-normal text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
+                inhabituelle
+              </span>
+            )}
+            {expense.feeling === "REGRET" && (
+              <span className="ml-2 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-normal text-orange-700 dark:bg-orange-900/50 dark:text-orange-300">
+                regrettée
+              </span>
+            )}
+          </p>
+          <p className="text-xs text-slate-500">{expense.bankAccountName}</p>
+        </div>
       </div>
       <div className="flex items-center gap-3">
         <span className="text-sm font-semibold">{currency.format(Number(expense.amount))}</span>
