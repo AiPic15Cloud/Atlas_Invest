@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { IconMenu, IconX, IconLogout } from "./icons";
+import { IconX, IconLogout } from "./icons";
 
 interface NavItem {
   to: string;
@@ -56,6 +56,46 @@ function navLinkClass({ isActive }: { isActive: boolean }) {
   return `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
     isActive ? "bg-pink-50 text-pink-700" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
   }`;
+}
+
+// Navigation mobile principale : 3 pages du quotidien accessibles en un tap
+// depuis une pastille flottante, plus un bouton "Plus" qui ouvre le même
+// tiroir complet que l'ancien bouton menu de la barre du haut (désormais
+// retiré de la barre du haut, qui ne garde que la marque). Chaque onglet a
+// sa propre couleur d'accent plutôt qu'un simple surlignage uniforme.
+const MOBILE_TABS = [
+  { to: "/", label: "Tableau de bord", icon: "📊", activeClass: "text-pink-600" },
+  { to: "/budget-du-mois", label: "Budget du mois", icon: "🗓️", activeClass: "text-amber-600" },
+  { to: "/revenus", label: "Revenus", icon: "💰", activeClass: "text-violet-600" },
+] as const;
+
+function mobileTabClass(isActive: boolean, activeClass: string) {
+  return `flex flex-1 flex-col items-center gap-0.5 py-1 text-[11px] transition-colors ${
+    isActive ? `${activeClass} font-semibold` : "font-medium text-slate-400"
+  }`;
+}
+
+function MobileTabBar({ onOpenMenu, menuOpen }: { onOpenMenu: () => void; menuOpen: boolean }) {
+  return (
+    <nav className="fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-30 mx-auto flex max-w-md items-stretch justify-around gap-1 rounded-full border border-slate-200 bg-white/85 px-2 py-2 shadow-2xl backdrop-blur-xl md:hidden">
+      {MOBILE_TABS.map((tab) => (
+        <NavLink key={tab.to} to={tab.to} end={tab.to === "/"} className="flex-1">
+          {({ isActive }) => (
+            <span className={mobileTabClass(isActive, tab.activeClass)}>
+              <span className="text-lg leading-none">{tab.icon}</span>
+              {tab.label}
+            </span>
+          )}
+        </NavLink>
+      ))}
+      <button onClick={onOpenMenu} className="flex-1" aria-label="Ouvrir le menu">
+        <span className={mobileTabClass(menuOpen, "text-slate-700")}>
+          <span className="text-lg leading-none">☰</span>
+          Plus
+        </span>
+      </button>
+    </nav>
+  );
 }
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
@@ -134,20 +174,11 @@ export function Layout() {
       </aside>
 
       {/* Mobile top bar */}
-      <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 md:hidden">
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-pink-500 text-sm shadow-sm">
-            💰
-          </div>
-          <span className="text-sm font-bold text-slate-900">Atlas Invest</span>
+      <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-slate-200 bg-white px-4 py-3 md:hidden">
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-pink-500 text-sm shadow-sm">
+          💰
         </div>
-        <button
-          onClick={() => setMobileOpen(true)}
-          className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
-          aria-label="Ouvrir le menu"
-        >
-          <IconMenu className="h-6 w-6" />
-        </button>
+        <span className="text-sm font-bold text-slate-900">Atlas Invest</span>
       </header>
 
       {/* Mobile drawer */}
@@ -172,10 +203,12 @@ export function Layout() {
       )}
 
       <main className="md:pl-64">
-        <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl px-4 pb-28 pt-6 sm:px-6 md:pb-6 lg:px-8">
           <Outlet />
         </div>
       </main>
+
+      <MobileTabBar onOpenMenu={() => setMobileOpen(true)} menuOpen={mobileOpen} />
     </div>
   );
 }
