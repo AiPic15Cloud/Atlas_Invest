@@ -4,7 +4,7 @@ import { apiFetch, ApiError } from "../api/client";
 import { QuickAddExpense } from "../components/QuickAddExpense";
 import { ImportStatement } from "../components/ImportStatement";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
-import type { BankAccountsResponse, BudgetCategory, Expense, ExpenseFeeling, ExpensesResponse } from "../api/types";
+import type { BankAccountsResponse, BudgetCategory, Expense, ExpenseCategory, ExpenseFeeling, ExpensesResponse } from "../api/types";
 
 const FEELING_EMOJI: Record<ExpenseFeeling, string> = {
   SATISFAIT: "😊",
@@ -25,25 +25,31 @@ const MONTH_NAMES = [
   "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
 ];
 
-const CATEGORY_LABELS: Record<BudgetCategory, string> = {
+const CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   BESOINS: "Besoins",
   ENVIES: "Envies",
   EPARGNE: "Épargne",
+  INVESTISSEMENT: "Investissement",
+  REMBOURSEMENT_DETTE: "Remboursement de dette",
 };
 
-const CATEGORY_COLORS: Record<BudgetCategory, string> = {
+const CATEGORY_COLORS: Record<ExpenseCategory, string> = {
   BESOINS: "#f59e0b",
   ENVIES: "#ec4899",
   EPARGNE: "#8b5cf6",
+  INVESTISSEMENT: "#0ea5e9",
+  REMBOURSEMENT_DETTE: "#64748b",
 };
 
-const CATEGORY_TEXT_CLASS: Record<BudgetCategory, string> = {
+const CATEGORY_TEXT_CLASS: Record<ExpenseCategory, string> = {
   BESOINS: "text-amber-600",
   ENVIES: "text-pink-600",
   EPARGNE: "text-violet-600",
+  INVESTISSEMENT: "text-sky-600",
+  REMBOURSEMENT_DETTE: "text-slate-600",
 };
 
-const CATEGORY_ORDER: BudgetCategory[] = ["BESOINS", "ENVIES", "EPARGNE"];
+const CATEGORY_ORDER: ExpenseCategory[] = ["BESOINS", "ENVIES", "EPARGNE", "INVESTISSEMENT", "REMBOURSEMENT_DETTE"];
 
 function shiftMonth(year: number, month: number, delta: number) {
   const zeroBased = month - 1 + delta;
@@ -64,7 +70,7 @@ export function BudgetDuMois() {
   const [accounts, setAccounts] = useState<BankAccountsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<BudgetCategory | "ALL">("ALL");
+  const [categoryFilter, setCategoryFilter] = useState<ExpenseCategory | "ALL">("ALL");
   const [actionError, setActionError] = useState<string | null>(null);
   const [copyOtherOpen, setCopyOtherOpen] = useState(false);
   const [copyFromYear, setCopyFromYear] = useState(year);
@@ -113,7 +119,7 @@ export function BudgetDuMois() {
   }, [data, search, categoryFilter]);
 
   const expensesByCategory = useMemo(() => {
-    const groups = new Map<BudgetCategory, Expense[]>();
+    const groups = new Map<ExpenseCategory, Expense[]>();
     for (const cat of CATEGORY_ORDER) groups.set(cat, []);
     for (const expense of filteredExpenses) {
       groups.get(expense.category)?.push(expense);
@@ -127,7 +133,7 @@ export function BudgetDuMois() {
     setMonth(next.month);
   }
 
-  async function handleQuickAdd(item: { poste: string; amount: number; category: BudgetCategory; bankAccountId: string }) {
+  async function handleQuickAdd(item: { poste: string; amount: number; category: ExpenseCategory; bankAccountId: string }) {
     await apiFetch("/api/expenses", { method: "POST", body: JSON.stringify({ ...item, year, month }) });
     await loadMonth();
   }
@@ -375,7 +381,7 @@ export function BudgetDuMois() {
           <div className="flex gap-2">
             <select
               value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value as BudgetCategory | "ALL")}
+              onChange={(e) => setCategoryFilter(e.target.value as ExpenseCategory | "ALL")}
               className="input px-2 py-1.5 text-sm"
               aria-label="Filtrer par catégorie"
             >

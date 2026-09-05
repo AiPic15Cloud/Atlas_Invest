@@ -1,3 +1,5 @@
+import type { BudgetCategory } from "@prisma/client";
+
 export function normalizePosteKey(poste: string): string {
   return poste.trim().toLowerCase();
 }
@@ -40,11 +42,7 @@ const REGRET_KEYWORDS = [
  * deviner. Affinee ensuite par les corrections de l'utilisateur (voir
  * FeelingRule).
  */
-export function computeAutoFeeling(
-  poste: string,
-  amount: number,
-  category: "BESOINS" | "ENVIES" | "EPARGNE",
-): "REGRET" | null {
+export function computeAutoFeeling(poste: string, amount: number, category: BudgetCategory): "REGRET" | null {
   const lower = poste.toLowerCase();
   if (REGRET_KEYWORDS.some((kw) => lower.includes(kw))) return "REGRET";
   if (category === "ENVIES" && amount > 0 && amount <= 15) return "REGRET";

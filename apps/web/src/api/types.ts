@@ -105,6 +105,11 @@ export interface BudgetMethodDefinition {
 
 export type BudgetCategory = "BESOINS" | "ENVIES" | "EPARGNE";
 
+// Natures possibles d'une depense reelle : les 3 categories du budget type,
+// plus 2 natures supplementaires (Lot 3) qui ne rentrent pas dans le
+// barème de repartition 50/30/20.
+export type ExpenseCategory = BudgetCategory | "INVESTISSEMENT" | "REMBOURSEMENT_DETTE";
+
 export interface BudgetItemNode {
   id: string;
   category: BudgetCategory;
@@ -152,7 +157,7 @@ export interface Expense {
   year: number;
   month: number;
   poste: string;
-  category: BudgetCategory;
+  category: ExpenseCategory;
   amount: string;
   note: string | null;
   bankAccountId: string;
@@ -287,6 +292,22 @@ export interface SavingsOpportunities {
   subscriptionsAnnualTotal: number;
   totalAnnual: number;
   totalMonthlyEquivalent: number;
+}
+
+export interface Transfer {
+  id: string;
+  amount: string;
+  date: string;
+  note: string | null;
+  fromAccountId: string;
+  fromAccountName: string;
+  toAccountId: string;
+  toAccountName: string;
+  createdAt: string;
+}
+
+export interface TransfersResponse {
+  transfers: Transfer[];
 }
 
 export interface RecurringCharge {

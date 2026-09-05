@@ -36,6 +36,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: "/comptes", label: "Comptes", icon: "🏦" },
       { to: "/revenus", label: "Revenus", icon: "💰" },
+      { to: "/transferts", label: "Transferts", icon: "🔀" },
       { to: "/economies", label: "Économies", icon: "✂️" },
       { to: "/abonnements", label: "Abonnements", icon: "🔁" },
       { to: "/echeances", label: "Échéances", icon: "⏰" },

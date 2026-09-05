@@ -1,21 +1,23 @@
 import { useState, type FormEvent } from "react";
 import { parseQuickExpense } from "../lib/parseQuickExpense";
-import type { BankAccount, BudgetCategory } from "../api/types";
+import type { BankAccount, ExpenseCategory } from "../api/types";
 
-const CATEGORY_LABELS: Record<BudgetCategory, string> = {
+const CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   BESOINS: "Besoins",
   ENVIES: "Envies",
   EPARGNE: "Épargne",
+  INVESTISSEMENT: "Investissement",
+  REMBOURSEMENT_DETTE: "Remboursement de dette",
 };
 
 interface QuickAddExpenseProps {
   accounts: BankAccount[];
-  onSubmit: (data: { poste: string; amount: number; category: BudgetCategory; bankAccountId: string }) => Promise<void>;
+  onSubmit: (data: { poste: string; amount: number; category: ExpenseCategory; bankAccountId: string }) => Promise<void>;
 }
 
 export function QuickAddExpense({ accounts, onSubmit }: QuickAddExpenseProps) {
   const [text, setText] = useState("");
-  const [category, setCategory] = useState<BudgetCategory>("BESOINS");
+  const [category, setCategory] = useState<ExpenseCategory>("BESOINS");
   const [bankAccountId, setBankAccountId] = useState(accounts[0]?.id ?? "");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -58,11 +60,11 @@ export function QuickAddExpense({ accounts, onSubmit }: QuickAddExpenseProps) {
         />
         <select
           value={category}
-          onChange={(e) => setCategory(e.target.value as BudgetCategory)}
+          onChange={(e) => setCategory(e.target.value as ExpenseCategory)}
           className="input px-2 py-2 text-sm"
           aria-label="Catégorie"
         >
-          {(Object.entries(CATEGORY_LABELS) as [BudgetCategory, string][]).map(([value, label]) => (
+          {(Object.entries(CATEGORY_LABELS) as [ExpenseCategory, string][]).map(([value, label]) => (
             <option key={value} value={value}>
               {label}
             </option>

@@ -106,6 +106,8 @@ model BankAccount {
   incomes          Income[]
   expenses         Expense[]
   recurringCharges RecurringCharge[]
+  transfersOut     Transfer[]        @relation("TransferFrom")
+  transfersIn      Transfer[]        @relation("TransferTo")
 }
 
 model Income {
@@ -120,6 +122,29 @@ model Income {
   bankAccountId String
 
   @@index([bankAccountId, year, month])
+}
+
+// Virement compte a compte (ex. Compte courant -> Livret A, ou Compte
+// Nicolas -> compte joint) : n'est ni un revenu ni une depense au niveau
+// du foyer, donc jamais insere dans Income/Expense — l'exclusion des
+// totaux du foyer est garantie par construction plutot que par un filtre
+// applique a chaque calcul (Lot 3, spec 4.2).
+model Transfer {
+  id     String   @id @default(cuid())
+  amount Decimal  @db.Decimal(12, 2)
+  date   DateTime
+  note   String?
+
+  fromAccount   BankAccount @relation("TransferFrom", fields: [fromAccountId], references: [id], onDelete: Cascade)
+  fromAccountId String
+
+  toAccount   BankAccount @relation("TransferTo", fields: [toAccountId], references: [id], onDelete: Cascade)
+  toAccountId String
+
+  createdAt DateTime @default(now())
+
+  @@index([fromAccountId])
+  @@index([toAccountId])
 }
 
 enum BudgetMethod {
@@ -139,10 +164,17 @@ enum ExpenseFeeling {
   REGRET
 }
 
+// Nature budgetaire d'une depense reelle. BESOINS/ENVIES/EPARGNE alimentent
+// la repartition du budget type (methodes 50/30/20 et similaires) ;
+// INVESTISSEMENT et REMBOURSEMENT_DETTE sont des natures supplementaires
+// pour les depenses reelles qui ne rentrent pas dans ce barème (Lot 3,
+// spec 4.2/section 9) — pas de poste cible associe pour l'instant.
 enum BudgetCategory {
   BESOINS
   ENVIES
   EPARGNE
+  INVESTISSEMENT
+  REMBOURSEMENT_DETTE
 }
 
 // Budget de reference (un par utilisateur), construit une fois et utilise

@@ -8,6 +8,7 @@ import { Onboarding } from "./pages/Onboarding";
 import { Dashboard } from "./pages/Dashboard";
 import { Accounts } from "./pages/Accounts";
 import { Revenus } from "./pages/Revenus";
+import { Transferts } from "./pages/Transferts";
 import { BudgetType } from "./pages/BudgetType";
 import { BudgetDuMois } from "./pages/BudgetDuMois";
 import { EpargnePrecaution } from "./pages/EpargnePrecaution";
@@ -69,6 +70,7 @@ export default function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/comptes" element={<Accounts />} />
         <Route path="/revenus" element={<Revenus />} />
+        <Route path="/transferts" element={<Transferts />} />
         <Route path="/budget-type" element={<BudgetType />} />
         <Route path="/budget-du-mois" element={<BudgetDuMois />} />
         <Route path="/epargne" element={<EpargnePrecaution />} />

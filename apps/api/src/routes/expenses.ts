@@ -7,13 +7,13 @@ import { shiftMonth } from "../utils/dateMath.js";
 import { buildItemTree, flattenLeafItems } from "../utils/budgetItemTree.js";
 import { computeBudgetBreakdown, type BudgetMethodKey } from "../constants/budgetMethods.js";
 import { normalizePosteKey, computeAutoFeeling } from "../constants/feelingRules.js";
-import type { Expense, ExpenseFeeling } from "@prisma/client";
+import type { Expense, ExpenseFeeling, BudgetCategory } from "@prisma/client";
 
 export const expensesRouter = Router();
 
 expensesRouter.use(requireAuth);
 
-const CATEGORY_VALUES = ["BESOINS", "ENVIES", "EPARGNE"] as const;
+const CATEGORY_VALUES = ["BESOINS", "ENVIES", "EPARGNE", "INVESTISSEMENT", "REMBOURSEMENT_DETTE"] as const;
 
 function serializeExpense(expense: Expense & { bankAccount: { name: string } }, unusual: boolean) {
   return {
@@ -38,7 +38,7 @@ async function resolveFeeling(
   userId: string,
   poste: string,
   amount: number,
-  category: "BESOINS" | "ENVIES" | "EPARGNE",
+  category: BudgetCategory,
 ): Promise<ExpenseFeeling | null> {
   const rule = await prisma.feelingRule.findUnique({
     where: { userId_posteKey: { userId, posteKey: normalizePosteKey(poste) } },
@@ -118,11 +118,14 @@ expensesRouter.get("/", async (req, res) => {
   const totalSpent = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
   const totalIncome = incomes.reduce((sum, i) => sum + Number(i.amount), 0);
   const regretTotal = expenses.filter((e) => e.feeling === "REGRET").reduce((sum, e) => sum + Number(e.amount), 0);
+  // INVESTISSEMENT et REMBOURSEMENT_DETTE ne rentrent pas dans ce barème
+  // (Lot 3) : elles comptent dans totalSpent mais pas dans byCategory, pour
+  // ne pas fausser la comparaison au budget type 50/30/20.
   const byCategory = { besoins: 0, envies: 0, epargne: 0 };
   for (const e of expenses) {
     if (e.category === "BESOINS") byCategory.besoins += Number(e.amount);
     else if (e.category === "ENVIES") byCategory.envies += Number(e.amount);
-    else byCategory.epargne += Number(e.amount);
+    else if (e.category === "EPARGNE") byCategory.epargne += Number(e.amount);
   }
 
   let budgetComparison = null;
