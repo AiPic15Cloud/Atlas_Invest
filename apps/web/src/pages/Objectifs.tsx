@@ -6,6 +6,15 @@ import type { SavingsGoal, SavingsGoalsResponse } from "../api/types";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" });
 
+const GOAL_COLORS = ["violet", "sky", "amber", "rose", "emerald"] as const;
+const GOAL_CHIP_CLASS: Record<(typeof GOAL_COLORS)[number], string> = {
+  violet: "bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400",
+  sky: "bg-sky-100 text-sky-600 dark:bg-sky-500/15 dark:text-sky-400",
+  amber: "bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400",
+  rose: "bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400",
+  emerald: "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400",
+};
+
 export function Objectifs() {
   const currency = useCurrencyFormatter();
   const [goals, setGoals] = useState<SavingsGoal[] | null>(null);
@@ -145,12 +154,19 @@ export function Objectifs() {
         <p className="text-sm text-slate-500">Aucun objectif pour l'instant.</p>
       ) : (
         <div className="space-y-4">
-          {goals.map((goal) => (
+          {goals.map((goal, index) => (
             <section key={goal.id} className="card">
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold">
-                  {goal.name} {goal.achieved && <span className="text-emerald-600">✓ atteint</span>}
-                </h3>
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${GOAL_CHIP_CLASS[GOAL_COLORS[index % GOAL_COLORS.length]]}`}
+                  >
+                    <IconFlag className="h-4 w-4" />
+                  </div>
+                  <h3 className="font-semibold">
+                    {goal.name} {goal.achieved && <span className="text-emerald-600">✓ atteint</span>}
+                  </h3>
+                </div>
                 <button onClick={() => handleDelete(goal.id)} className="text-xs text-red-500 underline">
                   Supprimer
                 </button>

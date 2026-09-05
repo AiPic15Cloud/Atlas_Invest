@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import { IconRepeat } from "../components/icons";
+import { StatTile } from "../components/StatTile";
 import type { Subscription, SubscriptionsResponse, SubscriptionStatus, UsageFrequency } from "../api/types";
 
 const MONTH_NAMES = [
@@ -76,10 +77,12 @@ export function Abonnements() {
         </p>
       </div>
 
-      <section className="card">
-        <p className="text-xs text-slate-500">Coût annualisé total des abonnements détectés</p>
-        <p className="mt-1 text-2xl font-semibold">{currency.format(data.annualTotal)}</p>
-      </section>
+      <StatTile
+        icon={IconRepeat}
+        label="Coût annualisé total des abonnements détectés"
+        value={currency.format(data.annualTotal)}
+        color="rose"
+      />
 
       {data.subscriptions.length === 0 ? (
         <p className="text-sm text-slate-500">
@@ -112,12 +115,20 @@ function SubscriptionCard({
   return (
     <li className="card">
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <p className="font-medium">{sub.poste}</p>
-          <p className="text-xs text-slate-500">
-            {currency.format(Number(sub.amount))} / mois · {currency.format(sub.annualCost)} / an · vu{" "}
-            {sub.occurrences} mois, dernière fois en {MONTH_NAMES[sub.lastSeen.month - 1]} {sub.lastSeen.year}
-          </p>
+        <div className="flex items-start gap-3">
+          <div
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${STATUS_COLORS[sub.status]}`}
+            aria-hidden="true"
+          >
+            {sub.poste.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <p className="font-medium">{sub.poste}</p>
+            <p className="text-xs text-slate-500">
+              {currency.format(Number(sub.amount))} / mois · {currency.format(sub.annualCost)} / an · vu{" "}
+              {sub.occurrences} mois, dernière fois en {MONTH_NAMES[sub.lastSeen.month - 1]} {sub.lastSeen.year}
+            </p>
+          </div>
         </div>
         <span className={`rounded-full px-2 py-1 text-xs font-medium ${STATUS_COLORS[sub.status]}`}>
           {STATUS_LABELS[sub.status]}

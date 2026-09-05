@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
-import { IconBuilding } from "../components/icons";
+import { IconBuilding, IconWallet, IconUsers, IconArrowsExchange, IconChartLine } from "../components/icons";
+import { StatTile } from "../components/StatTile";
 import type { Loan, LoansResponse, WealthCategory, WealthResponse } from "../api/types";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" });
@@ -170,25 +171,31 @@ export function Patrimoine() {
       <section className="card">
         <h2 className="font-semibold">Mon patrimoine</h2>
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-4">
-          <div>
-            <p className="text-xs text-slate-500">Comptes bancaires (les miens)</p>
-            <p className="text-lg font-medium">{currency.format(data.mine.bankAccountsTotal)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-slate-500">Comptes joints du foyer</p>
-            <p className="text-lg font-medium">{currency.format(data.joint.accountsTotal)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-slate-500">Prêts en cours (restant dû)</p>
-            <p className="text-lg font-medium text-red-600">
-              {data.mine.loansTotal > 0 ? "− " : ""}
-              {currency.format(data.mine.loansTotal)}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-slate-500">Mon solde net (patrimoine déclaré)</p>
-            <p className="text-lg font-medium">{currency.format(data.mine.netWorth)}</p>
-          </div>
+          <StatTile
+            icon={IconWallet}
+            label="Comptes bancaires (les miens)"
+            value={currency.format(data.mine.bankAccountsTotal)}
+            color="sky"
+          />
+          <StatTile
+            icon={IconUsers}
+            label="Comptes joints du foyer"
+            value={currency.format(data.joint.accountsTotal)}
+            color="violet"
+          />
+          <StatTile
+            icon={IconArrowsExchange}
+            label="Prêts en cours (restant dû)"
+            value={`${data.mine.loansTotal > 0 ? "− " : ""}${currency.format(data.mine.loansTotal)}`}
+            color="rose"
+            tone={data.mine.loansTotal > 0 ? "warn" : "default"}
+          />
+          <StatTile
+            icon={IconChartLine}
+            label="Mon solde net (patrimoine déclaré)"
+            value={currency.format(data.mine.netWorth)}
+            color="emerald"
+          />
         </div>
       </section>
 

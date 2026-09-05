@@ -186,7 +186,7 @@ export function Echeances() {
                   c.active ? "" : "opacity-50"
                 }`}
               >
-                <span className="w-10 shrink-0 rounded-md bg-slate-100 dark:bg-slate-800 py-1 text-center text-xs font-semibold text-slate-600 dark:text-slate-400">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-semibold text-violet-700 dark:bg-violet-500/15 dark:text-violet-400">
                   {c.dayOfMonth}
                 </span>
                 <span className="flex-1 text-sm">
