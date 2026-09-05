@@ -73,6 +73,7 @@ export function Dashboard() {
   if (!data) return <p className="text-sm text-slate-500">Chargement...</p>;
 
   const selected = data.monthly[selectedMonthIndex];
+  const moneyFlowMax = Math.max(selected.income, selected.expense);
   const currentMonthLabel = MONTH_NAMES[new Date().getMonth()];
   const monthGoingWell = data.availableMoney.amount >= 0;
   const greeting = user?.firstName
@@ -215,16 +216,29 @@ export function Dashboard() {
         <h2 className="mb-2 font-semibold">Revenu, dépenses et reste — {year}</h2>
         <AnnualLineChart monthly={data.monthly} selectedIndex={selectedMonthIndex} onSelectMonth={setSelectedMonthIndex} />
 
-        <div className="mt-3 rounded-md bg-slate-50 dark:bg-slate-800/60 p-3 text-sm text-slate-700 dark:text-slate-300">
-          <p>
-            <span className="font-medium">En {MONTH_NAMES[selected.month - 1]}</span> : revenu de{" "}
-            {currency.format(selected.income)}, dépenses de {currency.format(selected.expense)}
-            {selected.income > 0 && ` (${Math.round((selected.expense / selected.income) * 100)} % du revenu)`}, reste
-            de {currency.format(selected.reste)}.
+        <div className="mt-3 space-y-3 rounded-md bg-slate-50 dark:bg-slate-800/60 p-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            {MONTH_NAMES[selected.month - 1]} {selected.year}
+          </p>
+          <MoneyBar
+            label="Argent qui rentre"
+            formatted={currency.format(selected.income)}
+            pct={moneyFlowMax > 0 ? Math.min((selected.income / moneyFlowMax) * 100, 100) : 0}
+            colorClass="bg-emerald-500"
+          />
+          <MoneyBar
+            label="Argent qui sort"
+            formatted={currency.format(selected.expense)}
+            pct={moneyFlowMax > 0 ? Math.min((selected.expense / moneyFlowMax) * 100, 100) : 0}
+            colorClass="bg-rose-500"
+          />
+          <p className="text-sm text-slate-700 dark:text-slate-300">
+            Reste de {currency.format(selected.reste)}
+            {selected.income > 0 && ` (dépenses = ${Math.round((selected.expense / selected.income) * 100)} % du revenu)`}.
           </p>
           <button
             onClick={() => navigate(`/budget-du-mois?year=${selected.year}&month=${selected.month}`)}
-            className="mt-1 text-sm link"
+            className="text-sm link"
           >
             Voir le détail de ce mois
           </button>
@@ -291,6 +305,30 @@ export function Dashboard() {
       </div>
 
       <MonthlyGoalsSection year={selected.year} month={selected.month} />
+    </div>
+  );
+}
+
+function MoneyBar({
+  label,
+  formatted,
+  pct,
+  colorClass,
+}: {
+  label: string;
+  formatted: string;
+  pct: number;
+  colorClass: string;
+}) {
+  return (
+    <div>
+      <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
+        <span>{label}</span>
+        <span className="font-semibold text-slate-900 dark:text-slate-100">{formatted}</span>
+      </div>
+      <div className="mt-1 h-2.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+        <div style={{ width: `${pct}%` }} className={`h-full rounded-full ${colorClass}`} />
+      </div>
     </div>
   );
 }

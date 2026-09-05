@@ -163,6 +163,19 @@ export function AnnualLineChart({ monthly, selectedIndex, onSelectMonth }: Annua
               <line x1={x(hoverIndex)} x2={x(hoverIndex)} y1={PADDING.top} y2={HEIGHT - PADDING.bottom} stroke="var(--chart-grid-zero)" strokeWidth={1} />
             )}
 
+            {hoverIndex !== null &&
+              SERIES.map((s) => (
+                <circle
+                  key={`${s.key}-hover`}
+                  cx={x(hoverIndex)}
+                  cy={y(monthly[hoverIndex][s.key])}
+                  r={4.5}
+                  fill={s.color}
+                  stroke="var(--chart-surface)"
+                  strokeWidth={2}
+                />
+              ))}
+
             {monthly.map((_, i) => (
               <rect
                 key={i}
@@ -181,16 +194,37 @@ export function AnnualLineChart({ monthly, selectedIndex, onSelectMonth }: Annua
 
           {hovered && hoverIndex !== null && (
             <div
-              className="pointer-events-none absolute top-2 rounded-md bg-violet-600 hover:bg-violet-700 px-3 py-2 text-xs text-white shadow-lg"
-              style={{ left: `min(${(x(hoverIndex) / WIDTH) * 100}%, 78%)` }}
+              className="pointer-events-none absolute top-2 min-w-[10rem] rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs shadow-lg dark:border-slate-700 dark:bg-slate-800"
+              style={{
+                left: `${(x(hoverIndex) / WIDTH) * 100}%`,
+                transform: `translateX(${(x(hoverIndex) / WIDTH) * 100 > 60 ? "calc(-100% - 10px)" : "10px"})`,
+              }}
             >
-              <p className="font-medium">{MONTH_NAMES_FULL[monthly[hoverIndex].month - 1]}</p>
-              {SERIES.map((s) => (
-                <p key={s.key} className="flex items-center gap-1.5">
-                  <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
-                  {s.label} : {currency.format(hovered[s.key])}
-                </p>
-              ))}
+              <p className="font-semibold text-slate-900 dark:text-slate-100">
+                {MONTH_NAMES_FULL[monthly[hoverIndex].month - 1]}
+              </p>
+              <div className="mt-1.5 space-y-1">
+                {SERIES.map((s) => {
+                  const value = hovered[s.key];
+                  const delta = hoverIndex > 0 ? value - monthly[hoverIndex - 1][s.key] : null;
+                  return (
+                    <div key={s.key} className="flex items-center justify-between gap-3">
+                      <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                        <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
+                        {s.label}
+                      </span>
+                      <span className="flex items-center gap-1 font-medium text-slate-900 dark:text-slate-100">
+                        {currency.format(value)}
+                        {delta !== null && Math.round(delta) !== 0 && (
+                          <span className={delta > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}>
+                            {delta > 0 ? "▲" : "▼"} {currency.format(Math.abs(delta))}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
