@@ -20,8 +20,6 @@ const MONTH_NAMES = [
   "Décembre",
 ];
 
-const MONTH_ICONS = ["🎉", "💕", "☘️", "🌸", "🌷", "☀️", "🏖️", "🌻", "🍂", "🎃", "🦃", "🎄"];
-
 const percent = new Intl.NumberFormat("fr-FR", { style: "percent", maximumFractionDigits: 1 });
 
 function shiftMonth(year: number, month: number, delta: number) {
@@ -231,7 +229,6 @@ function YearView({
             <div key={name} className="card">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold">
-                  <span className="mr-1.5">{MONTH_ICONS[index]}</span>
                   {name} {year}
                 </h3>
                 <span className="text-sm font-semibold">{currency.format(monthTotal)}</span>

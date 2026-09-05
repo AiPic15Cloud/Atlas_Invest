@@ -150,23 +150,29 @@ export function BudgetType() {
           // raisonnablement dépenser ?".
           <dl className="mt-3 divide-y divide-slate-100 text-sm">
             <div className="flex items-center justify-between py-2">
-              <dt className="text-slate-600">💶 Revenus habituels</dt>
+              <dt className="text-slate-600">Revenus habituels</dt>
               <dd className="text-base font-semibold">{currency.format(template.monthlyIncome)}</dd>
             </div>
             <div className="flex items-center justify-between py-2">
-              <dt className="text-slate-600">🏠 Charges essentielles</dt>
+              <dt className="flex items-center gap-1.5 text-slate-600">
+                <span className="inline-block h-2 w-2 rounded-full bg-amber-500" /> Charges essentielles
+              </dt>
               <dd className="font-medium">{currency.format(breakdown.besoinsTarget)}</dd>
             </div>
             <div className="flex items-center justify-between py-2">
-              <dt className="text-slate-600">💕 Envies / loisirs</dt>
+              <dt className="flex items-center gap-1.5 text-slate-600">
+                <span className="inline-block h-2 w-2 rounded-full bg-pink-500" /> Envies / loisirs
+              </dt>
               <dd className="font-medium">{currency.format(breakdown.enviesTarget)}</dd>
             </div>
             <div className="flex items-center justify-between py-2">
-              <dt className="text-slate-600">💰 Épargne prévue</dt>
+              <dt className="flex items-center gap-1.5 text-slate-600">
+                <span className="inline-block h-2 w-2 rounded-full bg-violet-500" /> Épargne prévue
+              </dt>
               <dd className="font-medium">{currency.format(breakdown.epargneTarget)}</dd>
             </div>
             <div className="flex items-center justify-between py-2">
-              <dt className="text-slate-600">🆓 Marge libre</dt>
+              <dt className="text-slate-600">Marge libre</dt>
               <dd className={`font-medium ${margeLibre < 0 ? "text-red-600" : ""}`}>{currency.format(margeLibre)}</dd>
             </div>
           </dl>
@@ -357,15 +363,21 @@ function ScenarioComparison({
               <p className="text-sm font-medium">{def.label}</p>
               <dl className="mt-2 space-y-1 text-xs text-slate-600">
                 <div className="flex items-center justify-between">
-                  <dt>🏠 Besoins</dt>
+                  <dt className="flex items-center gap-1.5">
+                    <span className="inline-block h-2 w-2 rounded-full bg-amber-500" /> Besoins
+                  </dt>
                   <dd className="font-medium text-slate-800">{currency.format(targets.besoins)}</dd>
                 </div>
                 <div className="flex items-center justify-between">
-                  <dt>💕 Envies</dt>
+                  <dt className="flex items-center gap-1.5">
+                    <span className="inline-block h-2 w-2 rounded-full bg-pink-500" /> Envies
+                  </dt>
                   <dd className="font-medium text-slate-800">{currency.format(targets.envies)}</dd>
                 </div>
                 <div className="flex items-center justify-between">
-                  <dt>💰 Épargne</dt>
+                  <dt className="flex items-center gap-1.5">
+                    <span className="inline-block h-2 w-2 rounded-full bg-violet-500" /> Épargne
+                  </dt>
                   <dd className="font-semibold text-emerald-600">{currency.format(targets.epargne)}</dd>
                 </div>
               </dl>

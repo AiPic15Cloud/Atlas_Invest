@@ -240,16 +240,16 @@ export function BudgetDuMois() {
         <h2 className="section-title text-sm">Actions rapides</h2>
         <div className="mt-3 flex flex-wrap gap-2">
           <button onClick={handleCopyTemplate} className="btn btn-outline btn-sm">
-            📁 Copier le budget type
+            Copier le budget type
           </button>
           <button onClick={handleCopyPreviousMonth} className="btn btn-outline btn-sm">
-            ↩️ Copier le mois précédent
+            Copier le mois précédent
           </button>
           <button onClick={() => setCopyOtherOpen((v) => !v)} className="btn btn-outline btn-sm">
-            🗓️ Copier un autre mois
+            Copier un autre mois
           </button>
           <button onClick={() => setImportOpen((v) => !v)} className="btn btn-primary btn-sm">
-            {importOpen ? "▲ Fermer l'import" : "📥 Importer un relevé"}
+            {importOpen ? "Fermer l'import" : "Importer un relevé"}
           </button>
           <button onClick={handleClearMonth} className="btn btn-danger btn-sm">
             Vider le mois
@@ -298,25 +298,25 @@ export function BudgetDuMois() {
 
       <section className="card">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatTile label="💶 Revenu du mois" value={currency.format(summary.totalIncome)} />
-          <StatTile label="💸 Dépensé ce mois" value={currency.format(summary.totalSpent)} />
+          <StatTile label="Revenu du mois" value={currency.format(summary.totalIncome)} />
+          <StatTile label="Dépensé ce mois" value={currency.format(summary.totalSpent)} />
           <StatTile
-            label="📊 Écart vs budget type"
+            label="Écart vs budget type"
             value={ecart === null ? "—" : `${ecart > 0 ? "+" : ""}${currency.format(ecart)}`}
             tone={ecart === null ? "default" : ecart > 0 ? "warn" : "good"}
             hint={
               ecart === null
                 ? undefined
                 : ecart > 0
-                  ? `Dépassé de ${currency.format(ecart)} ⚠️`
-                  : "Sous ton budget type, bravo 💪"
+                  ? `Dépassé de ${currency.format(ecart)}`
+                  : "Sous ton budget type, bravo"
             }
           />
           <StatTile
-            label="🔍 Dépense inhabituelle"
+            label="Dépense inhabituelle"
             value={unusualCount === 0 ? "Aucune" : String(unusualCount)}
             tone={unusualCount === 0 ? "good" : "warn"}
-            hint={unusualCount === 0 ? "Tout est dans les clous 👍" : "À vérifier ci-dessous"}
+            hint={unusualCount === 0 ? "Tout est dans les clous" : "À vérifier ci-dessous"}
           />
         </div>
         {!summary.budgetComparison && (
@@ -515,10 +515,10 @@ function StatTile({
   );
 }
 
-const CATEGORY_ROW_ICON: Record<BudgetCategory, string> = {
-  BESOINS: "🏠",
-  ENVIES: "💕",
-  EPARGNE: "💰",
+const CATEGORY_ROW_DOT: Record<BudgetCategory, string> = {
+  BESOINS: "bg-amber-500",
+  ENVIES: "bg-pink-500",
+  EPARGNE: "bg-violet-500",
 };
 
 // Tableau à 4 colonnes (spec 4.2) plutôt qu'une liste de chiffres isolés :
@@ -598,7 +598,10 @@ function MonthlyComparisonTable({
             return (
               <tr key={category} className="border-b border-slate-100 last:border-0">
                 <td className="py-2">
-                  {CATEGORY_ROW_ICON[category]} {CATEGORY_LABELS[category]}
+                  <span className="flex items-center gap-1.5">
+                    <span className={`inline-block h-2 w-2 rounded-full ${CATEGORY_ROW_DOT[category]}`} />
+                    {CATEGORY_LABELS[category]}
+                  </span>
                 </td>
                 <td className="py-2 text-right text-slate-500">{currency.format(reference)}</td>
                 <td className="py-2 text-right">

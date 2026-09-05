@@ -75,8 +75,8 @@ export function Dashboard() {
   const currentMonthLabel = MONTH_NAMES[new Date().getMonth()];
   const monthGoingWell = data.availableMoney.amount >= 0;
   const greeting = user?.firstName
-    ? `Bonjour ${user.firstName}, ${currentMonthLabel} ${monthGoingWell ? "se présente bien 🙂" : "demande de l'attention 👀"}.`
-    : `${currentMonthLabel.charAt(0).toUpperCase() + currentMonthLabel.slice(1)} ${monthGoingWell ? "se présente bien 🙂" : "demande de l'attention 👀"}.`;
+    ? `Bonjour ${user.firstName}, ${currentMonthLabel} ${monthGoingWell ? "se présente bien" : "demande de l'attention"}.`
+    : `${currentMonthLabel.charAt(0).toUpperCase() + currentMonthLabel.slice(1)} ${monthGoingWell ? "se présente bien" : "demande de l'attention"}.`;
 
   return (
     <div className="space-y-6">
@@ -86,7 +86,7 @@ export function Dashboard() {
             <IconHome className="h-6 w-6 text-violet-600" />
             Accueil
           </h1>
-          <p className="mt-0.5 text-sm text-slate-500">Une vue claire de mon mois (ou de mon année). 💡</p>
+          <p className="mt-0.5 text-sm text-slate-500">Une vue claire de mon mois (ou de mon année).</p>
         </div>
         <div className="flex items-center gap-1 rounded-lg bg-white p-1 shadow-sm ring-1 ring-slate-200/80">
           <button
@@ -110,7 +110,7 @@ export function Dashboard() {
       <p className="text-sm text-slate-600">{greeting}</p>
 
       <section className="card">
-        <p className="stat-label">🏦 Argent réellement disponible</p>
+        <p className="stat-label">Argent réellement disponible</p>
         <p
           className={`mt-1 text-3xl font-bold tracking-tight ${
             data.availableMoney.amount < 0 ? "text-red-600" : "text-emerald-600"
@@ -190,17 +190,17 @@ export function Dashboard() {
       <section className="card">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <StatTile
-            label="💶 Revenu annuel net"
+            label="Revenu annuel net"
             value={currency.format(data.totals.income)}
             hint={`${currency.format(data.averages.incomePerMonth)} / mois en moyenne`}
           />
           <StatTile
-            label="💸 Dépensé sur l'année"
+            label="Dépensé sur l'année"
             value={currency.format(data.totals.expenses)}
             hint={`${currency.format(data.averages.expensePerMonth)} / mois en moyenne`}
           />
           <StatTile
-            label="🏦 Reste à vivre"
+            label="Reste à vivre"
             value={currency.format(data.totals.reste)}
             tone={data.totals.reste < 0 ? "warn" : "success"}
           />
