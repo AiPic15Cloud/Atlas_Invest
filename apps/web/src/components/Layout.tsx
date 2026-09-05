@@ -14,38 +14,32 @@ interface NavGroup {
   items: NavItem[];
 }
 
+// Navigation simplifiée à 5-6 destinations : Accueil / Mon mois / Mon plan /
+// Projets & Sécurité / Patrimoine / Plus. Revenus et Répartition ne sont plus
+// des destinations de premier niveau (Revenus rejoint "Plus", Répartition
+// rejoint "Projets & Sécurité").
 const NAV_GROUPS: NavGroup[] = [
-  { title: null, items: [{ to: "/", label: "Tableau de bord", icon: "📊" }] },
+  { title: null, items: [{ to: "/", label: "Accueil", icon: "🏠" }] },
+  { title: null, items: [{ to: "/budget-du-mois", label: "Mon mois", icon: "📅" }] },
+  { title: null, items: [{ to: "/budget-type", label: "Mon plan", icon: "🧭" }] },
   {
-    title: "Budget",
+    title: "Projets & sécurité",
+    items: [
+      { to: "/epargne", label: "Épargne de précaution", icon: "🛡️" },
+      { to: "/objectifs", label: "Objectifs", icon: "🎯" },
+      { to: "/repartition", label: "Répartition des charges", icon: "🤝" },
+    ],
+  },
+  { title: null, items: [{ to: "/patrimoine", label: "Patrimoine", icon: "🏛️" }] },
+  {
+    title: "Plus",
     items: [
       { to: "/comptes", label: "Comptes", icon: "🏦" },
       { to: "/revenus", label: "Revenus", icon: "💰" },
-      { to: "/budget-type", label: "Budget type", icon: "📁" },
-      { to: "/budget-du-mois", label: "Budget du mois", icon: "🗓️" },
-      { to: "/repartition", label: "Répartition", icon: "🤝" },
-    ],
-  },
-  {
-    title: "Épargne & patrimoine",
-    items: [
-      { to: "/epargne", label: "Épargne", icon: "🛡️" },
-      { to: "/objectifs", label: "Objectifs", icon: "🎯" },
-      { to: "/patrimoine", label: "Patrimoine", icon: "🏛️" },
       { to: "/economies", label: "Économies", icon: "✂️" },
-    ],
-  },
-  {
-    title: "Suivi",
-    items: [
       { to: "/abonnements", label: "Abonnements", icon: "🔁" },
       { to: "/echeances", label: "Échéances", icon: "⏰" },
       { to: "/historique", label: "Historique", icon: "🕒" },
-    ],
-  },
-  {
-    title: "Outils",
-    items: [
       { to: "/export", label: "Export", icon: "📤" },
       { to: "/projection", label: "Projection", icon: "🔮" },
     ],
@@ -64,9 +58,9 @@ function navLinkClass({ isActive }: { isActive: boolean }) {
 // retiré de la barre du haut, qui ne garde que la marque). Chaque onglet a
 // sa propre couleur d'accent plutôt qu'un simple surlignage uniforme.
 const MOBILE_TABS = [
-  { to: "/", label: "Tableau de bord", icon: "📊", activeClass: "text-pink-600" },
-  { to: "/budget-du-mois", label: "Budget du mois", icon: "🗓️", activeClass: "text-amber-600" },
-  { to: "/revenus", label: "Revenus", icon: "💰", activeClass: "text-violet-600" },
+  { to: "/", label: "Accueil", icon: "🏠", activeClass: "text-pink-600" },
+  { to: "/budget-du-mois", label: "Mon mois", icon: "📅", activeClass: "text-amber-600" },
+  { to: "/budget-type", label: "Mon plan", icon: "🧭", activeClass: "text-violet-600" },
 ] as const;
 
 function mobileTabClass(isActive: boolean, activeClass: string) {

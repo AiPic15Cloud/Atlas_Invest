@@ -56,7 +56,7 @@ export function Dashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="page-title">📊 Tableau de bord</h1>
+          <h1 className="page-title">🏠 Accueil</h1>
           <p className="mt-0.5 text-sm text-slate-500">Une vue claire de mon mois (ou de mon année). 💡</p>
         </div>
         <div className="flex items-center gap-1 rounded-lg bg-white p-1 shadow-sm ring-1 ring-slate-200/80">
@@ -120,19 +120,19 @@ export function Dashboard() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <section className="card">
-          <h2 className="font-semibold">📁 Méthode de budget active</h2>
+          <h2 className="font-semibold">🧭 Mon plan</h2>
           {data.budgetTemplate ? (
             <>
               <p className="mt-2 text-sm text-slate-700">{data.budgetTemplate.label}</p>
               <Link to="/budget-type" className="btn btn-outline btn-sm mt-3">
-                Voir le budget type →
+                Voir mon plan →
               </Link>
             </>
           ) : (
             <>
-              <p className="mt-2 text-sm text-slate-500">Aucun budget type créé pour l'instant.</p>
+              <p className="mt-2 text-sm text-slate-500">Tu n'as pas encore construit ton plan.</p>
               <Link to="/budget-type" className="btn btn-outline btn-sm mt-3">
-                Créer mon budget type →
+                Construire mon plan →
               </Link>
             </>
           )}

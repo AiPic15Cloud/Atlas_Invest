@@ -115,7 +115,7 @@ export function BudgetType() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold">📁 Budget type</h1>
+          <h1 className="text-xl font-semibold">🧭 Mon plan</h1>
           <p className="text-sm text-slate-500">{method.label}</p>
         </div>
         <button onClick={() => setChangingMethod(true)} className="text-sm link">
