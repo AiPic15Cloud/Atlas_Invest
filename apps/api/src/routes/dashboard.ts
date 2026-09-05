@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
 import { listAccessibleAccounts } from "../utils/accountAccess.js";
-import { BUDGET_METHODS, type BudgetMethodKey } from "../constants/budgetMethods.js";
+import { BUDGET_METHODS, computeBudgetBreakdown, type BudgetMethodKey } from "../constants/budgetMethods.js";
 
 export const dashboardRouter = Router();
 
@@ -63,6 +63,57 @@ dashboardRouter.get("/", async (req, res) => {
   const totalIncome = monthly.reduce((sum, m) => sum + m.income, 0);
   const totalExpenses = monthly.reduce((sum, m) => sum + m.expense, 0);
 
+  // "Argent réellement disponible" : le solde en banque n'est pas l'argent
+  // disponible tant que des échéances connues et des dépenses essentielles
+  // habituelles n'ont pas encore été prélevées ce mois-ci.
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const currentDay = now.getDate();
+
+  const [recurringCharges, currentMonthExpenses] = await Promise.all([
+    prisma.recurringCharge.findMany({
+      where: { bankAccountId: { in: accountIds }, active: true },
+      select: { amount: true, dayOfMonth: true },
+    }),
+    prisma.expense.findMany({
+      where: { year: currentYear, month: currentMonth, bankAccountId: { in: accountIds } },
+      select: { category: true, amount: true },
+    }),
+  ]);
+
+  const currentBalance = accounts.reduce((sum, a) => sum + Number(a.initialBalance), 0);
+  const upcomingCharges = recurringCharges
+    .filter((c) => c.dayOfMonth >= currentDay)
+    .reduce((sum, c) => sum + Number(c.amount), 0);
+
+  let besoinsRemaining = 0;
+  let epargneRemaining = 0;
+  if (template && BUDGET_METHODS[template.method as BudgetMethodKey].splitMode !== "ZERO_BASED") {
+    const besoinsSpent = currentMonthExpenses
+      .filter((e) => e.category === "BESOINS")
+      .reduce((sum, e) => sum + Number(e.amount), 0);
+    const epargneSpent = currentMonthExpenses
+      .filter((e) => e.category === "EPARGNE")
+      .reduce((sum, e) => sum + Number(e.amount), 0);
+    const breakdown = computeBudgetBreakdown(template.method as BudgetMethodKey, Number(template.monthlyIncome), {
+      besoins: besoinsSpent,
+      envies: 0,
+      epargne: epargneSpent,
+    });
+    besoinsRemaining = Math.max(0, breakdown.besoinsTarget - besoinsSpent);
+    epargneRemaining = Math.max(0, breakdown.epargneTarget - epargneSpent);
+  }
+
+  const availableMoney = {
+    currentBalance,
+    upcomingCharges,
+    besoinsRemaining,
+    epargneRemaining,
+    amount: currentBalance - upcomingCharges - besoinsRemaining - epargneRemaining,
+    hasEstimate: Boolean(template && BUDGET_METHODS[template.method as BudgetMethodKey].splitMode !== "ZERO_BASED"),
+  };
+
   res.json({
     year,
     fiscalYearStartMonth,
@@ -76,6 +127,7 @@ dashboardRouter.get("/", async (req, res) => {
       expensePerMonth: totalExpenses / 12,
     },
     monthly,
+    availableMoney,
     budgetTemplate: template
       ? { method: template.method, label: BUDGET_METHODS[template.method as BudgetMethodKey].label }
       : null,

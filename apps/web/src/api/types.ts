@@ -475,11 +475,21 @@ export interface CorrectionHistoryResponse {
   logs: CorrectionLogEntry[];
 }
 
+export interface AvailableMoney {
+  currentBalance: number;
+  upcomingCharges: number;
+  besoinsRemaining: number;
+  epargneRemaining: number;
+  amount: number;
+  hasEstimate: boolean;
+}
+
 export interface DashboardResponse {
   year: number;
   fiscalYearStartMonth: number;
   totals: { income: number; expenses: number; reste: number };
   averages: { incomePerMonth: number; expensePerMonth: number };
   monthly: DashboardMonth[];
+  availableMoney: AvailableMoney;
   budgetTemplate: { method: BudgetMethodKey; label: string } | null;
 }

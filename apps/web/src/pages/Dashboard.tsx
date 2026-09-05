@@ -2,8 +2,22 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiFetch, ApiError } from "../api/client";
 import { AnnualLineChart } from "../components/AnnualLineChart";
+import { useAuth } from "../context/AuthContext";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
-import type { DashboardResponse, EmergencyFundProfile, MonthlyGoal, MonthlyGoalsResponse } from "../api/types";
+import type {
+  BudgetCategory,
+  DashboardResponse,
+  EmergencyFundProfile,
+  ExpensesResponse,
+  MonthlyGoal,
+  MonthlyGoalsResponse,
+} from "../api/types";
+
+const CATEGORY_BAR_COLOR: Record<BudgetCategory, string> = {
+  BESOINS: "bg-amber-500",
+  ENVIES: "bg-pink-500",
+  EPARGNE: "bg-violet-500",
+};
 
 const MONTH_NAMES = [
   "janvier", "février", "mars", "avril", "mai", "juin",
@@ -20,11 +34,13 @@ function defaultMonthIndex(monthly: DashboardResponse["monthly"]) {
 export function Dashboard() {
   const currency = useCurrencyFormatter();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [year, setYear] = useState(new Date().getFullYear());
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(11);
   const [emergencyFund, setEmergencyFund] = useState<EmergencyFundProfile | null | undefined>(undefined);
+  const [currentMonthExpenses, setCurrentMonthExpenses] = useState<ExpensesResponse | null>(null);
 
   async function load() {
     try {
@@ -40,6 +56,10 @@ export function Dashboard() {
     apiFetch<{ profile: EmergencyFundProfile | null }>("/api/emergency-fund").then((res) =>
       setEmergencyFund(res.profile),
     );
+    const now = new Date();
+    apiFetch<ExpensesResponse>(`/api/expenses?year=${now.getFullYear()}&month=${now.getMonth() + 1}`).then(
+      setCurrentMonthExpenses,
+    );
   }, []);
 
   useEffect(() => {
@@ -51,6 +71,11 @@ export function Dashboard() {
   if (!data) return <p className="text-sm text-slate-500">Chargement...</p>;
 
   const selected = data.monthly[selectedMonthIndex];
+  const currentMonthLabel = MONTH_NAMES[new Date().getMonth()];
+  const monthGoingWell = data.availableMoney.amount >= 0;
+  const greeting = user?.firstName
+    ? `Bonjour ${user.firstName}, ${currentMonthLabel} ${monthGoingWell ? "se présente bien 🙂" : "demande de l'attention 👀"}.`
+    : `${currentMonthLabel.charAt(0).toUpperCase() + currentMonthLabel.slice(1)} ${monthGoingWell ? "se présente bien 🙂" : "demande de l'attention 👀"}.`;
 
   return (
     <div className="space-y-6">
@@ -77,6 +102,86 @@ export function Dashboard() {
           </button>
         </div>
       </div>
+
+      <p className="text-sm text-slate-600">{greeting}</p>
+
+      <section className="card">
+        <p className="stat-label">🏦 Argent réellement disponible</p>
+        <p
+          className={`mt-1 text-3xl font-bold tracking-tight ${
+            data.availableMoney.amount < 0 ? "text-red-600" : "text-emerald-600"
+          }`}
+        >
+          {currency.format(data.availableMoney.amount)}
+        </p>
+        <p className="mt-1 text-sm text-slate-500">
+          Ton solde bancaire, moins les prélèvements à venir et les dépenses essentielles restantes ce mois-ci —
+          plus fiable que le solde affiché par ta banque pour savoir ce que tu peux vraiment dépenser.
+        </p>
+        <dl className="mt-3 space-y-1 text-xs text-slate-500">
+          <div className="flex justify-between">
+            <dt>Solde actuel des comptes</dt>
+            <dd className="font-medium text-slate-700">{currency.format(data.availableMoney.currentBalance)}</dd>
+          </div>
+          <div className="flex justify-between">
+            <dt>− Prélèvements à venir ce mois</dt>
+            <dd className="font-medium text-slate-700">{currency.format(data.availableMoney.upcomingCharges)}</dd>
+          </div>
+          {data.availableMoney.hasEstimate ? (
+            <>
+              <div className="flex justify-between">
+                <dt>− Essentiels restants estimés</dt>
+                <dd className="font-medium text-slate-700">{currency.format(data.availableMoney.besoinsRemaining)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt>− Épargne prévue restante</dt>
+                <dd className="font-medium text-slate-700">{currency.format(data.availableMoney.epargneRemaining)}</dd>
+              </div>
+            </>
+          ) : (
+            <p className="italic">
+              Crée ton plan (méthode à cibles fixes) pour affiner cette estimation avec tes essentiels et ton
+              épargne prévue restants.
+            </p>
+          )}
+        </dl>
+      </section>
+
+      {currentMonthExpenses?.summary.budgetComparison && (
+        <section className="card">
+          <h2 className="font-semibold">Ce mois : prévu vs réel</h2>
+          <div className="mt-3 space-y-3">
+            {(["BESOINS", "ENVIES", "EPARGNE"] as BudgetCategory[]).map((cat) => {
+              const key = cat.toLowerCase() as "besoins" | "envies" | "epargne";
+              const actual = currentMonthExpenses.summary.byCategory[key];
+              const target =
+                cat === "BESOINS"
+                  ? currentMonthExpenses.summary.budgetComparison!.besoinsTarget
+                  : cat === "ENVIES"
+                    ? currentMonthExpenses.summary.budgetComparison!.enviesTarget
+                    : currentMonthExpenses.summary.budgetComparison!.epargneTarget;
+              const pct = target > 0 ? Math.min(actual / target, 1) * 100 : actual > 0 ? 100 : 0;
+              const over = actual > target;
+              return (
+                <div key={cat}>
+                  <div className="flex justify-between text-xs text-slate-600">
+                    <span>{cat === "BESOINS" ? "Besoins" : cat === "ENVIES" ? "Envies" : "Épargne"}</span>
+                    <span className={over ? "font-medium text-red-600" : ""}>
+                      {currency.format(actual)} / prévu {currency.format(target)}
+                    </span>
+                  </div>
+                  <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      style={{ width: `${pct}%` }}
+                      className={`h-full ${over ? "bg-red-500" : CATEGORY_BAR_COLOR[cat]}`}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       <section className="card">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
