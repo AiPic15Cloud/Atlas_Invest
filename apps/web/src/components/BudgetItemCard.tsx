@@ -22,7 +22,7 @@ export function BudgetItemCard({ item, categoryTotal, barColorClass, onAddChild,
   const pct = categoryTotal > 0 ? Math.min(100, (item.displayedAmount / categoryTotal) * 100) : 0;
 
   return (
-    <div className="rounded-lg border border-slate-200 p-3">
+    <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
       {editing ? (
         <BudgetItemForm
           initialName={item.name}
@@ -41,12 +41,12 @@ export function BudgetItemCard({ item, categoryTotal, barColorClass, onAddChild,
             <p className="text-sm font-medium">
               {item.name}
               {!item.essential && (
-                <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-normal text-slate-500">autre</span>
+                <span className="ml-2 rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs font-normal text-slate-500">autre</span>
               )}
             </p>
             <div className="flex shrink-0 items-center gap-1 text-xs">
-              <button onClick={() => onMove(item.id, "up")} className="px-1 text-slate-400 hover:text-slate-900" aria-label="Monter">↑</button>
-              <button onClick={() => onMove(item.id, "down")} className="px-1 text-slate-400 hover:text-slate-900" aria-label="Descendre">↓</button>
+              <button onClick={() => onMove(item.id, "up")} className="px-1 text-slate-400 hover:text-slate-900 dark:hover:text-slate-100" aria-label="Monter">↑</button>
+              <button onClick={() => onMove(item.id, "down")} className="px-1 text-slate-400 hover:text-slate-900 dark:hover:text-slate-100" aria-label="Descendre">↓</button>
               <button onClick={() => onDelete(item.id)} className="px-1 text-slate-400 hover:text-red-600" aria-label="Supprimer">✕</button>
             </div>
           </div>
@@ -56,7 +56,7 @@ export function BudgetItemCard({ item, categoryTotal, barColorClass, onAddChild,
           <p className="text-xs text-slate-500">
             {Math.round(pct)}% de votre budget · {currency.format(item.displayedAmount * 12)} /an
           </p>
-          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
             <div style={{ width: `${pct}%` }} className={`h-full ${barColorClass}`} />
           </div>
           <div className="mt-2 flex gap-3 text-xs">
@@ -78,7 +78,7 @@ export function BudgetItemCard({ item, categoryTotal, barColorClass, onAddChild,
       )}
 
       {item.children.length > 0 && (
-        <ul className="mt-2 border-t border-slate-100 pt-2">
+        <ul className="mt-2 border-t border-slate-100 dark:border-slate-800 pt-2">
           {item.children.map((child) => (
             <BudgetItemRow
               key={child.id}

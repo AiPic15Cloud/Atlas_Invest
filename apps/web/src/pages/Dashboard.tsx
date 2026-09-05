@@ -88,18 +88,18 @@ export function Dashboard() {
           </h1>
           <p className="mt-0.5 text-sm text-slate-500">Une vue claire de mon mois (ou de mon année).</p>
         </div>
-        <div className="flex items-center gap-1 rounded-lg bg-white p-1 shadow-sm ring-1 ring-slate-200/80">
+        <div className="flex items-center gap-1 rounded-lg bg-white dark:bg-slate-900 p-1 shadow-sm ring-1 ring-slate-200/80 dark:ring-slate-700/80">
           <button
             onClick={() => setYear((y) => y - 1)}
-            className="rounded-md px-2.5 py-1 text-sm text-slate-500 hover:bg-slate-100"
+            className="rounded-md px-2.5 py-1 text-sm text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
             aria-label="Année précédente"
           >
             ←
           </button>
-          <span className="min-w-[3.5rem] text-center text-sm font-semibold text-slate-900">{year}</span>
+          <span className="min-w-[3.5rem] text-center text-sm font-semibold text-slate-900 dark:text-slate-100">{year}</span>
           <button
             onClick={() => setYear((y) => y + 1)}
-            className="rounded-md px-2.5 py-1 text-sm text-slate-500 hover:bg-slate-100"
+            className="rounded-md px-2.5 py-1 text-sm text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
             aria-label="Année suivante"
           >
             →
@@ -107,7 +107,7 @@ export function Dashboard() {
         </div>
       </div>
 
-      <p className="text-sm text-slate-600">{greeting}</p>
+      <p className="text-sm text-slate-600 dark:text-slate-400">{greeting}</p>
 
       <section className="card">
         <p className="stat-label">Argent réellement disponible</p>
@@ -125,21 +125,21 @@ export function Dashboard() {
         <dl className="mt-3 space-y-1 text-xs text-slate-500">
           <div className="flex justify-between">
             <dt>Solde actuel des comptes</dt>
-            <dd className="font-medium text-slate-700">{currency.format(data.availableMoney.currentBalance)}</dd>
+            <dd className="font-medium text-slate-700 dark:text-slate-300">{currency.format(data.availableMoney.currentBalance)}</dd>
           </div>
           <div className="flex justify-between">
             <dt>− Prélèvements à venir ce mois</dt>
-            <dd className="font-medium text-slate-700">{currency.format(data.availableMoney.upcomingCharges)}</dd>
+            <dd className="font-medium text-slate-700 dark:text-slate-300">{currency.format(data.availableMoney.upcomingCharges)}</dd>
           </div>
           {data.availableMoney.hasEstimate ? (
             <>
               <div className="flex justify-between">
                 <dt>− Essentiels restants estimés</dt>
-                <dd className="font-medium text-slate-700">{currency.format(data.availableMoney.besoinsRemaining)}</dd>
+                <dd className="font-medium text-slate-700 dark:text-slate-300">{currency.format(data.availableMoney.besoinsRemaining)}</dd>
               </div>
               <div className="flex justify-between">
                 <dt>− Épargne prévue restante</dt>
-                <dd className="font-medium text-slate-700">{currency.format(data.availableMoney.epargneRemaining)}</dd>
+                <dd className="font-medium text-slate-700 dark:text-slate-300">{currency.format(data.availableMoney.epargneRemaining)}</dd>
               </div>
             </>
           ) : (
@@ -168,13 +168,13 @@ export function Dashboard() {
               const over = actual > target;
               return (
                 <div key={cat}>
-                  <div className="flex justify-between text-xs text-slate-600">
+                  <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400">
                     <span>{cat === "BESOINS" ? "Besoins" : cat === "ENVIES" ? "Envies" : "Épargne"}</span>
                     <span className={over ? "font-medium text-red-600" : ""}>
                       {currency.format(actual)} / prévu {currency.format(target)}
                     </span>
                   </div>
-                  <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                     <div
                       style={{ width: `${pct}%` }}
                       className={`h-full ${over ? "bg-red-500" : CATEGORY_BAR_COLOR[cat]}`}
@@ -211,7 +211,7 @@ export function Dashboard() {
         <h2 className="mb-2 font-semibold">Revenu, dépenses et reste — {year}</h2>
         <AnnualLineChart monthly={data.monthly} selectedIndex={selectedMonthIndex} onSelectMonth={setSelectedMonthIndex} />
 
-        <div className="mt-3 rounded-md bg-slate-50 p-3 text-sm text-slate-700">
+        <div className="mt-3 rounded-md bg-slate-50 dark:bg-slate-800/60 p-3 text-sm text-slate-700 dark:text-slate-300">
           <p>
             <span className="font-medium">En {MONTH_NAMES[selected.month - 1]}</span> : revenu de{" "}
             {currency.format(selected.income)}, dépenses de {currency.format(selected.expense)}
@@ -235,7 +235,7 @@ export function Dashboard() {
           </h2>
           {data.budgetTemplate ? (
             <>
-              <p className="mt-2 text-sm text-slate-700">{data.budgetTemplate.label}</p>
+              <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">{data.budgetTemplate.label}</p>
               <Link to="/budget-type" className="btn btn-outline btn-sm mt-3">
                 Voir mon plan →
               </Link>
@@ -259,11 +259,11 @@ export function Dashboard() {
             <p className="mt-2 text-sm text-slate-500">Chargement...</p>
           ) : emergencyFund ? (
             <>
-              <p className="mt-2 text-sm text-slate-700">
+              <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
                 {currency.format(emergencyFund.currentSavedAmount)} sur {currency.format(emergencyFund.targetAmount)}{" "}
                 ({Math.round(emergencyFund.progressRatio * 100)} %)
               </p>
-              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                 <div
                   style={{ width: `${Math.min(emergencyFund.progressRatio * 100, 100)}%` }}
                   className="h-full bg-emerald-500"
@@ -391,7 +391,7 @@ function MonthlyGoalsSection({ year, month }: { year: number; month: number }) {
       ) : (
         <ul className="mt-3 space-y-1">
           {goals.map((goal) => (
-            <li key={goal.id} className="flex items-center justify-between gap-2 border-b border-slate-100 py-1.5 last:border-0">
+            <li key={goal.id} className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 py-1.5 last:border-0">
               <label className="flex flex-1 items-center gap-2 text-sm">
                 <input type="checkbox" checked={goal.done} onChange={() => handleToggle(goal)} />
                 <span className={goal.done ? "text-slate-400 line-through" : ""}>
@@ -421,9 +421,9 @@ function StatTile({
   tone?: "default" | "warn" | "success";
   hint?: string;
 }) {
-  const toneClass = tone === "warn" ? "text-red-600" : tone === "success" ? "text-emerald-600" : "text-slate-900";
+  const toneClass = tone === "warn" ? "text-red-600" : tone === "success" ? "text-emerald-600" : "text-slate-900 dark:text-slate-100";
   return (
-    <div className="rounded-lg bg-slate-50 p-3.5">
+    <div className="rounded-lg bg-slate-50 dark:bg-slate-800/60 p-3.5">
       <p className="stat-label">{label}</p>
       <p className={`mt-1 text-xl font-semibold tracking-tight ${toneClass}`}>{value}</p>
       {hint && <p className="mt-0.5 text-xs text-slate-500">{hint}</p>}

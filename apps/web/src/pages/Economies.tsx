@@ -60,14 +60,14 @@ export function Economies() {
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex items-center justify-between card p-3">
-        <button onClick={() => setYear((y) => y - 1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100">
+        <button onClick={() => setYear((y) => y - 1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100 dark:hover:bg-slate-800">
           ← {year - 1}
         </button>
         <span className="text-lg font-semibold flex items-center gap-2">
           <IconScissors className="h-5 w-5 text-violet-600" />
           Recommandations d'économies — {year}
         </span>
-        <button onClick={() => setYear((y) => y + 1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100">
+        <button onClick={() => setYear((y) => y + 1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100 dark:hover:bg-slate-800">
           {year + 1} →
         </button>
       </div>
@@ -86,7 +86,7 @@ export function Economies() {
         )}
 
         {profile === undefined ? null : profile ? (
-          <div className="mt-3 border-t border-slate-100 pt-3">
+          <div className="mt-3 border-t border-slate-100 dark:border-slate-800 pt-3">
             {reallocated ? (
               <p className="text-sm text-emerald-700">
                 Capacité d'épargne mensuelle mise à jour : {currency.format(profile.monthlySavingsCapacity)}.{" "}
@@ -107,7 +107,7 @@ export function Economies() {
             )}
           </div>
         ) : (
-          <p className="mt-3 border-t border-slate-100 pt-3 text-sm text-slate-500">
+          <p className="mt-3 border-t border-slate-100 dark:border-slate-800 pt-3 text-sm text-slate-500">
             <Link to="/epargne" className="underline">
               Complète ton épargne de précaution
             </Link>{" "}
@@ -126,7 +126,7 @@ export function Economies() {
         ) : (
           <ul className="mt-2">
             {data.regret.byPoste.map((item) => (
-              <li key={item.poste} className="flex items-center justify-between border-b border-slate-100 py-2 last:border-0">
+              <li key={item.poste} className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 py-2 last:border-0">
                 <span className="text-sm">
                   {item.poste} <span className="text-slate-400">({item.count} fois)</span>
                 </span>
@@ -152,7 +152,7 @@ export function Economies() {
         ) : (
           <ul className="mt-2">
             {data.subscriptionsToCancel.map((sub) => (
-              <li key={sub.id} className="flex items-center justify-between border-b border-slate-100 py-2 last:border-0">
+              <li key={sub.id} className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 py-2 last:border-0">
                 <span className="text-sm">
                   En résiliant <span className="font-medium">{sub.poste}</span>, tu économises
                 </span>

@@ -107,7 +107,7 @@ export function Transferts() {
           <h2 className="font-semibold">Nouveau transfert</h2>
           <div className="mt-3 flex flex-wrap items-end gap-2">
             <div>
-              <label htmlFor="transfer-from" className="mb-1 block text-xs font-medium text-slate-700">
+              <label htmlFor="transfer-from" className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
                 Depuis
               </label>
               <select
@@ -124,7 +124,7 @@ export function Transferts() {
               </select>
             </div>
             <div>
-              <label htmlFor="transfer-to" className="mb-1 block text-xs font-medium text-slate-700">
+              <label htmlFor="transfer-to" className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
                 Vers
               </label>
               <select
@@ -141,7 +141,7 @@ export function Transferts() {
               </select>
             </div>
             <div>
-              <label htmlFor="transfer-amount" className="mb-1 block text-xs font-medium text-slate-700">
+              <label htmlFor="transfer-amount" className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
                 Montant (€)
               </label>
               <input
@@ -154,7 +154,7 @@ export function Transferts() {
               />
             </div>
             <div>
-              <label htmlFor="transfer-date" className="mb-1 block text-xs font-medium text-slate-700">
+              <label htmlFor="transfer-date" className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
                 Date
               </label>
               <input
@@ -166,7 +166,7 @@ export function Transferts() {
               />
             </div>
             <div className="min-w-[160px] flex-1">
-              <label htmlFor="transfer-note" className="mb-1 block text-xs font-medium text-slate-700">
+              <label htmlFor="transfer-note" className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
                 Note (optionnel)
               </label>
               <input
@@ -192,7 +192,7 @@ export function Transferts() {
         ) : (
           <ul className="mt-2">
             {data.transfers.map((t) => (
-              <li key={t.id} className="flex items-center justify-between border-b border-slate-100 py-2 last:border-0">
+              <li key={t.id} className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 py-2 last:border-0">
                 <div>
                   <p className="text-sm font-medium">
                     {t.fromAccountName} → {t.toAccountName}

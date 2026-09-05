@@ -106,12 +106,12 @@ export function Echeances() {
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {data.accounts.some((a) => a.alert) && (
-        <section className="space-y-2 rounded-lg bg-red-50 p-4 ring-1 ring-red-200">
-          <h2 className="font-semibold text-red-800">Alerte de solde prévisionnel</h2>
+        <section className="space-y-2 rounded-lg bg-red-50 p-4 ring-1 ring-red-200 dark:bg-red-950/40 dark:ring-red-900">
+          <h2 className="font-semibold text-red-800 dark:text-red-300">Alerte de solde prévisionnel</h2>
           {data.accounts
             .filter((a) => a.alert)
             .map((a) => (
-              <p key={a.id} className="text-sm text-red-700">
+              <p key={a.id} className="text-sm text-red-700 dark:text-red-400">
                 Le compte <span className="font-medium">{a.name}</span> risque de passer en négatif
                 ({currency.format(a.alert!.projectedBalance)}) autour du {a.alert!.dayOfMonth} du mois, en
                 cumulant les échéances déclarées à partir d'un solde de {currency.format(a.currentBalance)}.
@@ -182,11 +182,11 @@ export function Echeances() {
             {sortedCharges.map((c) => (
               <li
                 key={c.id}
-                className={`flex items-center justify-between gap-3 border-b border-slate-100 py-2 last:border-0 ${
+                className={`flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 py-2 last:border-0 ${
                   c.active ? "" : "opacity-50"
                 }`}
               >
-                <span className="w-10 shrink-0 rounded-md bg-slate-100 py-1 text-center text-xs font-semibold text-slate-600">
+                <span className="w-10 shrink-0 rounded-md bg-slate-100 dark:bg-slate-800 py-1 text-center text-xs font-semibold text-slate-600 dark:text-slate-400">
                   {c.dayOfMonth}
                 </span>
                 <span className="flex-1 text-sm">
@@ -217,7 +217,7 @@ export function Echeances() {
           </p>
           <ul className="mt-2">
             {data.subscriptionsWithoutDate.map((s) => (
-              <li key={s.id} className="flex items-center justify-between border-b border-slate-100 py-2 last:border-0">
+              <li key={s.id} className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 py-2 last:border-0">
                 <span className="text-sm">{s.poste}</span>
                 <span className="text-sm font-medium">{currency.format(s.amount)} / mois</span>
               </li>

@@ -18,7 +18,7 @@ export function BudgetItemRow({ item, depth = 0, onAddChild, onUpdate, onDelete,
   const [addingChild, setAddingChild] = useState(false);
 
   return (
-    <li style={{ marginLeft: depth * 20 }} className="border-b border-slate-100 py-2 last:border-0">
+    <li style={{ marginLeft: depth * 20 }} className="border-b border-slate-100 dark:border-slate-800 py-2 last:border-0">
       {editing ? (
         <BudgetItemForm
           initialName={item.name}
@@ -37,12 +37,12 @@ export function BudgetItemRow({ item, depth = 0, onAddChild, onUpdate, onDelete,
             <p className="text-sm font-medium">
               {item.name}
               {!item.essential && (
-                <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-normal text-slate-500">
+                <span className="ml-2 rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs font-normal text-slate-500">
                   autre
                 </span>
               )}
               {item.children.length > 0 && (
-                <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-normal text-slate-500">
+                <span className="ml-2 rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs font-normal text-slate-500">
                   détaillé
                 </span>
               )}
@@ -50,16 +50,16 @@ export function BudgetItemRow({ item, depth = 0, onAddChild, onUpdate, onDelete,
           </div>
           <div className="flex items-center gap-1 text-xs">
             <span className="mr-2 text-sm font-semibold">{currency.format(item.displayedAmount)}</span>
-            <button onClick={() => onMove(item.id, "up")} className="px-1 text-slate-400 hover:text-slate-900" aria-label="Monter">
+            <button onClick={() => onMove(item.id, "up")} className="px-1 text-slate-400 hover:text-slate-900 dark:hover:text-slate-100" aria-label="Monter">
               ↑
             </button>
-            <button onClick={() => onMove(item.id, "down")} className="px-1 text-slate-400 hover:text-slate-900" aria-label="Descendre">
+            <button onClick={() => onMove(item.id, "down")} className="px-1 text-slate-400 hover:text-slate-900 dark:hover:text-slate-100" aria-label="Descendre">
               ↓
             </button>
-            <button onClick={() => setAddingChild((v) => !v)} className="px-1 text-slate-400 hover:text-slate-900">
+            <button onClick={() => setAddingChild((v) => !v)} className="px-1 text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
               + sous-dépense
             </button>
-            <button onClick={() => setEditing(true)} className="px-1 text-slate-400 hover:text-slate-900">
+            <button onClick={() => setEditing(true)} className="px-1 text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
               Modifier
             </button>
             <button onClick={() => onDelete(item.id)} className="px-1 text-slate-400 hover:text-red-600">

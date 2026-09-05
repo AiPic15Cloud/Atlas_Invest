@@ -41,12 +41,12 @@ export function Onboarding() {
       subtitle="Pour commencer, crée ton foyer ou rejoins celui d'un proche grâce à un code d'invitation."
       maxWidth="max-w-md"
     >
-      <div className="mb-6 flex rounded-lg bg-slate-100 p-1 text-sm font-medium">
+      <div className="mb-6 flex rounded-lg bg-slate-100 dark:bg-slate-800 p-1 text-sm font-medium">
         <button
           type="button"
           onClick={() => setMode("create")}
           className={`flex-1 rounded-md py-1.5 transition-colors ${
-            mode === "create" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
+            mode === "create" ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm" : "text-slate-500"
           }`}
         >
           Créer un foyer
@@ -55,7 +55,7 @@ export function Onboarding() {
           type="button"
           onClick={() => setMode("join")}
           className={`flex-1 rounded-md py-1.5 transition-colors ${
-            mode === "join" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
+            mode === "join" ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm" : "text-slate-500"
           }`}
         >
           Rejoindre un foyer

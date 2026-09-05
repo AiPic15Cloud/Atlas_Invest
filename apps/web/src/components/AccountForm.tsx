@@ -39,9 +39,9 @@ export function AccountForm({ variant, onSubmit, onCancel }: AccountFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-3 space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3">
+    <form onSubmit={handleSubmit} className="mt-3 space-y-3 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-3">
       <div>
-        <label htmlFor={`${variant}-account-name`} className="mb-1 block text-xs font-medium text-slate-700">
+        <label htmlFor={`${variant}-account-name`} className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
           Nom du compte
         </label>
         <input
@@ -56,7 +56,7 @@ export function AccountForm({ variant, onSubmit, onCancel }: AccountFormProps) {
       </div>
       {variant === "personal" && (
         <div>
-          <label htmlFor={`${variant}-account-type`} className="mb-1 block text-xs font-medium text-slate-700">
+          <label htmlFor={`${variant}-account-type`} className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
             Type
           </label>
           <select
@@ -74,7 +74,7 @@ export function AccountForm({ variant, onSubmit, onCancel }: AccountFormProps) {
         </div>
       )}
       <div>
-        <label htmlFor={`${variant}-account-balance`} className="mb-1 block text-xs font-medium text-slate-700">
+        <label htmlFor={`${variant}-account-balance`} className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
           Solde actuel (€)
         </label>
         <input
@@ -97,7 +97,7 @@ export function AccountForm({ variant, onSubmit, onCancel }: AccountFormProps) {
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-md px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-200"
+          className="rounded-md px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
         >
           Annuler
         </button>

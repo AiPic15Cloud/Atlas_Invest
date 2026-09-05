@@ -116,13 +116,13 @@ export function Revenus() {
       ) : (
         <>
           <div className="flex items-center justify-between card p-3">
-            <button onClick={() => goToMonth(-1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100">
+            <button onClick={() => goToMonth(-1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100 dark:hover:bg-slate-800">
               ← Précédent
             </button>
             <span className="font-medium">
               {MONTH_NAMES[month - 1]} {year}
             </span>
-            <button onClick={() => goToMonth(1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100">
+            <button onClick={() => goToMonth(1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100 dark:hover:bg-slate-800">
               Suivant →
             </button>
           </div>
@@ -167,7 +167,7 @@ export function Revenus() {
                 {incomes.map((income) => (
                   <li
                     key={income.id}
-                    className="flex items-center justify-between border-b border-slate-100 py-2 last:border-0"
+                    className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 py-2 last:border-0"
                   >
                     <div>
                       <p className="text-sm font-medium">{income.source}</p>
@@ -219,7 +219,7 @@ function YearView({
   return (
     <section>
       <p className="text-sm text-slate-500">
-        Revenus {year} — total <span className="font-semibold text-slate-900">{currency.format(total)}</span>
+        Revenus {year} — total <span className="font-semibold text-slate-900 dark:text-slate-100">{currency.format(total)}</span>
       </p>
       <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {MONTH_NAMES.map((name, index) => {
@@ -240,8 +240,8 @@ function YearView({
                 <ul className="mt-2 space-y-1">
                   {monthData.incomes.map((income) => (
                     <li key={income.id} className="flex items-center justify-between text-sm">
-                      <span className="text-slate-700">{income.source}</span>
-                      <span className="font-medium text-slate-900">
+                      <span className="text-slate-700 dark:text-slate-300">{income.source}</span>
+                      <span className="font-medium text-slate-900 dark:text-slate-100">
                         {currency.format(Number(income.amount))}
                         {monthTotal > 0 && (
                           <span className="ml-1.5 text-xs font-normal text-slate-400">
@@ -298,8 +298,8 @@ function CopyMonthPanel({
   }
 
   return (
-    <div className="mt-3 space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3">
-      <p className="text-xs text-slate-600">
+    <div className="mt-3 space-y-3 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-3">
+      <p className="text-xs text-slate-600 dark:text-slate-400">
         Copier la structure de revenus d'un autre mois vers {MONTH_NAMES[targetMonth - 1]} {targetYear}. Cela
         remplacera les revenus déjà saisis pour ce mois.
       </p>
@@ -331,7 +331,7 @@ function CopyMonthPanel({
         >
           {submitting ? "Copie..." : "Copier"}
         </button>
-        <button onClick={onCancel} className="rounded-md px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-200">
+        <button onClick={onCancel} className="rounded-md px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">
           Annuler
         </button>
       </div>

@@ -236,7 +236,7 @@ export function Patrimoine() {
         ) : (
           <ul className="mt-2">
             {data.mine.wealthItems.map((item) => (
-              <li key={item.id} className="flex items-center justify-between gap-3 border-b border-slate-100 py-2 last:border-0">
+              <li key={item.id} className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 py-2 last:border-0">
                 <span className="text-sm">
                   {item.label}{" "}
                   <span className="text-slate-400">({data.categories[item.category].label})</span>
@@ -312,7 +312,7 @@ export function Patrimoine() {
         {loans && loans.length > 0 && (
           <div className="mt-4 space-y-3">
             {loans.map((loan) => (
-              <div key={loan.id} className="rounded-md border border-slate-200 p-3">
+              <div key={loan.id} className="rounded-md border border-slate-200 dark:border-slate-700 p-3">
                 <div className="flex items-center justify-between">
                   <h3 className="font-medium">
                     {loan.label} {loan.paidOff && <span className="text-emerald-600">✓ remboursé</span>}
@@ -322,13 +322,13 @@ export function Patrimoine() {
                   </button>
                 </div>
 
-                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                   <div
                     className={`h-full ${loan.paidOff ? "bg-emerald-500" : "bg-violet-600"}`}
                     style={{ width: `${Math.round(loan.progressRatio * 100)}%` }}
                   />
                 </div>
-                <p className="mt-1 text-sm text-slate-600">
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                   Capital restant dû : <span className="font-medium">{currency.format(loan.remainingBalance)}</span> /{" "}
                   {currency.format(loan.principalAmount)} emprunté ({Math.round(loan.progressRatio * 100)}% remboursé)
                 </p>
@@ -371,7 +371,7 @@ export function Patrimoine() {
           <h2 className="font-semibold">Reste du foyer</h2>
           <ul className="mt-2">
             {data.household.map((member) => (
-              <li key={member.userId} className="border-b border-slate-100 py-2 last:border-0">
+              <li key={member.userId} className="border-b border-slate-100 dark:border-slate-800 py-2 last:border-0">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">{member.firstName}</span>
                   <span className="text-sm font-medium">{currency.format(member.netWorth)}</span>

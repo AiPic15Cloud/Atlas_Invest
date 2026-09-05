@@ -47,7 +47,7 @@ export function QuickAddExpense({ accounts, onSubmit }: QuickAddExpenseProps) {
 
   return (
     <form onSubmit={handleSubmit} className="card">
-      <label htmlFor="quick-expense" className="mb-1 block text-sm font-medium text-slate-700">
+      <label htmlFor="quick-expense" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
         Ajout rapide
       </label>
       <div className="flex flex-wrap items-center gap-2">

@@ -86,7 +86,7 @@ export function WaterfallChart({ income, besoins, envies, epargne, autres }: Wat
 
   return (
     <div>
-      <div className="mb-2 flex flex-wrap gap-4 text-xs text-slate-600">
+      <div className="mb-2 flex flex-wrap gap-4 text-xs text-slate-600 dark:text-slate-400">
         <span className="flex items-center gap-1.5">
           <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "#10b981" }} />
           Revenu / Reste
@@ -120,7 +120,7 @@ export function WaterfallChart({ income, besoins, envies, epargne, autres }: Wat
               x2={WIDTH - PADDING.right}
               y1={y(t)}
               y2={y(t)}
-              stroke={t === 0 ? "#c3c2b7" : "#eeede7"}
+              stroke={t === 0 ? "var(--chart-grid-zero)" : "var(--chart-grid)"}
               strokeWidth={1}
             />
           ))}
@@ -133,7 +133,7 @@ export function WaterfallChart({ income, besoins, envies, epargne, autres }: Wat
                 x2={x(i) - barWidth / 2}
                 y1={y(bars[i - 1].after)}
                 y2={y(bars[i - 1].after)}
-                stroke="#c3c2b7"
+                stroke="var(--chart-grid-zero)"
                 strokeWidth={1}
                 strokeDasharray="3 3"
               />
@@ -155,10 +155,10 @@ export function WaterfallChart({ income, besoins, envies, epargne, autres }: Wat
                   fill={b.color}
                   opacity={hoverIndex === null || hoverIndex === i ? 1 : 0.55}
                 />
-                <text x={x(i)} y={top - 8} textAnchor="middle" fontSize={11} fontWeight={600} fill="#1e293b">
+                <text x={x(i)} y={top - 8} textAnchor="middle" fontSize={11} fontWeight={600} fill="var(--chart-text)">
                   {currency.format(b.isTotal ? b.amount : Math.abs(b.amount))}
                 </text>
-                <text x={x(i)} y={HEIGHT - 8} textAnchor="middle" fontSize={10} fill="#64748b">
+                <text x={x(i)} y={HEIGHT - 8} textAnchor="middle" fontSize={10} fill="var(--chart-text-muted)">
                   {b.label}
                 </text>
                 <rect

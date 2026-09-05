@@ -40,7 +40,7 @@ const CATEGORY_TEXT_CLASS: Record<ExpenseCategory, string> = {
   ENVIES: "text-pink-600",
   EPARGNE: "text-violet-600",
   INVESTISSEMENT: "text-sky-600",
-  REMBOURSEMENT_DETTE: "text-slate-600",
+  REMBOURSEMENT_DETTE: "text-slate-600 dark:text-slate-400",
 };
 
 const CATEGORY_ORDER: ExpenseCategory[] = ["BESOINS", "ENVIES", "EPARGNE", "INVESTISSEMENT", "REMBOURSEMENT_DETTE"];
@@ -220,11 +220,11 @@ export function BudgetDuMois() {
       </h1>
 
       <div className="flex items-center justify-between card p-3">
-        <button onClick={() => goToMonth(-1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100">
+        <button onClick={() => goToMonth(-1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100 dark:hover:bg-slate-800">
           ← Précédent
         </button>
         <span className="font-medium">{MONTH_NAMES[month - 1]} {year}</span>
-        <button onClick={() => goToMonth(1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100">
+        <button onClick={() => goToMonth(1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100 dark:hover:bg-slate-800">
           Suivant →
         </button>
       </div>
@@ -249,9 +249,9 @@ export function BudgetDuMois() {
           </button>
         </div>
         {copyOtherOpen && (
-          <div className="mt-3 flex items-end gap-2 rounded-md border border-slate-200 bg-slate-50 p-2">
+          <div className="mt-3 flex items-end gap-2 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-2">
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-700">Mois source</label>
+              <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">Mois source</label>
               <select
                 value={copyFromMonth}
                 onChange={(e) => setCopyFromMonth(Number(e.target.value))}
@@ -319,7 +319,7 @@ export function BudgetDuMois() {
         )}
 
         {summary.budgetComparison && summary.budgetComparison.overBudgetCategories.length > 0 && (
-          <div className="mt-3 rounded-md bg-red-50 p-3 text-sm text-red-700">
+          <div className="mt-3 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-400">
             <p className="font-medium">Budget dépassé :</p>
             <ul className="mt-1 list-disc pl-5">
               {summary.budgetComparison.overBudgetCategories.map((c) => (
@@ -333,7 +333,7 @@ export function BudgetDuMois() {
         )}
 
         {summary.regretTotal > 0 && (
-          <div className="mt-3 rounded-md bg-orange-50 p-3 text-sm text-orange-700">
+          <div className="mt-3 rounded-md bg-orange-50 p-3 text-sm text-orange-700 dark:bg-orange-950/40 dark:text-orange-400">
             <p>
               <span className="font-medium">{currency.format(summary.regretTotal)}</span> de dépenses regrettées
               (😬) ce mois — autant de gain potentiel si elles étaient évitées. Ajuste le ressenti qui ne te semble
@@ -428,17 +428,17 @@ function ExpenseRow({
 }) {
   const currency = useCurrencyFormatter();
   return (
-    <li className="flex items-center justify-between border-b border-slate-100 py-2 last:border-0">
+    <li className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 py-2 last:border-0">
       <div>
         <p className="text-sm font-medium">
           {expense.poste}
           {expense.unusual && (
-            <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-normal text-amber-700">
+            <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-normal text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
               inhabituelle
             </span>
           )}
           {expense.feeling === "REGRET" && (
-            <span className="ml-2 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-normal text-orange-700">
+            <span className="ml-2 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-normal text-orange-700 dark:bg-orange-900/50 dark:text-orange-300">
               regrettée
             </span>
           )}
@@ -455,7 +455,7 @@ function ExpenseRow({
               title={FEELING_LABELS[feeling]}
               aria-pressed={expense.feeling === feeling}
               className={`rounded-full px-1 py-0.5 text-sm leading-none transition ${
-                expense.feeling === feeling ? "bg-slate-200" : "opacity-40 hover:opacity-100"
+                expense.feeling === feeling ? "bg-slate-200 dark:bg-slate-700" : "opacity-40 hover:opacity-100"
               }`}
             >
               {FEELING_EMOJI[feeling]}
@@ -482,7 +482,7 @@ function StatTile({
   hint?: string;
 }) {
   return (
-    <div className="rounded-md bg-slate-50 p-3">
+    <div className="rounded-md bg-slate-50 dark:bg-slate-800/60 p-3">
       <p className="text-xs text-slate-500">{label}</p>
       <p
         className={`mt-1 text-lg font-semibold ${
@@ -567,7 +567,7 @@ function MonthlyComparisonTable({
     <div className="mt-4 overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-400">
+          <tr className="border-b border-slate-200 dark:border-slate-700 text-left text-xs uppercase tracking-wide text-slate-400">
             <th className="py-2 font-medium">Poste</th>
             <th className="py-2 text-right font-medium">Référence</th>
             <th className="py-2 text-right font-medium">Ce mois</th>
@@ -581,7 +581,7 @@ function MonthlyComparisonTable({
             // problème ; pour Épargne c'est l'inverse : projeter en dessous.
             const projectionOver = category === "EPARGNE" ? projection < thisMonth : projection > thisMonth;
             return (
-              <tr key={category} className="border-b border-slate-100 last:border-0">
+              <tr key={category} className="border-b border-slate-100 dark:border-slate-800 last:border-0">
                 <td className="py-2">
                   <span className="flex items-center gap-1.5">
                     <span className={`inline-block h-2 w-2 rounded-full ${CATEGORY_ROW_DOT[category]}`} />
@@ -612,7 +612,7 @@ function MonthlyComparisonTable({
                       {hasOverride && (
                         <button
                           onClick={() => resetToReference(category)}
-                          className="text-xs text-slate-400 hover:text-slate-700"
+                          className="text-xs text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                           title="Revenir à la référence"
                         >
                           ↺

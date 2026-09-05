@@ -114,13 +114,13 @@ export function Export() {
       </h1>
 
       <div className="flex items-center justify-between card p-3">
-        <button onClick={() => shiftMonth(-1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100">
+        <button onClick={() => shiftMonth(-1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100 dark:hover:bg-slate-800">
           ← Précédent
         </button>
         <span className="font-medium">
           {MONTH_LABELS[month - 1]} {year}
         </span>
-        <button onClick={() => shiftMonth(1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100">
+        <button onClick={() => shiftMonth(1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100 dark:hover:bg-slate-800">
           Suivant →
         </button>
       </div>
@@ -177,7 +177,7 @@ export function Export() {
             </div>
             <button
               onClick={handleDownloadYear}
-              className="mt-3 rounded-md bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
+              className="mt-3 rounded-md bg-slate-100 dark:bg-slate-800 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
             >
               Télécharger le récapitulatif annuel (CSV)
             </button>

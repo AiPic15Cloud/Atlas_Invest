@@ -17,7 +17,7 @@ const TYPE_LABELS: Record<BankAccountType, string> = {
 function AccountRow({ account, onDelete }: { account: BankAccount; onDelete: (id: string) => void }) {
   const currency = useCurrencyFormatter();
   return (
-    <li className="flex items-center justify-between border-b border-slate-100 py-2 last:border-0">
+    <li className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 py-2 last:border-0">
       <div>
         <p className="text-sm font-medium">{account.name}</p>
         <p className="text-xs text-slate-500">{TYPE_LABELS[account.type]}</p>
@@ -147,7 +147,7 @@ export function Accounts() {
                   member.accounts && member.accounts.length > 0 ? (
                     <ul>
                       {member.accounts.map((account) => (
-                        <li key={account.id} className="flex justify-between border-b border-slate-100 py-1.5 text-sm last:border-0">
+                        <li key={account.id} className="flex justify-between border-b border-slate-100 dark:border-slate-800 py-1.5 text-sm last:border-0">
                           <span>
                             {account.name} <span className="text-slate-400">({TYPE_LABELS[account.type]})</span>
                           </span>

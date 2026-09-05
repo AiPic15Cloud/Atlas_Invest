@@ -11,8 +11,8 @@ const TYPE_LABELS: Record<CorrectionType, string> = {
 };
 
 const TYPE_COLORS: Record<CorrectionType, string> = {
-  WASTEFUL_EXPENSE: "bg-amber-100 text-amber-800",
-  SUBSCRIPTION_STATUS: "bg-sky-100 text-sky-800",
+  WASTEFUL_EXPENSE: "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300",
+  SUBSCRIPTION_STATUS: "bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300",
 };
 
 export function Historique() {
@@ -50,7 +50,7 @@ export function Historique() {
             key={t}
             onClick={() => setFilter(t)}
             className={`rounded-md px-3 py-2 text-sm font-medium ${
-              filter === t ? "bg-violet-600 text-white" : "bg-slate-100 text-slate-700"
+              filter === t ? "bg-violet-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
             }`}
           >
             {t === "ALL" ? "Tout" : TYPE_LABELS[t]}

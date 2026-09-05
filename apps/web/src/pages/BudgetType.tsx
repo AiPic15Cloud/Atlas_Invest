@@ -148,31 +148,31 @@ export function BudgetType() {
           // envies/loisirs, épargne prévue, marge libre — avant tout détail par
           // poste, pour répondre d'abord à "avec mes revenus, combien puis-je
           // raisonnablement dépenser ?".
-          <dl className="mt-3 divide-y divide-slate-100 text-sm">
+          <dl className="mt-3 divide-y divide-slate-100 dark:divide-slate-800 text-sm">
             <div className="flex items-center justify-between py-2">
-              <dt className="text-slate-600">Revenus habituels</dt>
+              <dt className="text-slate-600 dark:text-slate-400">Revenus habituels</dt>
               <dd className="text-base font-semibold">{currency.format(template.monthlyIncome)}</dd>
             </div>
             <div className="flex items-center justify-between py-2">
-              <dt className="flex items-center gap-1.5 text-slate-600">
+              <dt className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
                 <span className="inline-block h-2 w-2 rounded-full bg-amber-500" /> Charges essentielles
               </dt>
               <dd className="font-medium">{currency.format(breakdown.besoinsTarget)}</dd>
             </div>
             <div className="flex items-center justify-between py-2">
-              <dt className="flex items-center gap-1.5 text-slate-600">
+              <dt className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
                 <span className="inline-block h-2 w-2 rounded-full bg-pink-500" /> Envies / loisirs
               </dt>
               <dd className="font-medium">{currency.format(breakdown.enviesTarget)}</dd>
             </div>
             <div className="flex items-center justify-between py-2">
-              <dt className="flex items-center gap-1.5 text-slate-600">
+              <dt className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
                 <span className="inline-block h-2 w-2 rounded-full bg-violet-500" /> Épargne prévue
               </dt>
               <dd className="font-medium">{currency.format(breakdown.epargneTarget)}</dd>
             </div>
             <div className="flex items-center justify-between py-2">
-              <dt className="text-slate-600">Marge libre</dt>
+              <dt className="text-slate-600 dark:text-slate-400">Marge libre</dt>
               <dd className={`font-medium ${margeLibre < 0 ? "text-red-600" : ""}`}>{currency.format(margeLibre)}</dd>
             </div>
           </dl>
@@ -280,12 +280,12 @@ function SplitBar({ besoins, envies, epargne, total }: { besoins: number; envies
   const pct = (v: number) => Math.max(0, Math.min(100, (v / safeTotal) * 100));
   return (
     <div className="mt-4">
-      <div className="flex h-4 w-full overflow-hidden rounded-full bg-slate-100">
+      <div className="flex h-4 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
         <div style={{ width: `${pct(besoins)}%` }} className="bg-amber-500" title={`Besoins ${currency.format(besoins)}`} />
         <div style={{ width: `${pct(envies)}%` }} className="bg-pink-500" title={`Envies ${currency.format(envies)}`} />
         <div style={{ width: `${pct(epargne)}%` }} className="bg-violet-500" title={`Épargne ${currency.format(epargne)}`} />
       </div>
-      <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-600">
+      <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-600 dark:text-slate-400">
         <span><span className="inline-block h-2 w-2 rounded-full bg-amber-500" /> Besoins {currency.format(besoins)}</span>
         <span><span className="inline-block h-2 w-2 rounded-full bg-pink-500" /> Envies {currency.format(envies)}</span>
         <span><span className="inline-block h-2 w-2 rounded-full bg-violet-500" /> Épargne {currency.format(epargne)}</span>
@@ -357,22 +357,22 @@ function ScenarioComparison({
             <div
               key={key}
               className={`w-56 shrink-0 rounded-lg border p-3 ${
-                isActive ? "border-violet-500 bg-violet-50 ring-1 ring-violet-500" : "border-slate-200 bg-white"
+                isActive ? "border-violet-500 bg-violet-50 ring-1 ring-violet-500 dark:bg-violet-500/15" : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
               }`}
             >
               <p className="text-sm font-medium">{def.label}</p>
-              <dl className="mt-2 space-y-1 text-xs text-slate-600">
+              <dl className="mt-2 space-y-1 text-xs text-slate-600 dark:text-slate-400">
                 <div className="flex items-center justify-between">
                   <dt className="flex items-center gap-1.5">
                     <span className="inline-block h-2 w-2 rounded-full bg-amber-500" /> Besoins
                   </dt>
-                  <dd className="font-medium text-slate-800">{currency.format(targets.besoins)}</dd>
+                  <dd className="font-medium text-slate-800 dark:text-slate-200">{currency.format(targets.besoins)}</dd>
                 </div>
                 <div className="flex items-center justify-between">
                   <dt className="flex items-center gap-1.5">
                     <span className="inline-block h-2 w-2 rounded-full bg-pink-500" /> Envies
                   </dt>
-                  <dd className="font-medium text-slate-800">{currency.format(targets.envies)}</dd>
+                  <dd className="font-medium text-slate-800 dark:text-slate-200">{currency.format(targets.envies)}</dd>
                 </div>
                 <div className="flex items-center justify-between">
                   <dt className="flex items-center gap-1.5">
@@ -387,7 +387,7 @@ function ScenarioComparison({
                 <button
                   onClick={() => handleChoose(key)}
                   disabled={choosing !== null}
-                  className="mt-3 w-full rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                  className="mt-3 w-full rounded-md border border-slate-300 dark:border-slate-700 px-2 py-1 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
                 >
                   {choosing === key ? "..." : "Choisir cette méthode"}
                 </button>
@@ -423,7 +423,7 @@ function IncomeOnlyForm({ initial, onCancel, onSubmit }: { initial: number; onCa
   return (
     <div className="mt-3 flex items-end gap-2">
       <div>
-        <label htmlFor="monthly-income" className="mb-1 block text-xs font-medium text-slate-700">
+        <label htmlFor="monthly-income" className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
           Revenu mensuel de référence (€)
         </label>
         <input
@@ -442,7 +442,7 @@ function IncomeOnlyForm({ initial, onCancel, onSubmit }: { initial: number; onCa
       >
         Enregistrer
       </button>
-      <button onClick={onCancel} className="rounded-md px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-200">
+      <button onClick={onCancel} className="rounded-md px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">
         Annuler
       </button>
     </div>
@@ -493,7 +493,7 @@ function MethodPicker({
         <IconSliders className="h-6 w-6 text-violet-600" />
         {initialMethod ? "Changer de méthode de budget" : "Construis ton budget type"}
       </h1>
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-slate-600 dark:text-slate-400">
         Choisis la méthode de budgétisation qui te servira de référence pour comparer tes dépenses réelles.
       </p>
 
@@ -504,7 +504,7 @@ function MethodPicker({
               key={key}
               onClick={() => setMethod(key)}
               className={`rounded-lg border p-3 text-left transition ${
-                method === key ? "border-violet-500 bg-violet-50 ring-1 ring-violet-500" : "border-slate-200 bg-white hover:border-slate-300"
+                method === key ? "border-violet-500 bg-violet-50 ring-1 ring-violet-500 dark:bg-violet-500/15" : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700"
               }`}
             >
               <p className="font-medium">{def.label}</p>
@@ -515,7 +515,7 @@ function MethodPicker({
       </div>
 
       <div className="card">
-        <label htmlFor="picker-income" className="mb-1 block text-sm font-medium text-slate-700">
+        <label htmlFor="picker-income" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
           Revenu mensuel de référence (€)
         </label>
         <input
@@ -536,7 +536,7 @@ function MethodPicker({
             {submitting ? "Enregistrement..." : initialMethod ? "Enregistrer" : "Créer mon budget type"}
           </button>
           {onCancel && (
-            <button onClick={onCancel} className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">
+            <button onClick={onCancel} className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
               Annuler
             </button>
           )}

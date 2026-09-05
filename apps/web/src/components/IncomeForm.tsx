@@ -38,9 +38,9 @@ export function IncomeForm({ accounts, onSubmit, onCancel }: IncomeFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-3 space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3">
+    <form onSubmit={handleSubmit} className="mt-3 space-y-3 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-3">
       <div>
-        <label htmlFor="income-source" className="mb-1 block text-xs font-medium text-slate-700">
+        <label htmlFor="income-source" className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
           Source
         </label>
         <input
@@ -60,7 +60,7 @@ export function IncomeForm({ accounts, onSubmit, onCancel }: IncomeFormProps) {
         </datalist>
       </div>
       <div>
-        <label htmlFor="income-account" className="mb-1 block text-xs font-medium text-slate-700">
+        <label htmlFor="income-account" className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
           Compte bancaire
         </label>
         <select
@@ -77,7 +77,7 @@ export function IncomeForm({ accounts, onSubmit, onCancel }: IncomeFormProps) {
         </select>
       </div>
       <div>
-        <label htmlFor="income-amount" className="mb-1 block text-xs font-medium text-slate-700">
+        <label htmlFor="income-amount" className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
           Montant (€)
         </label>
         <input
@@ -101,7 +101,7 @@ export function IncomeForm({ accounts, onSubmit, onCancel }: IncomeFormProps) {
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-md px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-200"
+          className="rounded-md px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
         >
           Annuler
         </button>

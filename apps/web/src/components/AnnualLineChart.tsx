@@ -70,7 +70,7 @@ export function AnnualLineChart({ monthly, selectedIndex, onSelectMonth }: Annua
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <div className="flex flex-wrap gap-4 text-xs text-slate-600">
+        <div className="flex flex-wrap gap-4 text-xs text-slate-600 dark:text-slate-400">
           {SERIES.map((s) => (
             <span key={s.key} className="flex items-center gap-1.5">
               <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color }} />
@@ -78,7 +78,7 @@ export function AnnualLineChart({ monthly, selectedIndex, onSelectMonth }: Annua
             </span>
           ))}
         </div>
-        <button onClick={() => setShowTable((v) => !v)} className="text-xs font-medium text-slate-900 underline">
+        <button onClick={() => setShowTable((v) => !v)} className="text-xs font-medium text-slate-900 underline dark:text-slate-100">
           {showTable ? "Voir le graphique" : "Voir en tableau"}
         </button>
       </div>
@@ -86,7 +86,7 @@ export function AnnualLineChart({ monthly, selectedIndex, onSelectMonth }: Annua
       {showTable ? (
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="text-slate-500">
+            <thead className="text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="py-1 pr-3">Mois</th>
                 <th className="py-1 pr-3">Revenu</th>
@@ -99,7 +99,7 @@ export function AnnualLineChart({ monthly, selectedIndex, onSelectMonth }: Annua
                 <tr
                   key={m.month}
                   onClick={() => onSelectMonth(i)}
-                  className={`cursor-pointer border-t border-slate-100 ${i === selectedIndex ? "bg-slate-50" : "hover:bg-slate-50"}`}
+                  className={`cursor-pointer border-t border-slate-100 dark:border-slate-800 ${i === selectedIndex ? "bg-slate-50 dark:bg-slate-800/60" : "hover:bg-slate-50 dark:hover:bg-slate-800/60"}`}
                 >
                   <td className="py-1 pr-3 font-medium">{MONTH_NAMES_FULL[m.month - 1]}</td>
                   <td className="py-1 pr-3">{currency.format(m.income)}</td>
@@ -115,8 +115,8 @@ export function AnnualLineChart({ monthly, selectedIndex, onSelectMonth }: Annua
           <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="w-full" role="img" aria-label="Revenu, dépenses et reste, par mois">
             {ticks.map((t) => (
               <g key={t}>
-                <line x1={PADDING.left} x2={WIDTH - PADDING.right} y1={y(t)} y2={y(t)} stroke={t === 0 ? "#c3c2b7" : "#e1e0d9"} strokeWidth={1} />
-                <text x={PADDING.left - 8} y={y(t)} textAnchor="end" dominantBaseline="middle" fontSize={10} fill="#898781">
+                <line x1={PADDING.left} x2={WIDTH - PADDING.right} y1={y(t)} y2={y(t)} stroke={t === 0 ? "var(--chart-grid-zero)" : "var(--chart-grid)"} strokeWidth={1} />
+                <text x={PADDING.left - 8} y={y(t)} textAnchor="end" dominantBaseline="middle" fontSize={10} fill="var(--chart-text-muted)">
                   {new Intl.NumberFormat("fr-FR", { notation: "compact" }).format(t)}
                 </text>
               </g>
@@ -130,7 +130,7 @@ export function AnnualLineChart({ monthly, selectedIndex, onSelectMonth }: Annua
                 textAnchor="middle"
                 fontSize={10}
                 fontWeight={i === selectedIndex ? 700 : 400}
-                fill={i === selectedIndex ? "#0b0b0b" : "#898781"}
+                fill={i === selectedIndex ? "var(--chart-text)" : "var(--chart-text-muted)"}
               >
                 {MONTH_NAMES[m.month - 1]}
               </text>
@@ -144,7 +144,7 @@ export function AnnualLineChart({ monthly, selectedIndex, onSelectMonth }: Annua
               const last = monthly[monthly.length - 1];
               return (
                 <g key={`${s.key}-end`}>
-                  <circle cx={x(11)} cy={y(last[s.key])} r={4.5} fill={s.color} stroke="#fcfcfb" strokeWidth={2} />
+                  <circle cx={x(11)} cy={y(last[s.key])} r={4.5} fill={s.color} stroke="var(--chart-surface)" strokeWidth={2} />
                 </g>
               );
             })}
@@ -154,13 +154,13 @@ export function AnnualLineChart({ monthly, selectedIndex, onSelectMonth }: Annua
               x2={x(selectedIndex)}
               y1={PADDING.top}
               y2={HEIGHT - PADDING.bottom}
-              stroke="#0b0b0b"
+              stroke="var(--chart-text)"
               strokeWidth={1.5}
               strokeDasharray="3 3"
             />
 
             {hoverIndex !== null && hoverIndex !== selectedIndex && (
-              <line x1={x(hoverIndex)} x2={x(hoverIndex)} y1={PADDING.top} y2={HEIGHT - PADDING.bottom} stroke="#c3c2b7" strokeWidth={1} />
+              <line x1={x(hoverIndex)} x2={x(hoverIndex)} y1={PADDING.top} y2={HEIGHT - PADDING.bottom} stroke="var(--chart-grid-zero)" strokeWidth={1} />
             )}
 
             {monthly.map((_, i) => (

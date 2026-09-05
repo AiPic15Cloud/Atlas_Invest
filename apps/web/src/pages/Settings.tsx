@@ -2,8 +2,15 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch, ApiError } from "../api/client";
 import { useAuth } from "../context/AuthContext";
-import { IconSettings } from "../components/icons";
+import { useTheme, type ThemePreference } from "../context/ThemeContext";
+import { IconSettings, IconSun, IconMoon, IconMonitor } from "../components/icons";
 import type { HouseholdCurrency, TwoFactorSetupResponse, TwoFactorStatus } from "../api/types";
+
+const THEME_OPTIONS: { value: ThemePreference; label: string; Icon: typeof IconSun }[] = [
+  { value: "light", label: "Clair", Icon: IconSun },
+  { value: "dark", label: "Sombre", Icon: IconMoon },
+  { value: "system", label: "Système", Icon: IconMonitor },
+];
 
 const CURRENCY_LABELS: Record<HouseholdCurrency, string> = {
   EUR: "€ Euro",
@@ -20,6 +27,7 @@ const MONTH_NAMES = [
 
 export function Settings() {
   const { user, household, refresh, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [savingPrivacy, setSavingPrivacy] = useState(false);
@@ -192,13 +200,34 @@ export function Settings() {
 
       <section className="card">
         <h2 className="font-semibold">Profil</h2>
-        <p className="mt-2 text-sm text-slate-600">Prénom : {user?.firstName}</p>
-        <p className="text-sm text-slate-600">Email : {user?.email}</p>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Prénom : {user?.firstName}</p>
+        <p className="text-sm text-slate-600 dark:text-slate-400">Email : {user?.email}</p>
+      </section>
+
+      <section className="card">
+        <h2 className="font-semibold">Apparence</h2>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Choisis le thème de l'application.</p>
+        <div className="mt-3 inline-flex rounded-lg bg-slate-100 dark:bg-slate-800 p-1 dark:bg-slate-800">
+          {THEME_OPTIONS.map(({ value, label, Icon }) => (
+            <button
+              key={value}
+              onClick={() => setTheme(value)}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                theme === value
+                  ? "bg-white dark:bg-slate-900 text-violet-700 shadow-sm dark:bg-slate-700 dark:text-violet-300"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </button>
+          ))}
+        </div>
       </section>
 
       <section className="card">
         <h2 className="font-semibold">Confidentialité</h2>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
           Choisis si le reste de ton foyer voit le détail de tes comptes bancaires personnels, ou seulement
           un total consolidé.
         </p>
@@ -215,15 +244,15 @@ export function Settings() {
 
       <section className="card">
         <h2 className="font-semibold">Double authentification (2FA)</h2>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
           Protège ton compte avec un code généré par une application comme Google Authenticator ou Authy, en plus
           de ton mot de passe.
         </p>
         {twoFactorError && <p className="mt-2 text-sm text-red-600">{twoFactorError}</p>}
 
         {backupCodes ? (
-          <div className="mt-3 rounded-md bg-amber-50 p-3 ring-1 ring-amber-200">
-            <p className="text-sm font-medium text-amber-800">
+          <div className="mt-3 rounded-md bg-amber-50 p-3 ring-1 ring-amber-200 dark:bg-amber-950/40 dark:ring-amber-900">
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
               2FA activée ! Note ces codes de secours dans un endroit sûr — chacun ne fonctionne qu'une fois et ils
               ne seront plus jamais affichés.
             </p>
@@ -241,7 +270,7 @@ export function Settings() {
           </div>
         ) : setup ? (
           <div className="mt-3 space-y-3">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
               Scanne ce QR code avec ton application d'authentification, ou saisis la clé manuellement :{" "}
               <span className="font-mono">{setup.secret}</span>
             </p>
@@ -320,7 +349,7 @@ export function Settings() {
 
       <section className="card">
         <h2 className="font-semibold">Foyer</h2>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
           {household?.name} — code d'invitation : <span className="font-mono">{household?.inviteCode}</span>
         </p>
         <button
@@ -337,7 +366,7 @@ export function Settings() {
           <h2 className="font-semibold">Réglages du foyer</h2>
           <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className="block">
-              <span className="text-xs font-medium text-slate-700">Devise</span>
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Devise</span>
               <select
                 className="mt-1 w-full input"
                 value={household.currency}
@@ -350,7 +379,7 @@ export function Settings() {
               </select>
             </label>
             <label className="block">
-              <span className="text-xs font-medium text-slate-700">Mois de début d'année</span>
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Mois de début d'année</span>
               <select
                 className="mt-1 w-full input"
                 value={household.fiscalYearStartMonth}
@@ -383,7 +412,7 @@ export function Settings() {
       {household && (
         <section className="card p-4 ring-red-300">
           <h2 className="font-semibold text-red-700">Réinitialiser les données du foyer</h2>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
             Supprime définitivement toutes les dépenses, revenus, budget type, patrimoine, prêts, objectifs,
             abonnements et l'épargne de précaution du foyer. Le foyer, ses membres et leurs comptes bancaires sont
             conservés. Pour confirmer, saisis le nom exact du foyer : <span className="font-mono">{household.name}</span>.

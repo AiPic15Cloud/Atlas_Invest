@@ -156,13 +156,13 @@ export function Objectifs() {
                 </button>
               </div>
 
-              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                 <div
                   className={`h-full ${goal.achieved ? "bg-emerald-500" : "bg-violet-600"}`}
                   style={{ width: `${Math.round(goal.progressRatio * 100)}%` }}
                 />
               </div>
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                 {currency.format(goal.currentAmount)} / {currency.format(goal.targetAmount)} (
                 {Math.round(goal.progressRatio * 100)}%)
               </p>

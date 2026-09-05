@@ -131,7 +131,7 @@ export function Projection() {
           </label>
         </div>
 
-        <div className="mt-4 border-t border-slate-100 pt-3">
+        <div className="mt-4 border-t border-slate-100 dark:border-slate-800 pt-3">
           <span className="text-xs text-slate-500">Nouvelles dépenses récurrentes simulées (+) ou économies (-)</span>
           <div className="mt-2 grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
             <input
@@ -156,7 +156,7 @@ export function Projection() {
           {extraCharges.length > 0 && (
             <ul className="mt-2">
               {extraCharges.map((c) => (
-                <li key={c.id} className="flex items-center justify-between border-b border-slate-100 py-1 text-sm last:border-0">
+                <li key={c.id} className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 py-1 text-sm last:border-0">
                   <span>{c.label}</span>
                   <span className="flex items-center gap-2">
                     {currency.format(c.amount)}
@@ -190,7 +190,7 @@ export function Projection() {
           </div>
         </div>
 
-        <p className="mt-3 text-sm text-slate-600">
+        <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
           {simulation.monthlyReste >= 0
             ? `À ce rythme, tu accumulerais environ ${currency.format(finalBalance)} d'ici ${monthsToProject} mois.`
             : firstNegativeMonth !== null
@@ -200,8 +200,8 @@ export function Projection() {
 
         <div className="mt-4 max-h-80 overflow-y-auto">
           <table className="w-full text-sm">
-            <thead className="sticky top-0 bg-white">
-              <tr className="border-b border-slate-200 text-left text-xs text-slate-500">
+            <thead className="sticky top-0 bg-white dark:bg-slate-900">
+              <tr className="border-b border-slate-200 dark:border-slate-700 text-left text-xs text-slate-500">
                 <th className="py-1">Mois</th>
                 <th className="py-1">Reste à vivre</th>
                 <th className="py-1">Solde cumulé</th>

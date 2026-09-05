@@ -199,7 +199,7 @@ export function ImportStatement({ year, month, accounts, onDone, onClose }: Impo
     <div className="card">
       <div className="flex items-center justify-between">
         <h2 className="font-semibold">Importer un relevé</h2>
-        <button onClick={onClose} className="text-sm font-medium text-slate-600 hover:underline">
+        <button onClick={onClose} className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:underline">
           Fermer
         </button>
       </div>
@@ -249,7 +249,7 @@ export function ImportStatement({ year, month, accounts, onDone, onClose }: Impo
               {skipped && skipped.unparsable > 0 && ` · ${skipped.unparsable} ligne(s) non reconnue(s)`}
             </span>
             <div className="flex items-center gap-2">
-              <label htmlFor="import-account" className="font-medium text-slate-700">Compte :</label>
+              <label htmlFor="import-account" className="font-medium text-slate-700 dark:text-slate-300">Compte :</label>
               <select
                 id="import-account"
                 value={bankAccountId}
@@ -263,9 +263,9 @@ export function ImportStatement({ year, month, accounts, onDone, onClose }: Impo
             </div>
           </div>
 
-          <div className="max-h-96 overflow-y-auto rounded-md border border-slate-200">
+          <div className="max-h-96 overflow-y-auto rounded-md border border-slate-200 dark:border-slate-700">
             <table className="w-full text-xs">
-              <thead className="sticky top-0 bg-slate-50 text-left text-slate-500">
+              <thead className="sticky top-0 bg-slate-50 dark:bg-slate-800/60 text-left text-slate-500">
                 <tr>
                   <th className="px-2 py-1.5"></th>
                   <th className="px-2 py-1.5">Poste</th>
@@ -276,7 +276,7 @@ export function ImportStatement({ year, month, accounts, onDone, onClose }: Impo
               </thead>
               <tbody>
                 {groups.map((g) => (
-                  <tr key={g.merchantKey} className={`border-t border-slate-100 ${g.possibleDuplicate ? "bg-amber-50" : ""}`}>
+                  <tr key={g.merchantKey} className={`border-t border-slate-100 dark:border-slate-800 ${g.possibleDuplicate ? "bg-amber-50 dark:bg-amber-950/40" : ""}`}>
                     <td className="px-2 py-1.5">
                       <input
                         type="checkbox"
@@ -289,15 +289,15 @@ export function ImportStatement({ year, month, accounts, onDone, onClose }: Impo
                       <input
                         value={g.poste}
                         onChange={(e) => updateGroup(g.merchantKey, { poste: e.target.value })}
-                        className="w-32 rounded border border-slate-200 px-1.5 py-1 text-xs"
+                        className="w-32 rounded border border-slate-200 dark:border-slate-700 px-1.5 py-1 text-xs"
                       />
                       {g.possibleDuplicate && (
-                        <span className="ml-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                        <span className="ml-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/60 dark:text-amber-300">
                           doublon probable
                         </span>
                       )}
                       {!g.possibleDuplicate && g.fromMemory && (
-                        <span className="ml-1 rounded-full bg-pink-50 px-1.5 py-0.5 text-[10px] font-medium text-pink-600">
+                        <span className="ml-1 rounded-full bg-pink-50 px-1.5 py-0.5 text-[10px] font-medium text-pink-600 dark:bg-pink-950/40 dark:text-pink-400">
                           mémorisé
                         </span>
                       )}
@@ -306,7 +306,7 @@ export function ImportStatement({ year, month, accounts, onDone, onClose }: Impo
                       <select
                         value={g.category}
                         onChange={(e) => updateGroup(g.merchantKey, { category: e.target.value as BudgetCategory })}
-                        className="rounded border border-slate-200 px-1.5 py-1 text-xs"
+                        className="rounded border border-slate-200 dark:border-slate-700 px-1.5 py-1 text-xs"
                       >
                         {(Object.entries(CATEGORY_LABELS) as [BudgetCategory, string][]).map(([value, label]) => (
                           <option key={value} value={value}>{label}</option>
@@ -332,7 +332,7 @@ export function ImportStatement({ year, month, accounts, onDone, onClose }: Impo
             >
               {submitting ? "Import..." : `Valider et intégrer ${totalToImport} dépense(s)`}
             </button>
-            <button onClick={() => setGroups(null)} className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">
+            <button onClick={() => setGroups(null)} className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
               Recommencer
             </button>
           </div>

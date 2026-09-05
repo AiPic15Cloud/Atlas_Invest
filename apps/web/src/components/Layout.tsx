@@ -74,7 +74,9 @@ const NAV_GROUPS: NavGroup[] = [
 
 function navLinkClass({ isActive }: { isActive: boolean }) {
   return `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-    isActive ? "bg-violet-50 text-violet-700" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+    isActive
+      ? "bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"
+      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
   }`;
 }
 
@@ -94,13 +96,13 @@ const MOBILE_TABS = [
 
 function mobileTabClass(isActive: boolean) {
   return `flex flex-1 flex-col items-center gap-0.5 py-1 text-[11px] transition-colors ${
-    isActive ? "text-violet-600 font-semibold" : "font-medium text-slate-400"
+    isActive ? "text-violet-600 font-semibold dark:text-violet-400" : "font-medium text-slate-400 dark:text-slate-500"
   }`;
 }
 
 function MobileTabBar({ onOpenMenu, menuOpen }: { onOpenMenu: () => void; menuOpen: boolean }) {
   return (
-    <nav className="fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-30 mx-auto flex max-w-md items-stretch justify-around gap-1 rounded-full border border-slate-200 bg-white/85 px-2 py-2 shadow-2xl backdrop-blur-xl md:hidden">
+    <nav className="fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-30 mx-auto flex max-w-md items-stretch justify-around gap-1 rounded-full border border-slate-200 bg-white/85 px-2 py-2 shadow-2xl backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/85 md:hidden">
       {MOBILE_TABS.map((tab) => (
         <NavLink key={tab.to} to={tab.to} end={tab.to === "/"} className="flex-1">
           {({ isActive }) => (
@@ -131,7 +133,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           <IconTrendingUp className="h-5 w-5 text-white" />
         </div>
         <div className="leading-tight">
-          <p className="text-base font-bold tracking-tight text-slate-900">Atlas Invest</p>
+          <p className="text-base font-bold tracking-tight text-slate-900 dark:text-slate-100">Atlas Invest</p>
           <p className="text-xs text-slate-400">mon budget</p>
         </div>
       </div>
@@ -140,7 +142,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         {NAV_GROUPS.map((group, i) => (
           <div key={i}>
             {group.title && (
-              <p className="mb-1.5 px-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <p className="mb-1.5 px-3 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
                 {group.title}
               </p>
             )}
@@ -156,22 +158,22 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         ))}
       </nav>
 
-      <div className="space-y-0.5 border-t border-slate-100 px-3 py-3">
+      <div className="space-y-0.5 border-t border-slate-100 px-3 py-3 dark:border-slate-800">
         <NavLink to="/settings" className={navLinkClass} onClick={onNavigate}>
           <IconSettings className="h-5 w-5 shrink-0" />
           Réglages
         </NavLink>
         <div className="flex items-center justify-between px-3 py-2">
           <div className="flex items-center gap-2 overflow-hidden">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold text-slate-600">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold text-slate-600 dark:bg-slate-700 dark:text-slate-200">
               {user?.firstName?.[0]?.toUpperCase()}
             </div>
-            <span className="truncate text-sm text-slate-600">{user?.firstName}</span>
+            <span className="truncate text-sm text-slate-600 dark:text-slate-400">{user?.firstName}</span>
           </div>
           <button
             onClick={logout}
             title="Déconnexion"
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
           >
             <IconLogout className="h-5 w-5" />
           </button>
@@ -192,27 +194,27 @@ export function Layout() {
   return (
     <div className="min-h-screen">
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-slate-200 bg-white md:block">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 md:block">
         <SidebarContent />
       </aside>
 
       {/* Mobile top bar */}
-      <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-slate-200 bg-white px-4 py-3 md:hidden">
+      <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 md:hidden">
         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-pink-500 shadow-sm">
           <IconTrendingUp className="h-4 w-4 text-white" />
         </div>
-        <span className="text-sm font-bold text-slate-900">Atlas Invest</span>
+        <span className="text-sm font-bold text-slate-900 dark:text-slate-100">Atlas Invest</span>
       </header>
 
       {/* Mobile drawer */}
       {mobileOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
           <div className="absolute inset-0 bg-slate-900/40" onClick={() => setMobileOpen(false)} />
-          <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-white shadow-xl">
+          <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-white shadow-xl dark:bg-slate-900">
             <div className="flex shrink-0 justify-end px-3 pt-3">
               <button
                 onClick={() => setMobileOpen(false)}
-                className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+                className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
                 aria-label="Fermer le menu"
               >
                 <IconX className="h-5 w-5" />

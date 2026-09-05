@@ -2,25 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --chart-grid: #eeede7;
+  --chart-grid-zero: #c3c2b7;
+  --chart-text: #1e293b;
+  --chart-text-muted: #64748b;
+  --chart-surface: #fcfcfb;
+}
+.dark {
+  --chart-grid: #27272f;
+  --chart-grid-zero: #45454f;
+  --chart-text: #e2e8f0;
+  --chart-text-muted: #94a3b8;
+  --chart-surface: #0f172a;
+}
+
 body {
-  @apply text-slate-900 antialiased;
-  background-color: #faf7fc;
+  @apply bg-[#faf7fc] text-slate-900 antialiased dark:bg-[#0b0b12] dark:text-slate-100;
   font-feature-settings: "cv11", "ss01";
 }
 
 @layer components {
   /* Cards */
   .card {
-    @apply rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200/80 sm:p-5 lg:p-6;
+    @apply rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200/80 sm:p-5 lg:p-6 dark:bg-slate-900 dark:ring-slate-800;
   }
   .card-warn {
-    @apply rounded-xl bg-amber-50 p-4 ring-1 ring-amber-200 sm:p-5 lg:p-6;
+    @apply rounded-xl bg-amber-50 p-4 ring-1 ring-amber-200 sm:p-5 lg:p-6 dark:bg-amber-950/40 dark:ring-amber-900;
   }
   .card-danger {
-    @apply rounded-xl bg-red-50 p-4 ring-1 ring-red-200 sm:p-5 lg:p-6;
+    @apply rounded-xl bg-red-50 p-4 ring-1 ring-red-200 sm:p-5 lg:p-6 dark:bg-red-950/40 dark:ring-red-900;
   }
   .card-success {
-    @apply rounded-xl bg-emerald-50 p-4 ring-1 ring-emerald-200 sm:p-5 lg:p-6;
+    @apply rounded-xl bg-emerald-50 p-4 ring-1 ring-emerald-200 sm:p-5 lg:p-6 dark:bg-emerald-950/40 dark:ring-emerald-900;
   }
 
   /* Buttons */
@@ -28,16 +42,16 @@ body {
     @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50;
   }
   .btn-primary {
-    @apply btn bg-violet-600 text-white shadow-sm hover:bg-violet-700;
+    @apply btn bg-violet-600 text-white shadow-sm hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-400;
   }
   .btn-secondary {
-    @apply btn bg-slate-100 text-slate-700 hover:bg-slate-200;
+    @apply btn bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700;
   }
   .btn-outline {
-    @apply btn border border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
+    @apply btn border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800;
   }
   .btn-danger {
-    @apply btn border border-red-300 bg-white text-red-700 hover:bg-red-50;
+    @apply btn border border-red-300 bg-white text-red-700 hover:bg-red-50 dark:border-red-900 dark:bg-slate-900 dark:text-red-400 dark:hover:bg-red-950;
   }
   .btn-sm {
     @apply px-3 py-1.5 text-xs;
@@ -45,27 +59,27 @@ body {
 
   /* Form controls */
   .input {
-    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500;
+    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500;
   }
   .label {
-    @apply mb-1 block text-sm font-medium text-slate-700;
+    @apply mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300;
   }
   .link {
-    @apply font-medium text-violet-600 underline decoration-violet-200 underline-offset-2 hover:text-violet-700 hover:decoration-violet-400;
+    @apply font-medium text-violet-600 underline decoration-violet-200 underline-offset-2 hover:text-violet-700 hover:decoration-violet-400 dark:text-violet-400 dark:decoration-violet-800 dark:hover:text-violet-300 dark:hover:decoration-violet-600;
   }
 
   /* Text */
   .page-title {
-    @apply text-xl font-semibold tracking-tight text-slate-900;
+    @apply text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100;
   }
   .section-title {
-    @apply font-semibold text-slate-900;
+    @apply font-semibold text-slate-900 dark:text-slate-100;
   }
   .stat-label {
-    @apply text-xs font-medium uppercase tracking-wide text-slate-500;
+    @apply text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400;
   }
   .stat-value {
-    @apply mt-1 text-2xl font-semibold tracking-tight text-slate-900;
+    @apply mt-1 text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100;
   }
 
   /* Badges */

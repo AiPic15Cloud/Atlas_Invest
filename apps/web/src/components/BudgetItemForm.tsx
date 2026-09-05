@@ -41,9 +41,9 @@ export function BudgetItemForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-2 flex flex-wrap items-end gap-2 rounded-md border border-slate-200 bg-slate-50 p-2">
+    <form onSubmit={handleSubmit} className="mt-2 flex flex-wrap items-end gap-2 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-2">
       <div>
-        <label className="mb-1 block text-xs font-medium text-slate-700">Nom du poste</label>
+        <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">Nom du poste</label>
         <input
           required
           autoFocus
@@ -54,7 +54,7 @@ export function BudgetItemForm({
         />
       </div>
       <div>
-        <label className="mb-1 block text-xs font-medium text-slate-700">Montant mensuel (€)</label>
+        <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">Montant mensuel (€)</label>
         <input
           inputMode="decimal"
           required
@@ -63,7 +63,7 @@ export function BudgetItemForm({
           className="w-28 input px-2 py-1 text-sm"
         />
       </div>
-      <label className="mb-1 flex items-center gap-1 text-xs text-slate-700">
+      <label className="mb-1 flex items-center gap-1 text-xs text-slate-700 dark:text-slate-300">
         <input type="checkbox" checked={essential} onChange={(e) => setEssential(e.target.checked)} />
         Essentiel
       </label>
@@ -75,7 +75,7 @@ export function BudgetItemForm({
       >
         {submitting ? "..." : submitLabel}
       </button>
-      <button type="button" onClick={onCancel} className="rounded-md px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-200">
+      <button type="button" onClick={onCancel} className="rounded-md px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">
         Annuler
       </button>
     </form>

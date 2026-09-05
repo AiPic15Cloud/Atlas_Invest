@@ -120,14 +120,14 @@ function ObjectiveSection({
   return (
     <section className="card">
       <h2 className="font-semibold">Ton objectif</h2>
-      <p className="mt-2 text-sm text-slate-600">
+      <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
         Score de vulnérabilité : <span className="font-medium">{profile.score.toFixed(1)}/5</span> —{" "}
         {vulnerabilityLabel(profile.score)}. Objectif recommandé : {profile.recommendedMonths} mois de dépenses
         essentielles.
       </p>
 
       <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="rounded-md bg-slate-50 p-3">
+        <div className="rounded-md bg-slate-50 dark:bg-slate-800/60 p-3">
           <p className="text-xs text-slate-500">Nombre de mois visé</p>
           {editingMonths ? (
             <div className="mt-1 flex items-center gap-2">
@@ -158,7 +158,7 @@ function ObjectiveSection({
             </div>
           )}
         </div>
-        <div className="rounded-md bg-slate-50 p-3">
+        <div className="rounded-md bg-slate-50 dark:bg-slate-800/60 p-3">
           <p className="text-xs text-slate-500">Montant cible</p>
           <p className="mt-1 text-lg font-semibold">{currency.format(profile.targetAmount)}</p>
         </div>
@@ -215,7 +215,7 @@ function ScoreDetailSection({
       {expanded && (
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
           {profile.breakdown.map((crit) => (
-            <div key={crit.key} className="rounded-md border border-slate-200 p-3">
+            <div key={crit.key} className="rounded-md border border-slate-200 dark:border-slate-700 p-3">
               <div className="flex items-start justify-between gap-2">
                 <p className="text-sm font-medium">{crit.question}</p>
                 <button
@@ -233,9 +233,9 @@ function ScoreDetailSection({
               <p className="mt-1 text-xs text-slate-500">{crit.label}</p>
 
               {editingKey === crit.key && (
-                <div className="mt-2 space-y-1 border-t border-slate-100 pt-2">
+                <div className="mt-2 space-y-1 border-t border-slate-100 dark:border-slate-800 pt-2">
                   {crit.options.map((opt) => (
-                    <label key={opt.value} className="flex items-center gap-2 text-xs text-slate-700">
+                    <label key={opt.value} className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
                       <input
                         type="radio"
                         checked={crit.value === opt.value}
@@ -304,18 +304,18 @@ function ProgressSection({
       <h2 className="font-semibold">Progression</h2>
 
       <div className="mt-3">
-        <div className="flex justify-between text-xs text-slate-600">
+        <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400">
           <span>{currency.format(profile.currentSavedAmount)} épargnés</span>
           <span>{pct}% de l'objectif ({currency.format(profile.targetAmount)})</span>
         </div>
-        <div className="mt-1 h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+        <div className="mt-1 h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
           <div style={{ width: `${Math.min(pct, 100)}%` }} className="h-full bg-emerald-500" />
         </div>
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div>
-          <label htmlFor="saved-amount" className="mb-1 block text-xs font-medium text-slate-700">
+          <label htmlFor="saved-amount" className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
             Montant déjà épargné (€)
           </label>
           <div className="flex gap-1">
@@ -331,7 +331,7 @@ function ProgressSection({
           </div>
         </div>
         <div>
-          <label htmlFor="capacity" className="mb-1 block text-xs font-medium text-slate-700">
+          <label htmlFor="capacity" className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
             Capacité d'épargne mensuelle (€)
           </label>
           <div className="flex gap-1">
@@ -351,8 +351,8 @@ function ProgressSection({
           </p>
         </div>
         <div>
-          <p className="mb-1 text-xs font-medium text-slate-700">Temps restant estimé</p>
-          <p className="text-sm font-semibold text-slate-800">
+          <p className="mb-1 text-xs font-medium text-slate-700 dark:text-slate-300">Temps restant estimé</p>
+          <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
             {profile.monthsRemaining === null
               ? "Indéterminé"
               : profile.monthsRemaining <= 0
@@ -426,7 +426,7 @@ function EnvelopesSection({
       ) : (
         <ul className="mt-2">
           {profile.envelopes.map((env) => (
-            <li key={env.id} className="flex items-center justify-between border-b border-slate-100 py-2 last:border-0">
+            <li key={env.id} className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 py-2 last:border-0">
               <span className="text-sm">{env.name}</span>
               <div className="flex items-center gap-3">
                 <span className="text-sm font-semibold">{currency.format(env.monthlyAllocation)} / mois</span>
@@ -440,9 +440,9 @@ function EnvelopesSection({
       )}
 
       {adding && (
-        <div className="mt-3 flex flex-wrap items-end gap-2 rounded-md border border-slate-200 bg-slate-50 p-2">
+        <div className="mt-3 flex flex-wrap items-end gap-2 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-2">
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-700">Nom</label>
+            <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">Nom</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -451,7 +451,7 @@ function EnvelopesSection({
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-700">Montant / mois (€)</label>
+            <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">Montant / mois (€)</label>
             <input
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
@@ -461,7 +461,7 @@ function EnvelopesSection({
           <button onClick={handleAdd} className="rounded-md bg-violet-600 hover:bg-violet-700 px-3 py-1.5 text-xs font-medium text-white">
             Ajouter
           </button>
-          <button onClick={() => setAdding(false)} className="rounded-md px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-200">
+          <button onClick={() => setAdding(false)} className="rounded-md px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">
             Annuler
           </button>
           {error && <p className="w-full text-xs text-red-600">{error}</p>}

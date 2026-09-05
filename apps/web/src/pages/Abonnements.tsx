@@ -17,10 +17,10 @@ const STATUS_LABELS: Record<SubscriptionStatus, string> = {
 };
 
 const STATUS_COLORS: Record<SubscriptionStatus, string> = {
-  NON_EVALUE: "bg-slate-100 text-slate-600",
-  A_GARDER: "bg-emerald-100 text-emerald-700",
-  A_SURVEILLER: "bg-amber-100 text-amber-700",
-  A_RESILIER: "bg-red-100 text-red-700",
+  NON_EVALUE: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400",
+  A_GARDER: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300",
+  A_SURVEILLER: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
+  A_RESILIER: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300",
 };
 
 const USAGE_LABELS: Record<UsageFrequency, string> = {
@@ -126,7 +126,7 @@ function SubscriptionCard({
 
       <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-4">
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-700">Statut</label>
+          <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">Statut</label>
           <select
             value={sub.status}
             onChange={(e) => onUpdate(sub.id, { status: e.target.value })}
@@ -138,7 +138,7 @@ function SubscriptionCard({
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-700">Fréquence d'usage</label>
+          <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">Fréquence d'usage</label>
           <select
             value={sub.usageFrequency ?? ""}
             onChange={(e) => onUpdate(sub.id, { usageFrequency: e.target.value || null })}
@@ -151,7 +151,7 @@ function SubscriptionCard({
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-700">Dernière utilisation</label>
+          <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">Dernière utilisation</label>
           <input
             type="date"
             value={lastUsed}
@@ -163,7 +163,7 @@ function SubscriptionCard({
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-700">Rappel de résiliation</label>
+          <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">Rappel de résiliation</label>
           <input
             type="date"
             value={reminder}
