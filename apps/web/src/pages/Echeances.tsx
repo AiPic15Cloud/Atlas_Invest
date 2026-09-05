@@ -91,7 +91,7 @@ export function Echeances() {
   const sortedCharges = [...data.charges].sort((a, b) => a.dayOfMonth - b.dayOfMonth);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div className="card p-3">
         <span className="text-lg font-semibold flex items-center gap-2">
           <IconClock className="h-5 w-5 text-violet-600" />

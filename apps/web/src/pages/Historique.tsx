@@ -32,7 +32,7 @@ export function Historique() {
   const filtered = filter === "ALL" ? logs : logs.filter((l) => l.type === filter);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div className="card p-3">
         <span className="text-lg font-semibold flex items-center gap-2">
           <IconHistory className="h-5 w-5 text-violet-600" />

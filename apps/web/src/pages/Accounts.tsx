@@ -78,7 +78,7 @@ export function Accounts() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
         <h1 className="text-xl font-semibold flex items-center gap-2">
           <IconWallet className="h-6 w-6 text-violet-600" />

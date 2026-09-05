@@ -87,7 +87,7 @@ export function Objectifs() {
   if (!goals) return <p className="text-sm text-slate-500">Chargement...</p>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div className="card p-3">
         <span className="text-lg font-semibold flex items-center gap-2">
           <IconFlag className="h-5 w-5 text-violet-600" />

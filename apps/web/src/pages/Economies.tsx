@@ -58,7 +58,7 @@ export function Economies() {
   const hasOverlapRisk = data.regret.byPoste.length > 0 && data.subscriptionsToCancel.length > 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div className="flex items-center justify-between card p-3">
         <button onClick={() => setYear((y) => y - 1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100">
           ← {year - 1}

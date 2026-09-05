@@ -152,7 +152,7 @@ export function Patrimoine() {
   const categoryEntries = Object.entries(data.categories) as [WealthCategory, { label: string; kind: "ASSET" | "LIABILITY" }][];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <h1 className="page-title flex items-center gap-2">
         <IconBuilding className="h-6 w-6 text-violet-600" />
         Patrimoine

@@ -86,7 +86,7 @@ export function Transferts() {
   if (!data || !accounts) return <p className="text-sm text-slate-500">Chargement...</p>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
         <h1 className="text-xl font-semibold flex items-center gap-2">
           <IconArrowsExchange className="h-6 w-6 text-violet-600" />

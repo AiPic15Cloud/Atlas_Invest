@@ -145,7 +145,7 @@ export function Repartition() {
   const needsCustomInputs = mode === "POURCENTAGE_CHOISI" || mode === "FORFAIT_FIXE" || mode === "POT_COMMUN_POURCENTAGE";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <h1 className="page-title flex items-center gap-2">
         <IconUsers className="h-6 w-6 text-violet-600" />
         Répartition des charges

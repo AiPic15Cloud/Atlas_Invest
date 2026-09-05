@@ -220,7 +220,7 @@ export function BudgetDuMois() {
   const unusualCount = data.expenses.filter((e) => e.unusual).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <h1 className="text-xl font-semibold flex items-center gap-2">
         <IconCalendar className="h-6 w-6 text-violet-600" />
         Mon mois

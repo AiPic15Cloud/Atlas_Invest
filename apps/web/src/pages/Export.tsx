@@ -107,7 +107,7 @@ export function Export() {
   if (error) return <p className="text-sm text-red-600">{error}</p>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <h1 className="page-title flex items-center gap-2">
         <IconDownload className="h-6 w-6 text-violet-600" />
         Export et rapport

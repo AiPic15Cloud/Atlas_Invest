@@ -79,7 +79,7 @@ export function Dashboard() {
     : `${currentMonthLabel.charAt(0).toUpperCase() + currentMonthLabel.slice(1)} ${monthGoingWell ? "se présente bien" : "demande de l'attention"}.`;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="page-title flex items-center gap-2">
