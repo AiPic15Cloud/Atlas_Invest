@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { apiFetch, ApiError } from "../api/client";
 import { QuickAddExpense } from "../components/QuickAddExpense";
 import { ImportStatement } from "../components/ImportStatement";
+import { WaterfallChart } from "../components/WaterfallChart";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import { IconCalendar } from "../components/icons";
 import type { BankAccountsResponse, BudgetCategory, Expense, ExpenseCategory, ExpenseFeeling, ExpensesResponse } from "../api/types";
@@ -32,14 +33,6 @@ const CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   EPARGNE: "Épargne",
   INVESTISSEMENT: "Investissement",
   REMBOURSEMENT_DETTE: "Remboursement de dette",
-};
-
-const CATEGORY_COLORS: Record<ExpenseCategory, string> = {
-  BESOINS: "#f59e0b",
-  ENVIES: "#ec4899",
-  EPARGNE: "#8b5cf6",
-  INVESTISSEMENT: "#0ea5e9",
-  REMBOURSEMENT_DETTE: "#64748b",
 };
 
 const CATEGORY_TEXT_CLASS: Record<ExpenseCategory, string> = {
@@ -353,26 +346,18 @@ export function BudgetDuMois() {
           <MonthlyComparisonTable columns={summary.budgetComparison.columns} year={year} month={month} onChanged={loadMonth} />
         )}
 
-        {summary.totalSpent > 0 && (
-          <div className="mt-4 flex items-center gap-4">
-            <div
-              className="h-24 w-24 shrink-0 rounded-full"
-              style={{ background: buildDonutGradient(summary.byCategory) }}
-              role="img"
-              aria-label="Répartition réelle des dépenses par catégorie"
+        {(summary.totalIncome > 0 || summary.totalSpent > 0) && (
+          <div className="mt-4">
+            <WaterfallChart
+              income={summary.totalIncome}
+              besoins={summary.byCategory.besoins}
+              envies={summary.byCategory.envies}
+              epargne={summary.byCategory.epargne}
+              autres={Math.max(
+                0,
+                summary.totalSpent - summary.byCategory.besoins - summary.byCategory.envies - summary.byCategory.epargne,
+              )}
             />
-            <ul className="text-xs text-slate-600">
-              {(["besoins", "envies", "epargne"] as const).map((key) => (
-                <li key={key} className="flex items-center gap-2">
-                  <span
-                    className="inline-block h-2 w-2 rounded-full"
-                    style={{ backgroundColor: CATEGORY_COLORS[key.toUpperCase() as BudgetCategory] }}
-                  />
-                  {CATEGORY_LABELS[key.toUpperCase() as BudgetCategory]} — {currency.format(summary.byCategory[key])} (
-                  {summary.totalSpent > 0 ? Math.round((summary.byCategory[key] / summary.totalSpent) * 100) : 0}%)
-                </li>
-              ))}
-            </ul>
           </div>
         )}
       </section>
@@ -649,10 +634,3 @@ function MonthlyComparisonTable({
   );
 }
 
-function buildDonutGradient(byCategory: { besoins: number; envies: number; epargne: number }) {
-  const total = byCategory.besoins + byCategory.envies + byCategory.epargne;
-  if (total <= 0) return "#e2e8f0";
-  const besoinsPct = (byCategory.besoins / total) * 100;
-  const enviesPct = (byCategory.envies / total) * 100;
-  return `conic-gradient(${CATEGORY_COLORS.BESOINS} 0% ${besoinsPct}%, ${CATEGORY_COLORS.ENVIES} ${besoinsPct}% ${besoinsPct + enviesPct}%, ${CATEGORY_COLORS.EPARGNE} ${besoinsPct + enviesPct}% 100%)`;
-}
