@@ -326,22 +326,7 @@ export function BudgetDuMois() {
         )}
 
         {summary.budgetComparison && (
-          <div className="mt-4 space-y-3">
-            {(["BESOINS", "ENVIES", "EPARGNE"] as BudgetCategory[]).map((cat) => (
-              <BudgetVsActualBar
-                key={cat}
-                label={CATEGORY_LABELS[cat]}
-                actual={summary.byCategory[cat.toLowerCase() as "besoins" | "envies" | "epargne"]}
-                target={
-                  cat === "BESOINS"
-                    ? summary.budgetComparison!.besoinsTarget
-                    : cat === "ENVIES"
-                      ? summary.budgetComparison!.enviesTarget
-                      : summary.budgetComparison!.epargneTarget
-                }
-              />
-            ))}
-          </div>
+          <PrevuReelEcartTable summary={summary} budgetComparison={summary.budgetComparison} />
         )}
 
         {summary.totalSpent > 0 && (
@@ -497,22 +482,67 @@ function StatTile({
   );
 }
 
-function BudgetVsActualBar({ label, actual, target }: { label: string; actual: number; target: number }) {
+const CATEGORY_ROW_ICON: Record<BudgetCategory, string> = {
+  BESOINS: "🏠",
+  ENVIES: "💕",
+  EPARGNE: "💰",
+};
+
+// Tableau comparatif Prévu / Réel / Écart plutôt qu'une liste de chiffres
+// isolés : répond directement à "suis-je dans les clous ?" (spec section 4.2).
+function PrevuReelEcartTable({
+  summary,
+  budgetComparison,
+}: {
+  summary: ExpensesResponse["summary"];
+  budgetComparison: NonNullable<ExpensesResponse["summary"]["budgetComparison"]>;
+}) {
   const currency = useCurrencyFormatter();
-  const pct = target > 0 ? actual / target : actual > 0 ? 1 : 0;
-  const width = Math.min(pct, 1) * 100;
-  const over = actual > target;
+  const rows = (["BESOINS", "ENVIES", "EPARGNE"] as BudgetCategory[]).map((cat) => {
+    const actual = summary.byCategory[cat.toLowerCase() as "besoins" | "envies" | "epargne"];
+    const target =
+      cat === "BESOINS"
+        ? budgetComparison.besoinsTarget
+        : cat === "ENVIES"
+          ? budgetComparison.enviesTarget
+          : budgetComparison.epargneTarget;
+    return { cat, actual, target, ecart: actual - target };
+  });
+
   return (
-    <div>
-      <div className="flex justify-between text-xs text-slate-600">
-        <span>{label}</span>
-        <span className={over ? "font-medium text-red-600" : ""}>
-          {currency.format(actual)} / cible {currency.format(target)}
-        </span>
-      </div>
-      <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-        <div style={{ width: `${width}%` }} className={`h-full ${over ? "bg-red-500" : "bg-emerald-500"}`} />
-      </div>
+    <div className="mt-4 overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-400">
+            <th className="py-2 font-medium">Poste</th>
+            <th className="py-2 text-right font-medium">Prévu</th>
+            <th className="py-2 text-right font-medium">Réel</th>
+            <th className="py-2 text-right font-medium">Écart</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(({ cat, actual, target, ecart }) => {
+            // Pour Besoins/Envies, dépasser la cible est le problème (écart > 0).
+            // Pour Épargne c'est l'inverse : épargner MOINS que prévu est le
+            // problème (écart < 0) — épargner plus n'est jamais une mauvaise
+            // nouvelle.
+            const over = cat === "EPARGNE" ? ecart < 0 : ecart > 0;
+            return (
+              <tr key={cat} className="border-b border-slate-100 last:border-0">
+                <td className="py-2">
+                  {CATEGORY_ROW_ICON[cat]} {CATEGORY_LABELS[cat]}
+                </td>
+                <td className="py-2 text-right text-slate-600">{currency.format(target)}</td>
+                <td className="py-2 text-right font-medium">{currency.format(actual)}</td>
+                <td className={`py-2 text-right font-medium ${over ? "text-red-600" : "text-emerald-600"}`}>
+                  {ecart > 0 ? "+" : ""}
+                  {currency.format(ecart)}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
