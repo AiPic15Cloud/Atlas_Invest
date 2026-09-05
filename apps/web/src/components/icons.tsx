@@ -34,6 +34,14 @@ export function IconWallet(props: IconProps) {
   );
 }
 
+export function IconPlus(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M10 4v12M4 10h12" />
+    </svg>
+  );
+}
+
 export function IconTrendingUp(props: IconProps) {
   return (
     <svg {...base(props)}>

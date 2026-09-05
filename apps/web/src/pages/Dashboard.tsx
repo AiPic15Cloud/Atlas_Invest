@@ -5,7 +5,19 @@ import { AnnualLineChart } from "../components/AnnualLineChart";
 import { StatTile } from "../components/StatTile";
 import { useAuth } from "../context/AuthContext";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
-import { IconHome, IconSliders, IconShield, IconFlag, IconTrendingUp, IconWallet, IconChartLine } from "../components/icons";
+import {
+  IconHome,
+  IconSliders,
+  IconShield,
+  IconFlag,
+  IconTrendingUp,
+  IconWallet,
+  IconChartLine,
+  IconPlus,
+  IconTarget,
+} from "../components/icons";
+import type { ComponentType } from "react";
+import type { IconProps } from "../components/icons";
 import type {
   BudgetCategory,
   DashboardResponse,
@@ -20,6 +32,13 @@ const CATEGORY_BAR_COLOR: Record<BudgetCategory, string> = {
   ENVIES: "bg-pink-500",
   EPARGNE: "bg-violet-500",
 };
+
+const HERO_QUICK_ACTIONS: { label: string; icon: ComponentType<IconProps>; to: string }[] = [
+  { label: "Ajouter", icon: IconPlus, to: "/budget-du-mois" },
+  { label: "Comptes", icon: IconWallet, to: "/comptes" },
+  { label: "Mon plan", icon: IconSliders, to: "/budget-type" },
+  { label: "Objectifs", icon: IconTarget, to: "/objectifs" },
+];
 
 const MONTH_NAMES = [
   "janvier", "février", "mars", "avril", "mai", "juin",
@@ -151,6 +170,20 @@ export function Dashboard() {
             </p>
           )}
         </dl>
+        <div className="mt-4 flex items-center justify-between gap-2 border-t border-white/20 pt-4">
+          {HERO_QUICK_ACTIONS.map((action) => (
+            <button
+              key={action.label}
+              onClick={() => navigate(action.to)}
+              className="flex flex-1 flex-col items-center gap-1.5 text-white/90 transition-colors hover:text-white"
+            >
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30">
+                <action.icon className="h-5 w-5" />
+              </span>
+              <span className="text-[11px] font-medium">{action.label}</span>
+            </button>
+          ))}
+        </div>
       </section>
 
       {currentMonthExpenses?.summary.budgetComparison && (
