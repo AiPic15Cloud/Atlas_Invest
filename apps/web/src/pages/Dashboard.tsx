@@ -110,37 +110,37 @@ export function Dashboard() {
 
       <p className="text-sm text-slate-600 dark:text-slate-400">{greeting}</p>
 
-      <section className="card">
-        <p className="stat-label">Argent réellement disponible</p>
-        <p
-          className={`mt-1 text-3xl font-bold tracking-tight ${
-            data.availableMoney.amount < 0 ? "text-red-600" : "text-emerald-600"
-          }`}
-        >
-          {currency.format(data.availableMoney.amount)}
-        </p>
-        <p className="mt-1 text-sm text-slate-500">
+      <section
+        className={`rounded-2xl p-5 text-white shadow-sm sm:p-6 ${
+          data.availableMoney.amount < 0
+            ? "bg-gradient-to-br from-red-600 to-orange-500"
+            : "bg-gradient-to-br from-violet-600 to-pink-500"
+        }`}
+      >
+        <p className="text-xs font-medium uppercase tracking-wide text-white/75">Argent réellement disponible</p>
+        <p className="mt-1 text-3xl font-bold tracking-tight">{currency.format(data.availableMoney.amount)}</p>
+        <p className="mt-1 text-sm text-white/80">
           Ton solde bancaire, moins les prélèvements à venir et les dépenses essentielles restantes ce mois-ci —
           plus fiable que le solde affiché par ta banque pour savoir ce que tu peux vraiment dépenser.
         </p>
-        <dl className="mt-3 space-y-1 text-xs text-slate-500">
+        <dl className="mt-4 space-y-1.5 border-t border-white/20 pt-3 text-xs text-white/80">
           <div className="flex justify-between">
             <dt>Solde actuel des comptes</dt>
-            <dd className="font-medium text-slate-700 dark:text-slate-300">{currency.format(data.availableMoney.currentBalance)}</dd>
+            <dd className="font-medium text-white">{currency.format(data.availableMoney.currentBalance)}</dd>
           </div>
           <div className="flex justify-between">
             <dt>− Prélèvements à venir ce mois</dt>
-            <dd className="font-medium text-slate-700 dark:text-slate-300">{currency.format(data.availableMoney.upcomingCharges)}</dd>
+            <dd className="font-medium text-white">{currency.format(data.availableMoney.upcomingCharges)}</dd>
           </div>
           {data.availableMoney.hasEstimate ? (
             <>
               <div className="flex justify-between">
                 <dt>− Essentiels restants estimés</dt>
-                <dd className="font-medium text-slate-700 dark:text-slate-300">{currency.format(data.availableMoney.besoinsRemaining)}</dd>
+                <dd className="font-medium text-white">{currency.format(data.availableMoney.besoinsRemaining)}</dd>
               </div>
               <div className="flex justify-between">
                 <dt>− Épargne prévue restante</dt>
-                <dd className="font-medium text-slate-700 dark:text-slate-300">{currency.format(data.availableMoney.epargneRemaining)}</dd>
+                <dd className="font-medium text-white">{currency.format(data.availableMoney.epargneRemaining)}</dd>
               </div>
             </>
           ) : (

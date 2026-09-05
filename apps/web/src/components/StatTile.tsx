@@ -35,7 +35,7 @@ interface StatTileProps {
 export function StatTile({ icon: Icon, label, value, tone = "default", hint }: StatTileProps) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${CHIP_CLASS[tone]}`}>
+      <div className={`flex h-9 w-9 items-center justify-center rounded-full ${CHIP_CLASS[tone]}`}>
         <Icon className="h-4 w-4" />
       </div>
       <p className="stat-label mt-2.5">{label}</p>
