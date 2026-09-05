@@ -121,9 +121,13 @@ householdsRouter.post("/reset", async (req, res) => {
   await prisma.$transaction([
     prisma.expense.deleteMany({ where: { bankAccountId: { in: bankAccountIds } } }),
     prisma.income.deleteMany({ where: { bankAccountId: { in: bankAccountIds } } }),
+    prisma.transfer.deleteMany({
+      where: { OR: [{ fromAccountId: { in: bankAccountIds } }, { toAccountId: { in: bankAccountIds } }] },
+    }),
     prisma.recurringCharge.deleteMany({ where: { bankAccountId: { in: bankAccountIds } } }),
     prisma.subscription.deleteMany({ where: { userId: { in: memberIds } } }),
     prisma.feelingRule.deleteMany({ where: { userId: { in: memberIds } } }),
+    prisma.monthlyBudgetOverride.deleteMany({ where: { userId: { in: memberIds } } }),
     prisma.savingsGoal.deleteMany({ where: { userId: { in: memberIds } } }),
     prisma.wealthItem.deleteMany({ where: { userId: { in: memberIds } } }),
     prisma.loan.deleteMany({ where: { userId: { in: memberIds } } }),

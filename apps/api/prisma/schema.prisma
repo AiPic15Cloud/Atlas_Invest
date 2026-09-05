@@ -86,6 +86,7 @@ model User {
   loans                Loan[]
   importCategoryMemory ImportCategoryMemory[]
   expenseAssignments   ExpenseAssignment[]
+  monthlyBudgetOverrides MonthlyBudgetOverride[]
 }
 
 model BankAccount {
@@ -212,6 +213,24 @@ model BudgetItem {
   children BudgetItem[] @relation("SubItems")
 
   @@index([templateId, category])
+}
+
+// Ajustement ponctuel de la cible d'un mois precis pour une categorie
+// (colonne "Ce mois" de Mon mois, spec 4.2) : peut differer de la
+// Reference (le budget type) sans la modifier. Absence de ligne = la
+// cible du mois est simplement celle de la Reference.
+model MonthlyBudgetOverride {
+  id       String         @id @default(cuid())
+  userId   String
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  year     Int
+  month    Int
+  category BudgetCategory
+  amount   Decimal        @db.Decimal(12, 2)
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, year, month, category])
 }
 
 // Depense reellement engagee pour un mois donne. "poste" est un libelle libre

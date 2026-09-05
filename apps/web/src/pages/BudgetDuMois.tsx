@@ -346,7 +346,7 @@ export function BudgetDuMois() {
         )}
 
         {summary.budgetComparison && (
-          <PrevuReelEcartTable summary={summary} budgetComparison={summary.budgetComparison} />
+          <MonthlyComparisonTable columns={summary.budgetComparison.columns} year={year} month={month} onChanged={loadMonth} />
         )}
 
         {summary.totalSpent > 0 && (
@@ -517,26 +517,62 @@ const CATEGORY_ROW_ICON: Record<BudgetCategory, string> = {
   EPARGNE: "💰",
 };
 
-// Tableau comparatif Prévu / Réel / Écart plutôt qu'une liste de chiffres
-// isolés : répond directement à "suis-je dans les clous ?" (spec section 4.2).
-function PrevuReelEcartTable({
-  summary,
-  budgetComparison,
+// Tableau à 4 colonnes (spec 4.2) plutôt qu'une liste de chiffres isolés :
+// Référence (le budget type) / Ce mois (ce qui a été décidé pour ce mois,
+// modifiable ponctuellement sans toucher au budget type) / Réel à date /
+// Projection fin de mois (extrapolation au rythme actuel).
+function MonthlyComparisonTable({
+  columns,
+  year,
+  month,
+  onChanged,
 }: {
-  summary: ExpensesResponse["summary"];
-  budgetComparison: NonNullable<ExpensesResponse["summary"]["budgetComparison"]>;
+  columns: NonNullable<ExpensesResponse["summary"]["budgetComparison"]>["columns"];
+  year: number;
+  month: number;
+  onChanged: () => Promise<void>;
 }) {
   const currency = useCurrencyFormatter();
-  const rows = (["BESOINS", "ENVIES", "EPARGNE"] as BudgetCategory[]).map((cat) => {
-    const actual = summary.byCategory[cat.toLowerCase() as "besoins" | "envies" | "epargne"];
-    const target =
-      cat === "BESOINS"
-        ? budgetComparison.besoinsTarget
-        : cat === "ENVIES"
-          ? budgetComparison.enviesTarget
-          : budgetComparison.epargneTarget;
-    return { cat, actual, target, ecart: actual - target };
-  });
+  const [editing, setEditing] = useState<BudgetCategory | null>(null);
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  function startEdit(cat: BudgetCategory, current: number) {
+    setEditing(cat);
+    setDraft(String(current));
+  }
+
+  async function saveEdit(cat: BudgetCategory) {
+    const parsed = Number(draft.replace(",", "."));
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      setEditing(null);
+      return;
+    }
+    setSaving(true);
+    try {
+      await apiFetch("/api/expenses/monthly-target", {
+        method: "PUT",
+        body: JSON.stringify({ year, month, category: cat, amount: parsed }),
+      });
+      await onChanged();
+    } finally {
+      setSaving(false);
+      setEditing(null);
+    }
+  }
+
+  async function resetToReference(cat: BudgetCategory) {
+    setSaving(true);
+    try {
+      await apiFetch("/api/expenses/monthly-target", {
+        method: "PUT",
+        body: JSON.stringify({ year, month, category: cat, amount: null }),
+      });
+      await onChanged();
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div className="mt-4 overflow-x-auto">
@@ -544,28 +580,58 @@ function PrevuReelEcartTable({
         <thead>
           <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-400">
             <th className="py-2 font-medium">Poste</th>
-            <th className="py-2 text-right font-medium">Prévu</th>
-            <th className="py-2 text-right font-medium">Réel</th>
-            <th className="py-2 text-right font-medium">Écart</th>
+            <th className="py-2 text-right font-medium">Référence</th>
+            <th className="py-2 text-right font-medium">Ce mois</th>
+            <th className="py-2 text-right font-medium">Réel à date</th>
+            <th className="py-2 text-right font-medium">Projection</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map(({ cat, actual, target, ecart }) => {
-            // Pour Besoins/Envies, dépasser la cible est le problème (écart > 0).
-            // Pour Épargne c'est l'inverse : épargner MOINS que prévu est le
-            // problème (écart < 0) — épargner plus n'est jamais une mauvaise
-            // nouvelle.
-            const over = cat === "EPARGNE" ? ecart < 0 : ecart > 0;
+          {columns.map(({ category, reference, thisMonth, hasOverride, actual, projection }) => {
+            // Pour Besoins/Envies, projeter au-dela de la cible du mois est le
+            // problème ; pour Épargne c'est l'inverse : projeter en dessous.
+            const projectionOver = category === "EPARGNE" ? projection < thisMonth : projection > thisMonth;
             return (
-              <tr key={cat} className="border-b border-slate-100 last:border-0">
+              <tr key={category} className="border-b border-slate-100 last:border-0">
                 <td className="py-2">
-                  {CATEGORY_ROW_ICON[cat]} {CATEGORY_LABELS[cat]}
+                  {CATEGORY_ROW_ICON[category]} {CATEGORY_LABELS[category]}
                 </td>
-                <td className="py-2 text-right text-slate-600">{currency.format(target)}</td>
+                <td className="py-2 text-right text-slate-500">{currency.format(reference)}</td>
+                <td className="py-2 text-right">
+                  {editing === category ? (
+                    <input
+                      autoFocus
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      onBlur={() => saveEdit(category)}
+                      onKeyDown={(e) => e.key === "Enter" && saveEdit(category)}
+                      disabled={saving}
+                      className="w-24 input px-1.5 py-0.5 text-right text-sm"
+                    />
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5">
+                      <button
+                        onClick={() => startEdit(category, thisMonth)}
+                        className={`font-medium hover:underline ${hasOverride ? "text-pink-600" : ""}`}
+                        title="Modifier la cible de ce mois"
+                      >
+                        {currency.format(thisMonth)}
+                      </button>
+                      {hasOverride && (
+                        <button
+                          onClick={() => resetToReference(category)}
+                          className="text-xs text-slate-400 hover:text-slate-700"
+                          title="Revenir à la référence"
+                        >
+                          ↺
+                        </button>
+                      )}
+                    </span>
+                  )}
+                </td>
                 <td className="py-2 text-right font-medium">{currency.format(actual)}</td>
-                <td className={`py-2 text-right font-medium ${over ? "text-red-600" : "text-emerald-600"}`}>
-                  {ecart > 0 ? "+" : ""}
-                  {currency.format(ecart)}
+                <td className={`py-2 text-right font-medium ${projectionOver ? "text-red-600" : "text-emerald-600"}`}>
+                  {currency.format(projection)}
                 </td>
               </tr>
             );

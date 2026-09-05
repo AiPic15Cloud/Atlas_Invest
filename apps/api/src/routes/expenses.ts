@@ -103,7 +103,7 @@ expensesRouter.get("/", async (req, res) => {
   const accounts = await listAccessibleAccounts(req.userId!);
   const accountIds = accounts.map((a) => a.id);
 
-  const [expenses, incomes, template] = await Promise.all([
+  const [expenses, incomes, template, overrides] = await Promise.all([
     prisma.expense.findMany({
       where: { year, month, bankAccountId: { in: accountIds } },
       include: { bankAccount: { select: { name: true } } },
@@ -111,6 +111,7 @@ expensesRouter.get("/", async (req, res) => {
     }),
     prisma.income.findMany({ where: { year, month, bankAccountId: { in: accountIds } }, select: { amount: true } }),
     prisma.budgetTemplate.findUnique({ where: { userId: req.userId! } }),
+    prisma.monthlyBudgetOverride.findMany({ where: { userId: req.userId!, year, month } }),
   ]);
 
   const unusualIds = await computeUnusualIds(accountIds, year, month, expenses);
@@ -128,6 +129,21 @@ expensesRouter.get("/", async (req, res) => {
     else if (e.category === "EPARGNE") byCategory.epargne += Number(e.amount);
   }
 
+  // Projection fin de mois (spec 4.2) : extrapolation lineaire au rythme
+  // actuel, seulement pertinente pour le mois en cours — un mois passe est
+  // deja definitif (projection = reel), un mois futur n'a pas encore
+  // commence (projection = reel = 0).
+  const now = new Date();
+  const isCurrentMonth = year === now.getFullYear() && month === now.getMonth() + 1;
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const dayOfMonth = isCurrentMonth ? now.getDate() : daysInMonth;
+  function project(actual: number) {
+    if (!isCurrentMonth || dayOfMonth === 0) return actual;
+    return (actual / dayOfMonth) * daysInMonth;
+  }
+
+  const overrideByCategory = new Map(overrides.map((o) => [o.category, Number(o.amount)]));
+
   let budgetComparison = null;
   if (template) {
     const breakdown = computeBudgetBreakdown(template.method as BudgetMethodKey, Number(template.monthlyIncome), {
@@ -137,23 +153,36 @@ expensesRouter.get("/", async (req, res) => {
     });
     const hasFixedTargets = template.method !== "BASE_ZERO";
     if (hasFixedTargets) {
-      const overBudgetCategories: { category: string; actual: number; target: number; overBy: number }[] = [];
-      const checks: [string, number, number][] = [
-        ["BESOINS", byCategory.besoins, breakdown.besoinsTarget],
-        ["ENVIES", byCategory.envies, breakdown.enviesTarget],
-        ["EPARGNE", byCategory.epargne, breakdown.epargneTarget],
-      ];
-      for (const [category, actual, target] of checks) {
-        if (actual > target) {
-          overBudgetCategories.push({ category, actual, target, overBy: actual - target });
-        }
-      }
+      const referenceByCategory: Record<"BESOINS" | "ENVIES" | "EPARGNE", number> = {
+        BESOINS: breakdown.besoinsTarget,
+        ENVIES: breakdown.enviesTarget,
+        EPARGNE: breakdown.epargneTarget,
+      };
+      const actualByCategory: Record<"BESOINS" | "ENVIES" | "EPARGNE", number> = {
+        BESOINS: byCategory.besoins,
+        ENVIES: byCategory.envies,
+        EPARGNE: byCategory.epargne,
+      };
+
+      const columns = (["BESOINS", "ENVIES", "EPARGNE"] as const).map((category) => {
+        const reference = referenceByCategory[category];
+        const override = overrideByCategory.get(category);
+        const thisMonth = override ?? reference;
+        const actual = actualByCategory[category];
+        return { category, reference, thisMonth, hasOverride: override !== undefined, actual, projection: project(actual) };
+      });
+
+      const overBudgetCategories = columns
+        .filter((c) => c.actual > c.thisMonth)
+        .map((c) => ({ category: c.category, actual: c.actual, target: c.thisMonth, overBy: c.actual - c.thisMonth }));
+
       budgetComparison = {
         method: template.method,
         besoinsTarget: breakdown.besoinsTarget,
         enviesTarget: breakdown.enviesTarget,
         epargneTarget: breakdown.epargneTarget,
         overBudgetCategories,
+        columns,
       };
     }
   }
@@ -526,4 +555,37 @@ expensesRouter.get("/feeling-summary", async (req, res) => {
     total: expenses.reduce((sum, e) => sum + Number(e.amount), 0),
     byPoste: [...byPoste.values()].sort((a, b) => b.total - a.total),
   });
+});
+
+const monthlyTargetSchema = z.object({
+  year: z.number().int().min(2000).max(2100),
+  month: z.number().int().min(1).max(12),
+  category: z.enum(["BESOINS", "ENVIES", "EPARGNE"]),
+  amount: z.number().finite().min(0).nullable(),
+});
+
+// Ajustement ponctuel de la colonne "Ce mois" (spec 4.2) : amount = null
+// supprime l'ajustement, la cible du mois redevient celle de la Reference.
+expensesRouter.put("/monthly-target", async (req, res) => {
+  const parsed = monthlyTargetSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Données invalides." });
+    return;
+  }
+  const { year, month, category, amount } = parsed.data;
+
+  if (amount === null) {
+    await prisma.monthlyBudgetOverride.deleteMany({
+      where: { userId: req.userId!, year, month, category },
+    });
+    res.status(204).send();
+    return;
+  }
+
+  await prisma.monthlyBudgetOverride.upsert({
+    where: { userId_year_month_category: { userId: req.userId!, year, month, category } },
+    create: { userId: req.userId!, year, month, category, amount },
+    update: { amount },
+  });
+  res.status(204).send();
 });

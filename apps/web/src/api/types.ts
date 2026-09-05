@@ -168,12 +168,22 @@ export interface Expense {
   createdAt: string;
 }
 
+export interface MonthlyComparisonColumn {
+  category: BudgetCategory;
+  reference: number;
+  thisMonth: number;
+  hasOverride: boolean;
+  actual: number;
+  projection: number;
+}
+
 export interface BudgetComparison {
   method: BudgetMethodKey;
   besoinsTarget: number;
   enviesTarget: number;
   epargneTarget: number;
   overBudgetCategories: { category: BudgetCategory; actual: number; target: number; overBy: number }[];
+  columns: MonthlyComparisonColumn[];
 }
 
 export interface ExpensesSummary {
