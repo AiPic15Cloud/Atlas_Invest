@@ -172,7 +172,7 @@ export function Repartition() {
               key={m}
               onClick={() => handleSelectMode(m)}
               className={`rounded-md px-3 py-2 text-sm font-medium ${
-                mode === m ? "bg-pink-600 text-white" : "bg-slate-100 text-slate-700"
+                mode === m ? "bg-violet-600 text-white" : "bg-slate-100 text-slate-700"
               }`}
             >
               {MODE_LABELS[m]}

@@ -28,7 +28,7 @@ body {
     @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50;
   }
   .btn-primary {
-    @apply btn bg-pink-600 text-white shadow-sm hover:bg-pink-700;
+    @apply btn bg-violet-600 text-white shadow-sm hover:bg-violet-700;
   }
   .btn-secondary {
     @apply btn bg-slate-100 text-slate-700 hover:bg-slate-200;
@@ -45,13 +45,13 @@ body {
 
   /* Form controls */
   .input {
-    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500;
+    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500;
   }
   .label {
     @apply mb-1 block text-sm font-medium text-slate-700;
   }
   .link {
-    @apply font-medium text-pink-600 underline decoration-pink-200 underline-offset-2 hover:text-pink-700 hover:decoration-pink-400;
+    @apply font-medium text-violet-600 underline decoration-violet-200 underline-offset-2 hover:text-violet-700 hover:decoration-violet-400;
   }
 
   /* Text */

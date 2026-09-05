@@ -181,7 +181,7 @@ export function AnnualLineChart({ monthly, selectedIndex, onSelectMonth }: Annua
 
           {hovered && hoverIndex !== null && (
             <div
-              className="pointer-events-none absolute top-2 rounded-md bg-pink-600 hover:bg-pink-700 px-3 py-2 text-xs text-white shadow-lg"
+              className="pointer-events-none absolute top-2 rounded-md bg-violet-600 hover:bg-violet-700 px-3 py-2 text-xs text-white shadow-lg"
               style={{ left: `min(${(x(hoverIndex) / WIDTH) * 100}%, 78%)` }}
             >
               <p className="font-medium">{MONTH_NAMES_FULL[monthly[hoverIndex].month - 1]}</p>

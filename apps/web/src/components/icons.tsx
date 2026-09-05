@@ -1,6 +1,6 @@
 import type { SVGProps } from "react";
 
-type IconProps = SVGProps<SVGSVGElement>;
+export type IconProps = SVGProps<SVGSVGElement>;
 
 function base(props: IconProps) {
   return {
@@ -204,6 +204,37 @@ export function IconLogout(props: IconProps) {
       <path d="M8 3.5H4.5v13H8" />
       <line x1="17" y1="10" x2="7.5" y2="10" />
       <polyline points="13,6.3 17,10 13,13.7" />
+    </svg>
+  );
+}
+
+export function IconSettings(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="10" cy="10" r="2.6" />
+      <path d="M10 3.5v1.8M10 14.7v1.8M16.5 10h-1.8M5.3 10H3.5M14.6 5.4l-1.3 1.3M6.7 13.3l-1.3 1.3M14.6 14.6l-1.3-1.3M6.7 6.7 5.4 5.4" />
+    </svg>
+  );
+}
+
+export function IconArrowsExchange(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <polyline points="6,4 6,15" />
+      <polyline points="3,7 6,4 9,7" />
+      <polyline points="14,16 14,5" />
+      <polyline points="11,13 14,16 17,13" />
+    </svg>
+  );
+}
+
+export function IconHistory(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M4 6.5A7.3 7.3 0 1 1 3.3 10" />
+      <polyline points="2.8,4.5 3.3,10 8.5,8.7" />
+      <line x1="10" y1="7" x2="10" y2="10.5" />
+      <line x1="10" y1="10.5" x2="12.5" y2="12" />
     </svg>
   );
 }

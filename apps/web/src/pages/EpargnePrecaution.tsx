@@ -130,7 +130,7 @@ function ObjectiveSection({
                 onChange={(e) => setMonthsInput(e.target.value)}
                 className="w-20 input px-2 py-1 text-sm"
               />
-              <button onClick={saveMonths} className="rounded-md bg-pink-600 hover:bg-pink-700 px-2 py-1 text-xs font-medium text-white">
+              <button onClick={saveMonths} className="rounded-md bg-violet-600 hover:bg-violet-700 px-2 py-1 text-xs font-medium text-white">
                 Valider
               </button>
               <button onClick={() => setEditingMonths(false)} className="text-xs text-slate-500 underline">
@@ -213,7 +213,7 @@ function ScoreDetailSection({
                 <p className="text-sm font-medium">{crit.question}</p>
                 <button
                   onClick={() => setEditingKey(editingKey === crit.key ? null : crit.key)}
-                  className="shrink-0 text-xs text-slate-400 hover:text-pink-600"
+                  className="shrink-0 text-xs text-slate-400 hover:text-violet-600"
                   aria-label={`Modifier ${crit.question}`}
                 >
                   ✎
@@ -318,7 +318,7 @@ function ProgressSection({
               onChange={(e) => setSavedInput(e.target.value)}
               className="w-full input px-2 py-1.5 text-sm"
             />
-            <button onClick={saveSaved} className="rounded-md bg-pink-600 hover:bg-pink-700 px-2 py-1.5 text-xs font-medium text-white">
+            <button onClick={saveSaved} className="rounded-md bg-violet-600 hover:bg-violet-700 px-2 py-1.5 text-xs font-medium text-white">
               OK
             </button>
           </div>
@@ -335,7 +335,7 @@ function ProgressSection({
               placeholder={String(profile.defaultMonthlySavingsCapacity)}
               className="w-full input px-2 py-1.5 text-sm"
             />
-            <button onClick={saveCapacity} className="rounded-md bg-pink-600 hover:bg-pink-700 px-2 py-1.5 text-xs font-medium text-white">
+            <button onClick={saveCapacity} className="rounded-md bg-violet-600 hover:bg-violet-700 px-2 py-1.5 text-xs font-medium text-white">
               OK
             </button>
           </div>
@@ -451,7 +451,7 @@ function EnvelopesSection({
               className="w-28 input px-2 py-1 text-sm"
             />
           </div>
-          <button onClick={handleAdd} className="rounded-md bg-pink-600 hover:bg-pink-700 px-3 py-1.5 text-xs font-medium text-white">
+          <button onClick={handleAdd} className="rounded-md bg-violet-600 hover:bg-violet-700 px-3 py-1.5 text-xs font-medium text-white">
             Ajouter
           </button>
           <button onClick={() => setAdding(false)} className="rounded-md px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-200">

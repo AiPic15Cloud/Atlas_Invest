@@ -320,7 +320,7 @@ export function Patrimoine() {
 
                 <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
                   <div
-                    className={`h-full ${loan.paidOff ? "bg-emerald-500" : "bg-pink-600"}`}
+                    className={`h-full ${loan.paidOff ? "bg-emerald-500" : "bg-violet-600"}`}
                     style={{ width: `${Math.round(loan.progressRatio * 100)}%` }}
                   />
                 </div>

@@ -149,7 +149,7 @@ export function Export() {
             </p>
             <button
               onClick={handleDownloadMonth}
-              className="mt-3 rounded-md bg-pink-600 hover:bg-pink-700 px-4 py-2 text-sm font-medium text-white"
+              className="mt-3 rounded-md bg-violet-600 hover:bg-violet-700 px-4 py-2 text-sm font-medium text-white"
             >
               Télécharger le rapport du mois (CSV)
             </button>

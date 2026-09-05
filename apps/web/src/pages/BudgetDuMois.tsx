@@ -272,7 +272,7 @@ export function BudgetDuMois() {
               className="w-24 input px-2 py-1.5 text-sm"
               aria-label="Année source"
             />
-            <button onClick={handleCopyOtherMonth} className="rounded-md bg-pink-600 hover:bg-pink-700 px-3 py-1.5 text-xs font-medium text-white">
+            <button onClick={handleCopyOtherMonth} className="rounded-md bg-violet-600 hover:bg-violet-700 px-3 py-1.5 text-xs font-medium text-white">
               Copier
             </button>
           </div>

@@ -347,7 +347,7 @@ function ScenarioComparison({
             <div
               key={key}
               className={`w-56 shrink-0 rounded-lg border p-3 ${
-                isActive ? "border-pink-500 bg-pink-50 ring-1 ring-pink-500" : "border-slate-200 bg-white"
+                isActive ? "border-violet-500 bg-violet-50 ring-1 ring-violet-500" : "border-slate-200 bg-white"
               }`}
             >
               <p className="text-sm font-medium">{def.label}</p>
@@ -366,7 +366,7 @@ function ScenarioComparison({
                 </div>
               </dl>
               {isActive ? (
-                <p className="mt-3 text-center text-xs font-medium text-pink-600">Méthode actuelle</p>
+                <p className="mt-3 text-center text-xs font-medium text-violet-600">Méthode actuelle</p>
               ) : (
                 <button
                   onClick={() => handleChoose(key)}
@@ -422,7 +422,7 @@ function IncomeOnlyForm({ initial, onCancel, onSubmit }: { initial: number; onCa
       <button
         onClick={handleSubmit}
         disabled={submitting}
-        className="rounded-md bg-pink-600 hover:bg-pink-700 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+        className="rounded-md bg-violet-600 hover:bg-violet-700 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
       >
         Enregistrer
       </button>
@@ -487,7 +487,7 @@ function MethodPicker({
               key={key}
               onClick={() => setMethod(key)}
               className={`rounded-lg border p-3 text-left transition ${
-                method === key ? "border-pink-500 bg-pink-50 ring-1 ring-pink-500" : "border-slate-200 bg-white hover:border-slate-300"
+                method === key ? "border-violet-500 bg-violet-50 ring-1 ring-violet-500" : "border-slate-200 bg-white hover:border-slate-300"
               }`}
             >
               <p className="font-medium">{def.label}</p>
