@@ -4,8 +4,9 @@ import { apiFetch, ApiError } from "../api/client";
 import { QuickAddExpense } from "../components/QuickAddExpense";
 import { ImportStatement } from "../components/ImportStatement";
 import { WaterfallChart } from "../components/WaterfallChart";
+import { StatTile } from "../components/StatTile";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
-import { IconCalendar } from "../components/icons";
+import { IconCalendar, IconTrendingUp, IconWallet, IconChartBar, IconFlag } from "../components/icons";
 import type { BankAccountsResponse, BudgetCategory, Expense, ExpenseCategory, ExpenseFeeling, ExpensesResponse } from "../api/types";
 
 const FEELING_EMOJI: Record<ExpenseFeeling, string> = {
@@ -291,9 +292,10 @@ export function BudgetDuMois() {
 
       <section className="card">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatTile label="Revenu du mois" value={currency.format(summary.totalIncome)} />
-          <StatTile label="Dépensé ce mois" value={currency.format(summary.totalSpent)} />
+          <StatTile icon={IconTrendingUp} label="Revenu du mois" value={currency.format(summary.totalIncome)} />
+          <StatTile icon={IconWallet} label="Dépensé ce mois" value={currency.format(summary.totalSpent)} />
           <StatTile
+            icon={IconChartBar}
             label="Écart vs budget type"
             value={ecart === null ? "—" : `${ecart > 0 ? "+" : ""}${currency.format(ecart)}`}
             tone={ecart === null ? "default" : ecart > 0 ? "warn" : "good"}
@@ -306,6 +308,7 @@ export function BudgetDuMois() {
             }
           />
           <StatTile
+            icon={IconFlag}
             label="Dépense inhabituelle"
             value={unusualCount === 0 ? "Aucune" : String(unusualCount)}
             tone={unusualCount === 0 ? "good" : "warn"}
@@ -467,36 +470,6 @@ function ExpenseRow({
         </button>
       </div>
     </li>
-  );
-}
-
-function StatTile({
-  label,
-  value,
-  tone = "default",
-  hint,
-}: {
-  label: string;
-  value: string;
-  tone?: "default" | "warn" | "good";
-  hint?: string;
-}) {
-  return (
-    <div className="rounded-md bg-slate-50 dark:bg-slate-800/60 p-3">
-      <p className="text-xs text-slate-500">{label}</p>
-      <p
-        className={`mt-1 text-lg font-semibold ${
-          tone === "warn" ? "text-red-600" : tone === "good" ? "text-emerald-600" : ""
-        }`}
-      >
-        {value}
-      </p>
-      {hint && (
-        <p className={`mt-0.5 text-xs ${tone === "warn" ? "text-red-600" : tone === "good" ? "text-emerald-600" : "text-slate-500"}`}>
-          {hint}
-        </p>
-      )}
-    </div>
   );
 }
 

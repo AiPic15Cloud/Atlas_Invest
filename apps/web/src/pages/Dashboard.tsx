@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiFetch, ApiError } from "../api/client";
 import { AnnualLineChart } from "../components/AnnualLineChart";
+import { StatTile } from "../components/StatTile";
 import { useAuth } from "../context/AuthContext";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
-import { IconHome, IconSliders, IconShield, IconFlag } from "../components/icons";
+import { IconHome, IconSliders, IconShield, IconFlag, IconTrendingUp, IconWallet, IconChartLine } from "../components/icons";
 import type {
   BudgetCategory,
   DashboardResponse,
@@ -190,19 +191,22 @@ export function Dashboard() {
       <section className="card">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <StatTile
+            icon={IconTrendingUp}
             label="Revenu annuel net"
             value={currency.format(data.totals.income)}
             hint={`${currency.format(data.averages.incomePerMonth)} / mois en moyenne`}
           />
           <StatTile
+            icon={IconWallet}
             label="Dépensé sur l'année"
             value={currency.format(data.totals.expenses)}
             hint={`${currency.format(data.averages.expensePerMonth)} / mois en moyenne`}
           />
           <StatTile
+            icon={IconChartLine}
             label="Reste à vivre"
             value={currency.format(data.totals.reste)}
-            tone={data.totals.reste < 0 ? "warn" : "success"}
+            tone={data.totals.reste < 0 ? "warn" : "good"}
           />
         </div>
       </section>
@@ -410,23 +414,3 @@ function MonthlyGoalsSection({ year, month }: { year: number; month: number }) {
   );
 }
 
-function StatTile({
-  label,
-  value,
-  tone = "default",
-  hint,
-}: {
-  label: string;
-  value: string;
-  tone?: "default" | "warn" | "success";
-  hint?: string;
-}) {
-  const toneClass = tone === "warn" ? "text-red-600" : tone === "success" ? "text-emerald-600" : "text-slate-900 dark:text-slate-100";
-  return (
-    <div className="rounded-lg bg-slate-50 dark:bg-slate-800/60 p-3.5">
-      <p className="stat-label">{label}</p>
-      <p className={`mt-1 text-xl font-semibold tracking-tight ${toneClass}`}>{value}</p>
-      {hint && <p className="mt-0.5 text-xs text-slate-500">{hint}</p>}
-    </div>
-  );
-}
