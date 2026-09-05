@@ -74,9 +74,16 @@ export interface Income {
   createdAt: string;
 }
 
+export interface IncomeSummaryMonth {
+  month: number;
+  total: number;
+  incomes: { id: string; source: string; amount: string; bankAccountName: string }[];
+}
+
 export interface IncomeSummary {
   year: number;
   totalsByMonth: number[];
+  byMonth: IncomeSummaryMonth[];
 }
 
 export type BudgetMethodKey =

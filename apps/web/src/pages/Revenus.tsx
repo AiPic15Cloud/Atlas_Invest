@@ -19,6 +19,8 @@ const MONTH_NAMES = [
   "Décembre",
 ];
 
+const MONTH_ICONS = ["🎉", "💕", "☘️", "🌸", "🌷", "☀️", "🏖️", "🌻", "🍂", "🎃", "🦃", "🎄"];
+
 const percent = new Intl.NumberFormat("fr-FR", { style: "percent", maximumFractionDigits: 1 });
 
 function shiftMonth(year: number, month: number, delta: number) {
@@ -213,25 +215,51 @@ function YearView({
   const currency = useCurrencyFormatter();
   const total = summary?.totalsByMonth.reduce((a, b) => a + b, 0) ?? 0;
   return (
-    <section className="card">
-      <h2 className="font-semibold">
-        Revenus {year} — total {currency.format(total)}
-      </h2>
-      <ul className="mt-3 divide-y divide-slate-100">
-        {MONTH_NAMES.map((name, index) => (
-          <li key={name} className="flex items-center justify-between py-2">
-            <button
-              onClick={() => onSelectMonth(index + 1)}
-              className="text-sm font-medium text-slate-900 hover:underline"
-            >
-              {name}
-            </button>
-            <span className="text-sm font-semibold">
-              {currency.format(summary?.totalsByMonth[index] ?? 0)}
-            </span>
-          </li>
-        ))}
-      </ul>
+    <section>
+      <p className="text-sm text-slate-500">
+        Revenus {year} — total <span className="font-semibold text-slate-900">{currency.format(total)}</span>
+      </p>
+      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {MONTH_NAMES.map((name, index) => {
+          const monthData = summary?.byMonth[index];
+          const monthTotal = monthData?.total ?? summary?.totalsByMonth[index] ?? 0;
+          return (
+            <div key={name} className="card">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold">
+                  <span className="mr-1.5">{MONTH_ICONS[index]}</span>
+                  {name} {year}
+                </h3>
+                <span className="text-sm font-semibold">{currency.format(monthTotal)}</span>
+              </div>
+
+              {!monthData || monthData.incomes.length === 0 ? (
+                <p className="mt-2 text-sm text-slate-500">Aucun revenu saisi.</p>
+              ) : (
+                <ul className="mt-2 space-y-1">
+                  {monthData.incomes.map((income) => (
+                    <li key={income.id} className="flex items-center justify-between text-sm">
+                      <span className="text-slate-700">{income.source}</span>
+                      <span className="font-medium text-slate-900">
+                        {currency.format(Number(income.amount))}
+                        {monthTotal > 0 && (
+                          <span className="ml-1.5 text-xs font-normal text-slate-400">
+                            {percent.format(Number(income.amount) / monthTotal)}
+                          </span>
+                        )}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <button onClick={() => onSelectMonth(index + 1)} className="mt-3 text-sm link">
+                {monthData && monthData.incomes.length > 0 ? "Modifier ce mois →" : "+ Ajouter un revenu"}
+              </button>
+            </div>
+          );
+        })}
+      </div>
     </section>
   );
 }

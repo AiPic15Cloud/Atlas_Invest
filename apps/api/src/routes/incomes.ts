@@ -62,15 +62,29 @@ incomesRouter.get("/summary", async (req, res) => {
   const accounts = await listAccessibleAccounts(req.userId!);
   const incomes = await prisma.income.findMany({
     where: { year: parsed.data.year, bankAccountId: { in: accounts.map((a) => a.id) } },
-    select: { month: true, amount: true },
+    select: { id: true, month: true, source: true, amount: true, bankAccount: { select: { name: true } } },
+    orderBy: { createdAt: "asc" },
   });
 
   const totalsByMonth = Array.from({ length: 12 }, () => 0);
+  const byMonth = Array.from({ length: 12 }, (_, i) => ({
+    month: i + 1,
+    total: 0,
+    incomes: [] as { id: string; source: string; amount: string; bankAccountName: string }[],
+  }));
   for (const income of incomes) {
-    totalsByMonth[income.month - 1] += Number(income.amount);
+    const amount = Number(income.amount);
+    totalsByMonth[income.month - 1] += amount;
+    byMonth[income.month - 1].total += amount;
+    byMonth[income.month - 1].incomes.push({
+      id: income.id,
+      source: income.source,
+      amount: income.amount.toString(),
+      bankAccountName: income.bankAccount.name,
+    });
   }
 
-  res.json({ year: parsed.data.year, totalsByMonth });
+  res.json({ year: parsed.data.year, totalsByMonth, byMonth });
 });
 
 const createIncomeSchema = z.object({
