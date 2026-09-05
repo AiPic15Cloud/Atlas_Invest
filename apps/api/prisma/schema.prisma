@@ -76,7 +76,7 @@ model User {
   bankAccounts         BankAccount[]
   budgetTemplate       BudgetTemplate?
   emergencyFundProfile EmergencyFundProfile?
-  wastefulRules        WastefulRule[]
+  feelingRules         FeelingRule[]
   subscriptions        Subscription[]
   recurringCharges     RecurringCharge[]
   wealthItems          WealthItem[]
@@ -129,6 +129,14 @@ enum BudgetMethod {
   BASE_ZERO
   QUATRE_VINGT_VINGT
   CASCADES_3
+}
+
+// Ressenti sur une depense : remplace l'ancien marquage binaire
+// "depense inutile" par une nuance a 3 etats, moins jugeante.
+enum ExpenseFeeling {
+  SATISFAIT
+  NEUTRE
+  REGRET
 }
 
 enum BudgetCategory {
@@ -187,12 +195,14 @@ model Expense {
   note      String?
   createdAt DateTime       @default(now())
 
-  // Marquage "depense inutile" (achat impulsif / faible valeur percue).
-  // wastefulReviewed = l'utilisateur a explicitement valide/corrige ce
-  // marquage pour cette depense precise (elle n'est alors plus recalculee
+  // Ressenti sur la depense (achat regrette, neutre, ou dont on est
+  // satisfait) : remplace l'ancien marquage binaire "depense inutile" par
+  // une nuance a 3 etats, moins jugeante. Null = pas encore evalue.
+  // feelingReviewed = l'utilisateur a explicitement choisi/corrige ce
+  // ressenti pour cette depense precise (elle n'est alors plus recalculee
   // par une regle apprise sur le poste).
-  wasteful         Boolean @default(false)
-  wastefulReviewed Boolean @default(false)
+  feeling         ExpenseFeeling?
+  feelingReviewed Boolean         @default(false)
 
   bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
   bankAccountId String
@@ -219,14 +229,14 @@ model ExpenseAssignment {
 }
 
 // Regle apprise a partir des corrections de l'utilisateur : quand il
-// marque un poste comme utile/inutile, on retient ce choix pour l'appliquer
+// choisit un ressenti pour un poste, on retient ce choix pour l'appliquer
 // automatiquement aux prochaines depenses du meme poste.
-model WastefulRule {
-  id       String  @id @default(cuid())
+model FeelingRule {
+  id       String         @id @default(cuid())
   userId   String
-  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   posteKey String
-  wasteful Boolean
+  feeling  ExpenseFeeling
 
   updatedAt DateTime @updatedAt
 

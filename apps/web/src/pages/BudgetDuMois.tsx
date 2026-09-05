@@ -4,7 +4,21 @@ import { apiFetch, ApiError } from "../api/client";
 import { QuickAddExpense } from "../components/QuickAddExpense";
 import { ImportStatement } from "../components/ImportStatement";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
-import type { BankAccountsResponse, BudgetCategory, Expense, ExpensesResponse } from "../api/types";
+import type { BankAccountsResponse, BudgetCategory, Expense, ExpenseFeeling, ExpensesResponse } from "../api/types";
+
+const FEELING_EMOJI: Record<ExpenseFeeling, string> = {
+  SATISFAIT: "😊",
+  NEUTRE: "😐",
+  REGRET: "😬",
+};
+
+const FEELING_LABELS: Record<ExpenseFeeling, string> = {
+  SATISFAIT: "Satisfait",
+  NEUTRE: "Neutre",
+  REGRET: "Regretté",
+};
+
+const FEELING_ORDER: ExpenseFeeling[] = ["SATISFAIT", "NEUTRE", "REGRET"];
 
 const MONTH_NAMES = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
@@ -124,8 +138,8 @@ export function BudgetDuMois() {
     await loadMonth();
   }
 
-  async function handleToggleWasteful(id: string, wasteful: boolean) {
-    await apiFetch(`/api/expenses/${id}/wasteful`, { method: "PATCH", body: JSON.stringify({ wasteful }) });
+  async function handleSetFeeling(id: string, feeling: ExpenseFeeling) {
+    await apiFetch(`/api/expenses/${id}/feeling`, { method: "PATCH", body: JSON.stringify({ feeling }) });
     await loadMonth();
   }
 
@@ -315,12 +329,12 @@ export function BudgetDuMois() {
           </div>
         )}
 
-        {summary.wastefulTotal > 0 && (
+        {summary.regretTotal > 0 && (
           <div className="mt-3 rounded-md bg-orange-50 p-3 text-sm text-orange-700">
             <p>
-              <span className="font-medium">{currency.format(summary.wastefulTotal)}</span> de dépenses jugées
-              inutiles ce mois — autant de gain potentiel si elles étaient évitées. Corrige les marquages qui ne te
-              semblent pas justes directement sur chaque dépense ci-dessous.
+              <span className="font-medium">{currency.format(summary.regretTotal)}</span> de dépenses regrettées
+              (😬) ce mois — autant de gain potentiel si elles étaient évitées. Ajuste le ressenti qui ne te semble
+              pas juste directement sur chaque dépense ci-dessous.
             </p>
           </div>
         )}
@@ -395,7 +409,7 @@ export function BudgetDuMois() {
                   </div>
                   <ul>
                     {items.map((expense) => (
-                      <ExpenseRow key={expense.id} expense={expense} onDelete={handleDelete} onToggleWasteful={handleToggleWasteful} />
+                      <ExpenseRow key={expense.id} expense={expense} onDelete={handleDelete} onSetFeeling={handleSetFeeling} />
                     ))}
                   </ul>
                 </div>
@@ -411,11 +425,11 @@ export function BudgetDuMois() {
 function ExpenseRow({
   expense,
   onDelete,
-  onToggleWasteful,
+  onSetFeeling,
 }: {
   expense: Expense;
   onDelete: (id: string) => void;
-  onToggleWasteful: (id: string, wasteful: boolean) => void;
+  onSetFeeling: (id: string, feeling: ExpenseFeeling) => void;
 }) {
   const currency = useCurrencyFormatter();
   return (
@@ -428,9 +442,9 @@ function ExpenseRow({
               inhabituelle
             </span>
           )}
-          {expense.wasteful && (
+          {expense.feeling === "REGRET" && (
             <span className="ml-2 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-normal text-orange-700">
-              inutile
+              regrettée
             </span>
           )}
         </p>
@@ -438,12 +452,21 @@ function ExpenseRow({
       </div>
       <div className="flex items-center gap-3">
         <span className="text-sm font-semibold">{currency.format(Number(expense.amount))}</span>
-        <button
-          onClick={() => onToggleWasteful(expense.id, !expense.wasteful)}
-          className="text-xs text-slate-400 hover:text-slate-700"
-        >
-          {expense.wasteful ? "Marquer utile" : "Marquer inutile"}
-        </button>
+        <div className="flex gap-0.5" role="group" aria-label="Ressenti sur cette dépense">
+          {FEELING_ORDER.map((feeling) => (
+            <button
+              key={feeling}
+              onClick={() => onSetFeeling(expense.id, feeling)}
+              title={FEELING_LABELS[feeling]}
+              aria-pressed={expense.feeling === feeling}
+              className={`rounded-full px-1 py-0.5 text-sm leading-none transition ${
+                expense.feeling === feeling ? "bg-slate-200" : "opacity-40 hover:opacity-100"
+              }`}
+            >
+              {FEELING_EMOJI[feeling]}
+            </button>
+          ))}
+        </div>
         <button onClick={() => onDelete(expense.id)} className="text-xs text-slate-400 hover:text-red-600">
           Supprimer
         </button>

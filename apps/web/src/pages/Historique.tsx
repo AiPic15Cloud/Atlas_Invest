@@ -5,7 +5,7 @@ import type { CorrectionHistoryResponse, CorrectionLogEntry, CorrectionType } fr
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
 const TYPE_LABELS: Record<CorrectionType, string> = {
-  WASTEFUL_EXPENSE: "Dépense inutile",
+  WASTEFUL_EXPENSE: "Ressenti sur une dépense",
   SUBSCRIPTION_STATUS: "Abonnement",
 };
 

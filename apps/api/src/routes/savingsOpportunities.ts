@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
 import { listAccessibleAccounts } from "../utils/accountAccess.js";
-import { normalizePosteKey } from "../constants/wastefulRules.js";
+import { normalizePosteKey } from "../constants/feelingRules.js";
 
 export const savingsOpportunitiesRouter = Router();
 
@@ -24,9 +24,9 @@ savingsOpportunitiesRouter.get("/", async (req, res) => {
   const accounts = await listAccessibleAccounts(req.userId!);
   const accountIds = accounts.map((a) => a.id);
 
-  const [wastefulExpenses, subscriptions] = await Promise.all([
+  const [regretExpenses, subscriptions] = await Promise.all([
     prisma.expense.findMany({
-      where: { year, wasteful: true, bankAccountId: { in: accountIds } },
+      where: { year, feeling: "REGRET", bankAccountId: { in: accountIds } },
       select: { poste: true, amount: true },
     }),
     prisma.subscription.findMany({
@@ -34,15 +34,15 @@ savingsOpportunitiesRouter.get("/", async (req, res) => {
     }),
   ]);
 
-  const wastefulByPoste = new Map<string, { poste: string; count: number; total: number }>();
-  for (const e of wastefulExpenses) {
+  const regretByPoste = new Map<string, { poste: string; count: number; total: number }>();
+  for (const e of regretExpenses) {
     const key = normalizePosteKey(e.poste);
-    const entry = wastefulByPoste.get(key) ?? { poste: e.poste, count: 0, total: 0 };
+    const entry = regretByPoste.get(key) ?? { poste: e.poste, count: 0, total: 0 };
     entry.count += 1;
     entry.total += Number(e.amount);
-    wastefulByPoste.set(key, entry);
+    regretByPoste.set(key, entry);
   }
-  const wastefulTotal = wastefulExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
+  const regretTotal = regretExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
 
   const subscriptionsToCancel = subscriptions.map((s) => ({
     id: s.id,
@@ -52,13 +52,13 @@ savingsOpportunitiesRouter.get("/", async (req, res) => {
   }));
   const subscriptionsAnnualTotal = subscriptionsToCancel.reduce((sum, s) => sum + s.annualCost, 0);
 
-  const totalAnnual = wastefulTotal + subscriptionsAnnualTotal;
+  const totalAnnual = regretTotal + subscriptionsAnnualTotal;
 
   res.json({
     year,
-    wasteful: {
-      total: wastefulTotal,
-      byPoste: [...wastefulByPoste.values()].sort((a, b) => b.total - a.total),
+    regret: {
+      total: regretTotal,
+      byPoste: [...regretByPoste.values()].sort((a, b) => b.total - a.total),
     },
     subscriptionsToCancel: subscriptionsToCancel.sort((a, b) => b.annualCost - a.annualCost),
     subscriptionsAnnualTotal,

@@ -145,6 +145,8 @@ export interface BudgetTemplateResponse {
   methods: Record<BudgetMethodKey, BudgetMethodDefinition>;
 }
 
+export type ExpenseFeeling = "SATISFAIT" | "NEUTRE" | "REGRET";
+
 export interface Expense {
   id: string;
   year: number;
@@ -156,8 +158,8 @@ export interface Expense {
   bankAccountId: string;
   bankAccountName: string;
   unusual: boolean;
-  wasteful: boolean;
-  wastefulReviewed: boolean;
+  feeling: ExpenseFeeling | null;
+  feelingReviewed: boolean;
   createdAt: string;
 }
 
@@ -172,12 +174,12 @@ export interface BudgetComparison {
 export interface ExpensesSummary {
   totalSpent: number;
   totalIncome: number;
-  wastefulTotal: number;
+  regretTotal: number;
   byCategory: { besoins: number; envies: number; epargne: number };
   budgetComparison: BudgetComparison | null;
 }
 
-export interface WastefulSummary {
+export interface FeelingSummary {
   year: number;
   total: number;
   byPoste: { poste: string; count: number; total: number }[];
@@ -280,7 +282,7 @@ export interface SubscriptionsResponse {
 
 export interface SavingsOpportunities {
   year: number;
-  wasteful: { total: number; byPoste: { poste: string; count: number; total: number }[] };
+  regret: { total: number; byPoste: { poste: string; count: number; total: number }[] };
   subscriptionsToCancel: { id: string; poste: string; monthlyAmount: number; annualCost: number }[];
   subscriptionsAnnualTotal: number;
   totalAnnual: number;

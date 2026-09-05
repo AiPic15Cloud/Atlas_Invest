@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
 import { listAccessibleAccounts } from "../utils/accountAccess.js";
-import { normalizePosteKey } from "../constants/wastefulRules.js";
+import { normalizePosteKey } from "../constants/feelingRules.js";
 import type { Subscription } from "@prisma/client";
 
 export const subscriptionsRouter = Router();

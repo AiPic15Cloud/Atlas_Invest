@@ -74,7 +74,7 @@ export function Export() {
   function handleDownloadMonth() {
     if (!monthData) return;
     const rows: (string | number)[][] = [
-      ["Type", "Poste / Source", "Catégorie", "Montant (€)", "Compte", "Marqué inutile"],
+      ["Type", "Poste / Source", "Catégorie", "Montant (€)", "Compte", "Ressenti"],
       ...monthData.incomes.map((i) => ["Revenu", i.source, "", i.amount, i.bankAccountName, ""]),
       ...monthData.expenses.expenses.map((e) => [
         "Dépense",
@@ -82,7 +82,7 @@ export function Export() {
         e.category,
         e.amount,
         e.bankAccountName,
-        e.wasteful ? "Oui" : "Non",
+        e.feeling ?? "",
       ]),
       [],
       ["Total revenus", "", "", monthData.expenses.summary.totalIncome, "", ""],

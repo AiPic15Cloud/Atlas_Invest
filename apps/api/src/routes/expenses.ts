@@ -6,8 +6,8 @@ import { loadAccessibleAccount, listAccessibleAccounts } from "../utils/accountA
 import { shiftMonth } from "../utils/dateMath.js";
 import { buildItemTree, flattenLeafItems } from "../utils/budgetItemTree.js";
 import { computeBudgetBreakdown, type BudgetMethodKey } from "../constants/budgetMethods.js";
-import { normalizePosteKey, computeAutoWasteful } from "../constants/wastefulRules.js";
-import type { Expense } from "@prisma/client";
+import { normalizePosteKey, computeAutoFeeling } from "../constants/feelingRules.js";
+import type { Expense, ExpenseFeeling } from "@prisma/client";
 
 export const expensesRouter = Router();
 
@@ -27,24 +27,24 @@ function serializeExpense(expense: Expense & { bankAccount: { name: string } }, 
     bankAccountId: expense.bankAccountId,
     bankAccountName: expense.bankAccount.name,
     unusual,
-    wasteful: expense.wasteful,
-    wastefulReviewed: expense.wastefulReviewed,
+    feeling: expense.feeling,
+    feelingReviewed: expense.feelingReviewed,
     createdAt: expense.createdAt,
   };
 }
 
-/** Regle apprise sur le poste (si l'utilisateur l'a deja corrige), sinon regle automatique V1. */
-async function resolveWasteful(
+/** Regle apprise sur le poste (si l'utilisateur l'a deja corrigee), sinon suggestion automatique V1. */
+async function resolveFeeling(
   userId: string,
   poste: string,
   amount: number,
   category: "BESOINS" | "ENVIES" | "EPARGNE",
-): Promise<boolean> {
-  const rule = await prisma.wastefulRule.findUnique({
+): Promise<ExpenseFeeling | null> {
+  const rule = await prisma.feelingRule.findUnique({
     where: { userId_posteKey: { userId, posteKey: normalizePosteKey(poste) } },
   });
-  if (rule) return rule.wasteful;
-  return computeAutoWasteful(poste, amount, category);
+  if (rule) return rule.feeling;
+  return computeAutoFeeling(poste, amount, category);
 }
 
 async function computeUnusualIds(
@@ -117,7 +117,7 @@ expensesRouter.get("/", async (req, res) => {
 
   const totalSpent = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
   const totalIncome = incomes.reduce((sum, i) => sum + Number(i.amount), 0);
-  const wastefulTotal = expenses.filter((e) => e.wasteful).reduce((sum, e) => sum + Number(e.amount), 0);
+  const regretTotal = expenses.filter((e) => e.feeling === "REGRET").reduce((sum, e) => sum + Number(e.amount), 0);
   const byCategory = { besoins: 0, envies: 0, epargne: 0 };
   for (const e of expenses) {
     if (e.category === "BESOINS") byCategory.besoins += Number(e.amount);
@@ -157,7 +157,7 @@ expensesRouter.get("/", async (req, res) => {
 
   res.json({
     expenses: expenses.map((e) => serializeExpense(e, unusualIds.has(e.id))),
-    summary: { totalSpent, totalIncome, wastefulTotal, byCategory, budgetComparison },
+    summary: { totalSpent, totalIncome, regretTotal, byCategory, budgetComparison },
   });
 });
 
@@ -184,10 +184,10 @@ expensesRouter.post("/", async (req, res) => {
     return;
   }
 
-  const wasteful = await resolveWasteful(req.userId!, parsed.data.poste, parsed.data.amount, parsed.data.category);
+  const feeling = await resolveFeeling(req.userId!, parsed.data.poste, parsed.data.amount, parsed.data.category);
 
   const expense = await prisma.expense.create({
-    data: { ...parsed.data, note: parsed.data.note || null, wasteful },
+    data: { ...parsed.data, note: parsed.data.note || null, feeling },
     include: { bankAccount: { select: { name: true } } },
   });
 
@@ -227,8 +227,8 @@ expensesRouter.post("/bulk", async (req, res) => {
     return;
   }
 
-  const rules = await prisma.wastefulRule.findMany({ where: { userId: req.userId! } });
-  const ruleMap = new Map(rules.map((r) => [r.posteKey, r.wasteful]));
+  const rules = await prisma.feelingRule.findMany({ where: { userId: req.userId! } });
+  const ruleMap = new Map(rules.map((r) => [r.posteKey, r.feeling]));
 
   const { count } = await prisma.expense.createMany({
     data: items.map((item) => ({
@@ -239,7 +239,7 @@ expensesRouter.post("/bulk", async (req, res) => {
       category: item.category,
       amount: item.amount,
       note: item.note || null,
-      wasteful: ruleMap.get(normalizePosteKey(item.poste)) ?? computeAutoWasteful(item.poste, item.amount, item.category),
+      feeling: ruleMap.get(normalizePosteKey(item.poste)) ?? computeAutoFeeling(item.poste, item.amount, item.category),
     })),
   });
 
@@ -335,8 +335,8 @@ expensesRouter.post("/copy-month", async (req, res) => {
         amount: e.amount,
         note: e.note,
         bankAccountId: e.bankAccountId,
-        wasteful: e.wasteful,
-        wastefulReviewed: e.wastefulReviewed,
+        feeling: e.feeling,
+        feelingReviewed: e.feelingReviewed,
       })),
     }),
   ]);
@@ -380,8 +380,8 @@ expensesRouter.post("/copy-budget-template", async (req, res) => {
   const accounts = await listAccessibleAccounts(req.userId!);
   const accountIds = accounts.map((a) => a.id);
 
-  const rules = await prisma.wastefulRule.findMany({ where: { userId: req.userId! } });
-  const ruleMap = new Map(rules.map((r) => [r.posteKey, r.wasteful]));
+  const rules = await prisma.feelingRule.findMany({ where: { userId: req.userId! } });
+  const ruleMap = new Map(rules.map((r) => [r.posteKey, r.feeling]));
 
   await prisma.$transaction([
     prisma.expense.deleteMany({ where: { year, month, bankAccountId: { in: accountIds } } }),
@@ -393,9 +393,9 @@ expensesRouter.post("/copy-budget-template", async (req, res) => {
         category: leaf.category as "BESOINS" | "ENVIES" | "EPARGNE",
         amount: leaf.displayedAmount,
         bankAccountId,
-        wasteful:
+        feeling:
           ruleMap.get(normalizePosteKey(leaf.name)) ??
-          computeAutoWasteful(leaf.name, leaf.displayedAmount, leaf.category as "BESOINS" | "ENVIES" | "EPARGNE"),
+          computeAutoFeeling(leaf.name, leaf.displayedAmount, leaf.category as "BESOINS" | "ENVIES" | "EPARGNE"),
       })),
     }),
   ]);
@@ -424,22 +424,28 @@ expensesRouter.post("/clear-month", async (req, res) => {
   res.json({ deleted: count });
 });
 
-const wastefulSchema = z.object({
-  wasteful: z.boolean(),
+const feelingSchema = z.object({
+  feeling: z.enum(["SATISFAIT", "NEUTRE", "REGRET"]),
 });
 
-// Correction manuelle du marquage "inutile" : l'utilisateur valide ou
-// corrige la depense, et ce choix est retenu (WastefulRule) pour etre
+const FEELING_LABELS: Record<"SATISFAIT" | "NEUTRE" | "REGRET", string> = {
+  SATISFAIT: "satisfait",
+  NEUTRE: "neutre",
+  REGRET: "regretté",
+};
+
+// Correction manuelle du ressenti : l'utilisateur choisit ou corrige son
+// ressenti sur la depense, et ce choix est retenu (FeelingRule) pour etre
 // applique automatiquement aux futures depenses du meme poste, ainsi qu'aux
 // depenses existantes du meme poste qui n'ont pas deja ete corrigees
 // individuellement.
-expensesRouter.patch("/:id/wasteful", async (req, res) => {
+expensesRouter.patch("/:id/feeling", async (req, res) => {
   const result = await loadOwnExpense(req.userId!, req.params.id);
   if ("error" in result) {
     res.status(result.error).json({ error: result.error === 404 ? "Dépense introuvable." : "Accès refusé." });
     return;
   }
-  const parsed = wastefulSchema.safeParse(req.body);
+  const parsed = feelingSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Données invalides." });
     return;
@@ -452,27 +458,27 @@ expensesRouter.patch("/:id/wasteful", async (req, res) => {
   await prisma.$transaction([
     prisma.expense.update({
       where: { id: result.expense.id },
-      data: { wasteful: parsed.data.wasteful, wastefulReviewed: true },
+      data: { feeling: parsed.data.feeling, feelingReviewed: true },
     }),
-    prisma.wastefulRule.upsert({
+    prisma.feelingRule.upsert({
       where: { userId_posteKey: { userId: req.userId!, posteKey } },
-      create: { userId: req.userId!, posteKey, wasteful: parsed.data.wasteful },
-      update: { wasteful: parsed.data.wasteful },
+      create: { userId: req.userId!, posteKey, feeling: parsed.data.feeling },
+      update: { feeling: parsed.data.feeling },
     }),
     prisma.expense.updateMany({
       where: {
         bankAccountId: { in: accountIds },
         poste: { equals: result.expense.poste, mode: "insensitive" },
-        wastefulReviewed: false,
+        feelingReviewed: false,
         id: { not: result.expense.id },
       },
-      data: { wasteful: parsed.data.wasteful },
+      data: { feeling: parsed.data.feeling },
     }),
     prisma.correctionLog.create({
       data: {
         userId: req.userId!,
         type: "WASTEFUL_EXPENSE",
-        label: `${result.expense.poste} marqué comme ${parsed.data.wasteful ? "inutile" : "utile"}`,
+        label: `${result.expense.poste} marqué comme ${FEELING_LABELS[parsed.data.feeling]}`,
         detail: `${result.expense.amount.toString()} € — ${result.expense.month}/${result.expense.year}`,
       },
     }),
@@ -485,12 +491,12 @@ expensesRouter.patch("/:id/wasteful", async (req, res) => {
   res.json({ expense: serializeExpense(expense, false) });
 });
 
-const wastefulSummaryQuerySchema = z.object({
+const feelingSummaryQuerySchema = z.object({
   year: z.coerce.number().int().min(2000).max(2100),
 });
 
-expensesRouter.get("/wasteful-summary", async (req, res) => {
-  const parsed = wastefulSummaryQuerySchema.safeParse(req.query);
+expensesRouter.get("/feeling-summary", async (req, res) => {
+  const parsed = feelingSummaryQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: "Année invalide." });
     return;
@@ -499,7 +505,7 @@ expensesRouter.get("/wasteful-summary", async (req, res) => {
   const accountIds = accounts.map((a) => a.id);
 
   const expenses = await prisma.expense.findMany({
-    where: { year: parsed.data.year, wasteful: true, bankAccountId: { in: accountIds } },
+    where: { year: parsed.data.year, feeling: "REGRET", bankAccountId: { in: accountIds } },
     select: { poste: true, amount: true },
   });
 
