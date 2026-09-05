@@ -54,8 +54,11 @@ export function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="page-title">📊 Vue d'ensemble</h1>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="page-title">📊 Tableau de bord</h1>
+          <p className="mt-0.5 text-sm text-slate-500">Une vue claire de mon mois (ou de mon année). 💡</p>
+        </div>
         <div className="flex items-center gap-1 rounded-lg bg-white p-1 shadow-sm ring-1 ring-slate-200/80">
           <button
             onClick={() => setYear((y) => y - 1)}
@@ -77,17 +80,21 @@ export function Dashboard() {
 
       <section className="card">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <StatTile label="💶 Revenu annuel net" value={currency.format(data.totals.income)} />
-          <StatTile label="💸 Dépenses sur l'année" value={currency.format(data.totals.expenses)} />
           <StatTile
-            label="Reste"
+            label="💶 Revenu annuel net"
+            value={currency.format(data.totals.income)}
+            hint={`${currency.format(data.averages.incomePerMonth)} / mois en moyenne`}
+          />
+          <StatTile
+            label="💸 Dépensé sur l'année"
+            value={currency.format(data.totals.expenses)}
+            hint={`${currency.format(data.averages.expensePerMonth)} / mois en moyenne`}
+          />
+          <StatTile
+            label="🏦 Reste à vivre"
             value={currency.format(data.totals.reste)}
             tone={data.totals.reste < 0 ? "warn" : "success"}
           />
-        </div>
-        <div className="mt-3 grid grid-cols-1 gap-3 border-t border-slate-100 pt-3 sm:grid-cols-2">
-          <StatTile label="Revenu moyen / mois" value={currency.format(data.averages.incomePerMonth)} muted />
-          <StatTile label="Dépense moyenne / mois" value={currency.format(data.averages.expensePerMonth)} muted />
         </div>
       </section>
 
@@ -113,26 +120,26 @@ export function Dashboard() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <section className="card">
-          <h2 className="font-semibold">Méthode de budget active</h2>
+          <h2 className="font-semibold">📁 Méthode de budget active</h2>
           {data.budgetTemplate ? (
             <>
               <p className="mt-2 text-sm text-slate-700">{data.budgetTemplate.label}</p>
-              <Link to="/budget-type" className="mt-2 inline-block text-sm link">
-                Voir le budget type
+              <Link to="/budget-type" className="btn btn-outline btn-sm mt-3">
+                Voir le budget type →
               </Link>
             </>
           ) : (
             <>
               <p className="mt-2 text-sm text-slate-500">Aucun budget type créé pour l'instant.</p>
-              <Link to="/budget-type" className="mt-2 inline-block text-sm link">
-                Créer mon budget type
+              <Link to="/budget-type" className="btn btn-outline btn-sm mt-3">
+                Créer mon budget type →
               </Link>
             </>
           )}
         </section>
 
         <section className="card">
-          <h2 className="font-semibold">Épargne de précaution</h2>
+          <h2 className="font-semibold">🛡️ Épargne de précaution</h2>
           {emergencyFund === undefined ? (
             <p className="mt-2 text-sm text-slate-500">Chargement...</p>
           ) : emergencyFund ? (
@@ -147,8 +154,8 @@ export function Dashboard() {
                   className="h-full bg-emerald-500"
                 />
               </div>
-              <Link to="/epargne" className="mt-3 inline-block text-sm link">
-                Voir le suivi
+              <Link to="/epargne" className="btn btn-outline btn-sm mt-3">
+                Voir le suivi →
               </Link>
             </>
           ) : (
@@ -156,8 +163,8 @@ export function Dashboard() {
               <p className="mt-2 text-sm text-slate-500">
                 Réponds au questionnaire de vulnérabilité pour estimer ton objectif d'épargne de précaution.
               </p>
-              <Link to="/epargne" className="mt-2 inline-block text-sm link">
-                Démarrer
+              <Link to="/epargne" className="btn btn-outline btn-sm mt-3">
+                Ouvrir l'épargne de précaution →
               </Link>
             </>
           )}
@@ -289,18 +296,19 @@ function StatTile({
   label,
   value,
   tone = "default",
-  muted = false,
+  hint,
 }: {
   label: string;
   value: string;
   tone?: "default" | "warn" | "success";
-  muted?: boolean;
+  hint?: string;
 }) {
   const toneClass = tone === "warn" ? "text-red-600" : tone === "success" ? "text-emerald-600" : "text-slate-900";
   return (
-    <div className={`rounded-lg p-3.5 ${muted ? "bg-white ring-1 ring-slate-100" : "bg-slate-50"}`}>
+    <div className="rounded-lg bg-slate-50 p-3.5">
       <p className="stat-label">{label}</p>
       <p className={`mt-1 text-xl font-semibold tracking-tight ${toneClass}`}>{value}</p>
+      {hint && <p className="mt-0.5 text-xs text-slate-500">{hint}</p>}
     </div>
   );
 }
