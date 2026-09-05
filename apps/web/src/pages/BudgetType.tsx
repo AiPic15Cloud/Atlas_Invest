@@ -110,6 +110,7 @@ export function BudgetType() {
   const method = data.methods[template.method];
   const showTargets = method.splitMode !== "ZERO_BASED";
   const { breakdown } = template;
+  const margeLibre = template.monthlyIncome - breakdown.besoinsTarget - breakdown.enviesTarget - breakdown.epargneTarget;
 
   return (
     <div className="space-y-6">
@@ -139,11 +140,32 @@ export function BudgetType() {
             onSubmit={(income) => saveTemplate(template.method, income)}
           />
         ) : (
-          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <StatTile label="💰 Budget disponible" value={currency.format(template.monthlyIncome)} />
-            <StatTile label="🌷 Reste à vivre" value={currency.format(breakdown.resteAVivre)} />
-            <StatTile label="🛡️ Capacité d'épargne théorique" value={currency.format(breakdown.capaciteEpargne)} />
-          </div>
+          // Ordre imposé par la spec : revenus habituels, charges essentielles,
+          // envies/loisirs, épargne prévue, marge libre — avant tout détail par
+          // poste, pour répondre d'abord à "avec mes revenus, combien puis-je
+          // raisonnablement dépenser ?".
+          <dl className="mt-3 divide-y divide-slate-100 text-sm">
+            <div className="flex items-center justify-between py-2">
+              <dt className="text-slate-600">💶 Revenus habituels</dt>
+              <dd className="text-base font-semibold">{currency.format(template.monthlyIncome)}</dd>
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <dt className="text-slate-600">🏠 Charges essentielles</dt>
+              <dd className="font-medium">{currency.format(breakdown.besoinsTarget)}</dd>
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <dt className="text-slate-600">💕 Envies / loisirs</dt>
+              <dd className="font-medium">{currency.format(breakdown.enviesTarget)}</dd>
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <dt className="text-slate-600">💰 Épargne prévue</dt>
+              <dd className="font-medium">{currency.format(breakdown.epargneTarget)}</dd>
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <dt className="text-slate-600">🆓 Marge libre</dt>
+              <dd className={`font-medium ${margeLibre < 0 ? "text-red-600" : ""}`}>{currency.format(margeLibre)}</dd>
+            </div>
+          </dl>
         )}
 
         {showTargets && (
@@ -155,6 +177,13 @@ export function BudgetType() {
           />
         )}
       </section>
+
+      <ScenarioComparison
+        methods={data.methods}
+        monthlyIncome={template.monthlyIncome}
+        activeMethod={template.method}
+        onChoose={(key) => saveTemplate(key, template.monthlyIncome)}
+      />
 
       <section className="card">
         <div className="flex flex-wrap items-center gap-2">
@@ -234,14 +263,6 @@ export function BudgetType() {
   );
 }
 
-function StatTile({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md bg-slate-50 p-3">
-      <p className="text-xs text-slate-500">{label}</p>
-      <p className="mt-1 text-lg font-semibold">{value}</p>
-    </div>
-  );
-}
 
 function SplitBar({ besoins, envies, epargne, total }: { besoins: number; envies: number; epargne: number; total: number }) {
   const currency = useCurrencyFormatter();
@@ -260,6 +281,106 @@ function SplitBar({ besoins, envies, epargne, total }: { besoins: number; envies
         <span><span className="inline-block h-2 w-2 rounded-full bg-violet-500" /> Épargne {currency.format(epargne)}</span>
       </div>
     </div>
+  );
+}
+
+// Calcule les 3 montants cibles d'une méthode à répartition fixe ou en
+// cascade pour un revenu donné, sans dépendre d'un budget type déjà créé —
+// permet de comparer des scénarios avant de valider une méthode figée.
+function computeScenarioTargets(
+  def: BudgetTemplateResponse["methods"][BudgetMethodKey],
+  monthlyIncome: number,
+): { besoins: number; envies: number; epargne: number } | null {
+  if (def.splitMode === "FIXED") {
+    return {
+      besoins: (monthlyIncome * (def.besoinsPct ?? 0)) / 100,
+      envies: (monthlyIncome * (def.enviesPct ?? 0)) / 100,
+      epargne: (monthlyIncome * (def.epargnePct ?? 0)) / 100,
+    };
+  }
+  if (def.splitMode === "CASCADE") {
+    const besoins = (monthlyIncome * (def.besoinsPct ?? 0)) / 100;
+    const epargne = (monthlyIncome * (def.epargnePct ?? 0)) / 100;
+    return { besoins, envies: monthlyIncome - besoins - epargne, epargne };
+  }
+  return null;
+}
+
+function ScenarioComparison({
+  methods,
+  monthlyIncome,
+  activeMethod,
+  onChoose,
+}: {
+  methods: BudgetTemplateResponse["methods"];
+  monthlyIncome: number;
+  activeMethod: BudgetMethodKey;
+  onChoose: (method: BudgetMethodKey) => void;
+}) {
+  const currency = useCurrencyFormatter();
+  const [choosing, setChoosing] = useState<BudgetMethodKey | null>(null);
+
+  const scenarios = (Object.entries(methods) as [BudgetMethodKey, BudgetTemplateResponse["methods"][BudgetMethodKey]][])
+    .map(([key, def]) => ({ key, def, targets: computeScenarioTargets(def, monthlyIncome) }))
+    .filter((s): s is { key: BudgetMethodKey; def: BudgetTemplateResponse["methods"][BudgetMethodKey]; targets: { besoins: number; envies: number; epargne: number } } => s.targets !== null);
+
+  async function handleChoose(key: BudgetMethodKey) {
+    setChoosing(key);
+    try {
+      await onChoose(key);
+    } finally {
+      setChoosing(null);
+    }
+  }
+
+  return (
+    <section className="card">
+      <h2 className="font-semibold">🔍 Comparer les scénarios de répartition</h2>
+      <p className="mt-1 text-xs text-slate-500">
+        À revenu constant ({currency.format(monthlyIncome)}), voici ce que donnerait chaque méthode — pour comparer
+        avant de choisir.
+      </p>
+      <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
+        {scenarios.map(({ key, def, targets }) => {
+          const isActive = key === activeMethod;
+          return (
+            <div
+              key={key}
+              className={`w-56 shrink-0 rounded-lg border p-3 ${
+                isActive ? "border-pink-500 bg-pink-50 ring-1 ring-pink-500" : "border-slate-200 bg-white"
+              }`}
+            >
+              <p className="text-sm font-medium">{def.label}</p>
+              <dl className="mt-2 space-y-1 text-xs text-slate-600">
+                <div className="flex items-center justify-between">
+                  <dt>🏠 Besoins</dt>
+                  <dd className="font-medium text-slate-800">{currency.format(targets.besoins)}</dd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <dt>💕 Envies</dt>
+                  <dd className="font-medium text-slate-800">{currency.format(targets.envies)}</dd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <dt>💰 Épargne</dt>
+                  <dd className="font-semibold text-emerald-600">{currency.format(targets.epargne)}</dd>
+                </div>
+              </dl>
+              {isActive ? (
+                <p className="mt-3 text-center text-xs font-medium text-pink-600">Méthode actuelle</p>
+              ) : (
+                <button
+                  onClick={() => handleChoose(key)}
+                  disabled={choosing !== null}
+                  className="mt-3 w-full rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                >
+                  {choosing === key ? "..." : "Choisir cette méthode"}
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
