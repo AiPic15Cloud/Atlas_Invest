@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiFetch, ApiError } from "../api/client";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
+import { IconScissors } from "../components/icons";
 import type { EmergencyFundProfile, SavingsOpportunities } from "../api/types";
 
 export function Economies() {
@@ -62,7 +63,10 @@ export function Economies() {
         <button onClick={() => setYear((y) => y - 1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100">
           ← {year - 1}
         </button>
-        <span className="text-lg font-semibold">✂️ Recommandations d'économies — {year}</span>
+        <span className="text-lg font-semibold flex items-center gap-2">
+          <IconScissors className="h-5 w-5 text-violet-600" />
+          Recommandations d'économies — {year}
+        </span>
         <button onClick={() => setYear((y) => y + 1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100">
           {year + 1} →
         </button>

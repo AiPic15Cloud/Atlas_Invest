@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { IncomeForm } from "../components/IncomeForm";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
+import { IconTrendingUp } from "../components/icons";
 import type { BankAccountsResponse, Income, IncomeSummary } from "../api/types";
 
 const MONTH_NAMES = [
@@ -103,7 +104,10 @@ export function Revenus() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">💰 Revenus</h1>
+        <h1 className="text-xl font-semibold flex items-center gap-2">
+          <IconTrendingUp className="h-6 w-6 text-violet-600" />
+          Revenus
+        </h1>
         <button onClick={() => setShowYear((v) => !v)} className="text-sm link">
           {showYear ? "Voir le mois" : "Voir l'année"}
         </button>

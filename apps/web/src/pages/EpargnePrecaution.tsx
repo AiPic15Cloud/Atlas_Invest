@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { EmergencyFundQuestionnaire } from "../components/EmergencyFundQuestionnaire";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
+import { IconShield } from "../components/icons";
 import type { CriterionValue, EmergencyFundProfile } from "../api/types";
 
 function vulnerabilityLabel(score: number): string {
@@ -43,7 +44,10 @@ export function EpargnePrecaution() {
   if (!profile || retaking) {
     return (
       <div className="space-y-4">
-        <h1 className="text-xl font-semibold">🛡️ Épargne de précaution</h1>
+        <h1 className="text-xl font-semibold flex items-center gap-2">
+          <IconShield className="h-6 w-6 text-violet-600" />
+          Épargne de précaution
+        </h1>
         <EmergencyFundQuestionnaire
           initialAnswers={profile?.answers}
           onSubmit={handleQuestionnaireSubmit}
@@ -56,7 +60,10 @@ export function EpargnePrecaution() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">🛡️ Épargne de précaution</h1>
+        <h1 className="text-xl font-semibold flex items-center gap-2">
+          <IconShield className="h-6 w-6 text-violet-600" />
+          Épargne de précaution
+        </h1>
         <button onClick={() => setRetaking(true)} className="text-sm link">
           Refaire le questionnaire
         </button>

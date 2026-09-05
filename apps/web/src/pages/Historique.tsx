@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
+import { IconHistory } from "../components/icons";
 import type { CorrectionHistoryResponse, CorrectionLogEntry, CorrectionType } from "../api/types";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -33,7 +34,10 @@ export function Historique() {
   return (
     <div className="space-y-6">
       <div className="card p-3">
-        <span className="text-lg font-semibold">🕒 Historique des corrections</span>
+        <span className="text-lg font-semibold flex items-center gap-2">
+          <IconHistory className="h-5 w-5 text-violet-600" />
+          Historique des corrections
+        </span>
         <p className="mt-1 text-sm text-slate-500">
           Journal de tes corrections manuelles (dépenses marquées utiles/inutiles, statuts d'abonnements changés),
           pour garder une trace de ce qui a été ajusté et quand.

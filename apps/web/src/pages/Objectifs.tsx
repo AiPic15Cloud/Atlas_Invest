@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
+import { IconFlag } from "../components/icons";
 import type { SavingsGoal, SavingsGoalsResponse } from "../api/types";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" });
@@ -88,7 +89,10 @@ export function Objectifs() {
   return (
     <div className="space-y-6">
       <div className="card p-3">
-        <span className="text-lg font-semibold">🎯 Objectifs d'épargne</span>
+        <span className="text-lg font-semibold flex items-center gap-2">
+          <IconFlag className="h-5 w-5 text-violet-600" />
+          Objectifs d'épargne
+        </span>
         <p className="mt-1 text-sm text-slate-500">
           Donne un nom à tes projets (voyage, apport immobilier, mariage...) et suis leur progression, en plus de
           ton épargne de précaution.

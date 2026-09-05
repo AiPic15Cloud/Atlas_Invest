@@ -3,6 +3,7 @@ import { apiFetch, ApiError } from "../api/client";
 import { BudgetCategorySection } from "../components/BudgetCategorySection";
 import { parseQuickExpense } from "../lib/parseQuickExpense";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
+import { IconSliders } from "../components/icons";
 import type { BudgetCategory, BudgetMethodKey, BudgetTemplateResponse } from "../api/types";
 
 export function BudgetType() {
@@ -116,7 +117,10 @@ export function BudgetType() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold">🧭 Mon plan</h1>
+          <h1 className="text-xl font-semibold flex items-center gap-2">
+            <IconSliders className="h-6 w-6 text-violet-600" />
+            Mon plan
+          </h1>
           <p className="text-sm text-slate-500">{method.label}</p>
         </div>
         <button onClick={() => setChangingMethod(true)} className="text-sm link">
@@ -335,7 +339,7 @@ function ScenarioComparison({
 
   return (
     <section className="card">
-      <h2 className="font-semibold">🔍 Comparer les scénarios de répartition</h2>
+      <h2 className="font-semibold">Comparer les scénarios de répartition</h2>
       <p className="mt-1 text-xs text-slate-500">
         À revenu constant ({currency.format(monthlyIncome)}), voici ce que donnerait chaque méthode — pour comparer
         avant de choisir.
@@ -473,8 +477,9 @@ function MethodPicker({
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold">
-        {initialMethod ? "📁 Changer de méthode de budget" : "📁 Construis ton budget type"}
+      <h1 className="text-xl font-semibold flex items-center gap-2">
+        <IconSliders className="h-6 w-6 text-violet-600" />
+        {initialMethod ? "Changer de méthode de budget" : "Construis ton budget type"}
       </h1>
       <p className="text-sm text-slate-600">
         Choisis la méthode de budgétisation qui te servira de référence pour comparer tes dépenses réelles.

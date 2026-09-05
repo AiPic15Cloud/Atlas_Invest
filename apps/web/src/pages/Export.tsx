@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
+import { IconDownload } from "../components/icons";
 import type { DashboardResponse, ExpensesResponse, IncomeSummary, Income } from "../api/types";
 
 const MONTH_LABELS = [
@@ -107,7 +108,10 @@ export function Export() {
 
   return (
     <div className="space-y-6">
-      <h1 className="page-title">📤 Export et rapport</h1>
+      <h1 className="page-title flex items-center gap-2">
+        <IconDownload className="h-6 w-6 text-violet-600" />
+        Export et rapport
+      </h1>
 
       <div className="flex items-center justify-between card p-3">
         <button onClick={() => shiftMonth(-1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100">

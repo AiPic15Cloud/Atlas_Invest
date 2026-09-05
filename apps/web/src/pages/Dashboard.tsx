@@ -4,6 +4,7 @@ import { apiFetch, ApiError } from "../api/client";
 import { AnnualLineChart } from "../components/AnnualLineChart";
 import { useAuth } from "../context/AuthContext";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
+import { IconHome, IconSliders, IconShield, IconFlag } from "../components/icons";
 import type {
   BudgetCategory,
   DashboardResponse,
@@ -81,7 +82,10 @@ export function Dashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="page-title">🏠 Accueil</h1>
+          <h1 className="page-title flex items-center gap-2">
+            <IconHome className="h-6 w-6 text-violet-600" />
+            Accueil
+          </h1>
           <p className="mt-0.5 text-sm text-slate-500">Une vue claire de mon mois (ou de mon année). 💡</p>
         </div>
         <div className="flex items-center gap-1 rounded-lg bg-white p-1 shadow-sm ring-1 ring-slate-200/80">
@@ -225,7 +229,10 @@ export function Dashboard() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <section className="card">
-          <h2 className="font-semibold">🧭 Mon plan</h2>
+          <h2 className="font-semibold flex items-center gap-2">
+            <IconSliders className="h-5 w-5 text-violet-600" />
+            Mon plan
+          </h2>
           {data.budgetTemplate ? (
             <>
               <p className="mt-2 text-sm text-slate-700">{data.budgetTemplate.label}</p>
@@ -244,7 +251,10 @@ export function Dashboard() {
         </section>
 
         <section className="card">
-          <h2 className="font-semibold">🛡️ Épargne de précaution</h2>
+          <h2 className="font-semibold flex items-center gap-2">
+            <IconShield className="h-5 w-5 text-violet-600" />
+            Épargne de précaution
+          </h2>
           {emergencyFund === undefined ? (
             <p className="mt-2 text-sm text-slate-500">Chargement...</p>
           ) : emergencyFund ? (
@@ -343,7 +353,10 @@ function MonthlyGoalsSection({ year, month }: { year: number; month: number }) {
   return (
     <section className="card">
       <div className="flex items-center justify-between">
-        <h2 className="font-semibold">🏆 Nos victoires</h2>
+        <h2 className="font-semibold flex items-center gap-2">
+          <IconFlag className="h-5 w-5 text-violet-600" />
+          Nos victoires
+        </h2>
         {goals && <span className="text-sm text-slate-400">{doneCount}/{goals.length}</span>}
       </div>
       <p className="mt-1 text-sm text-slate-500">

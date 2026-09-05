@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
+import { IconBuilding } from "../components/icons";
 import type { Loan, LoansResponse, WealthCategory, WealthResponse } from "../api/types";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" });
@@ -152,7 +153,10 @@ export function Patrimoine() {
 
   return (
     <div className="space-y-6">
-      <h1 className="page-title">🏛️ Patrimoine</h1>
+      <h1 className="page-title flex items-center gap-2">
+        <IconBuilding className="h-6 w-6 text-violet-600" />
+        Patrimoine
+      </h1>
       <div className="card">
         <p className="text-xs text-slate-500">Patrimoine net du foyer</p>
         <p className="mt-1 text-2xl font-semibold">{currency.format(data.householdNetWorth)}</p>
@@ -251,7 +255,7 @@ export function Patrimoine() {
       </section>
 
       <section className="card">
-        <h2 className="font-semibold">💳 Prêts en cours</h2>
+        <h2 className="font-semibold">Prêts en cours</h2>
         <p className="mt-1 text-sm text-slate-500">
           Crédit auto, prêt immobilier, prêt étudiant... suis le capital restant dû et la mensualité de chaque prêt,
           en plus de la dette globale déclarée ci-dessus.

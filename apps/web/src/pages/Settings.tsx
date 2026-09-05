@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch, ApiError } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { IconSettings } from "../components/icons";
 import type { HouseholdCurrency, TwoFactorSetupResponse, TwoFactorStatus } from "../api/types";
 
 const CURRENCY_LABELS: Record<HouseholdCurrency, string> = {
@@ -183,7 +184,10 @@ export function Settings() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold">⚙️ Réglages</h1>
+      <h1 className="text-xl font-semibold flex items-center gap-2">
+        <IconSettings className="h-6 w-6 text-violet-600" />
+        Réglages
+      </h1>
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       <section className="card">

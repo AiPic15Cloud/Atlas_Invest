@@ -3,6 +3,7 @@ import { apiFetch, ApiError } from "../api/client";
 import { AccountForm } from "../components/AccountForm";
 import { useAuth } from "../context/AuthContext";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
+import { IconWallet } from "../components/icons";
 import type { BankAccount, BankAccountsResponse, BankAccountType } from "../api/types";
 
 const TYPE_LABELS: Record<BankAccountType, string> = {
@@ -79,7 +80,10 @@ export function Accounts() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold">🏦 Comptes bancaires — {household?.name}</h1>
+        <h1 className="text-xl font-semibold flex items-center gap-2">
+          <IconWallet className="h-6 w-6 text-violet-600" />
+          Comptes bancaires — {household?.name}
+        </h1>
         <p className="text-sm text-slate-500">
           Code d'invitation du foyer : <span className="font-mono font-semibold">{household?.inviteCode}</span>
         </p>

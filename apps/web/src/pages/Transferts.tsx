@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
+import { IconArrowsExchange } from "../components/icons";
 import type { BankAccountsResponse, TransfersResponse } from "../api/types";
 
 function today() {
@@ -87,7 +88,10 @@ export function Transferts() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold">🔀 Transferts</h1>
+        <h1 className="text-xl font-semibold flex items-center gap-2">
+          <IconArrowsExchange className="h-6 w-6 text-violet-600" />
+          Transferts
+        </h1>
         <p className="text-sm text-slate-500">
           Un virement compte à compte n'est ni un revenu ni une dépense pour le foyer — il est enregistré ici, à
           part, pour ne jamais fausser tes totaux.

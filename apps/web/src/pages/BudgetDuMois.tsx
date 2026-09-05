@@ -4,6 +4,7 @@ import { apiFetch, ApiError } from "../api/client";
 import { QuickAddExpense } from "../components/QuickAddExpense";
 import { ImportStatement } from "../components/ImportStatement";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
+import { IconCalendar } from "../components/icons";
 import type { BankAccountsResponse, BudgetCategory, Expense, ExpenseCategory, ExpenseFeeling, ExpensesResponse } from "../api/types";
 
 const FEELING_EMOJI: Record<ExpenseFeeling, string> = {
@@ -220,7 +221,10 @@ export function BudgetDuMois() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold">📅 Mon mois</h1>
+      <h1 className="text-xl font-semibold flex items-center gap-2">
+        <IconCalendar className="h-6 w-6 text-violet-600" />
+        Mon mois
+      </h1>
 
       <div className="flex items-center justify-between card p-3">
         <button onClick={() => goToMonth(-1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100">

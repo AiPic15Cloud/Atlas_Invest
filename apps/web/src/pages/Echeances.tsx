@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
+import { IconClock } from "../components/icons";
 import type { BankAccountsResponse, RecurringChargesResponse } from "../api/types";
 
 export function Echeances() {
@@ -92,7 +93,10 @@ export function Echeances() {
   return (
     <div className="space-y-6">
       <div className="card p-3">
-        <span className="text-lg font-semibold">⏰ Calendrier des échéances</span>
+        <span className="text-lg font-semibold flex items-center gap-2">
+          <IconClock className="h-5 w-5 text-violet-600" />
+          Calendrier des échéances
+        </span>
         <p className="mt-1 text-sm text-slate-500">
           Loyer, crédits, factures... déclare tes prélèvements récurrents pour les voir classés par date et
           repérer un risque de découvert avant qu'il arrive.

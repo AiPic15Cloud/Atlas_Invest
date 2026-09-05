@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
+import { IconRepeat } from "../components/icons";
 import type { Subscription, SubscriptionsResponse, SubscriptionStatus, UsageFrequency } from "../api/types";
 
 const MONTH_NAMES = [
@@ -65,7 +66,10 @@ export function Abonnements() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold">🔁 Audit des abonnements</h1>
+        <h1 className="text-xl font-semibold flex items-center gap-2">
+          <IconRepeat className="h-6 w-6 text-violet-600" />
+          Audit des abonnements
+        </h1>
         <p className="mt-1 text-sm text-slate-500">
           Détectés automatiquement à partir des dépenses qui reviennent sur au moins deux mois avec un montant
           stable, sur les 12 derniers mois.

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
+import { IconChartLine } from "../components/icons";
 import type { DashboardResponse } from "../api/types";
 
 const MONTH_OPTIONS = [6, 12, 24, 36];
@@ -76,7 +77,10 @@ export function Projection() {
   return (
     <div className="space-y-6">
       <div className="card p-3">
-        <span className="text-lg font-semibold">🔮 Projection et simulation</span>
+        <span className="text-lg font-semibold flex items-center gap-2">
+          <IconChartLine className="h-5 w-5 text-violet-600" />
+          Projection et simulation
+        </span>
         <p className="mt-1 text-sm text-slate-500">
           Simule l'impact d'un changement de revenu ou d'une nouvelle dépense récurrente sur ton budget des
           prochains mois. Point de départ : ta moyenne mensuelle {now.getFullYear()}, modifiable ci-dessous.
