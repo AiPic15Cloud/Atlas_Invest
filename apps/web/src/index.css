@@ -25,16 +25,16 @@ body {
 @layer components {
   /* Cards */
   .card {
-    @apply rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200/80 sm:p-5 lg:p-6 dark:bg-slate-900 dark:ring-slate-800;
+    @apply rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/80 sm:p-5 lg:p-6 dark:bg-slate-900 dark:ring-slate-800;
   }
   .card-warn {
-    @apply rounded-xl bg-amber-50 p-4 ring-1 ring-amber-200 sm:p-5 lg:p-6 dark:bg-amber-950/40 dark:ring-amber-900;
+    @apply rounded-2xl bg-amber-50 p-4 ring-1 ring-amber-200 sm:p-5 lg:p-6 dark:bg-amber-950/40 dark:ring-amber-900;
   }
   .card-danger {
-    @apply rounded-xl bg-red-50 p-4 ring-1 ring-red-200 sm:p-5 lg:p-6 dark:bg-red-950/40 dark:ring-red-900;
+    @apply rounded-2xl bg-red-50 p-4 ring-1 ring-red-200 sm:p-5 lg:p-6 dark:bg-red-950/40 dark:ring-red-900;
   }
   .card-success {
-    @apply rounded-xl bg-emerald-50 p-4 ring-1 ring-emerald-200 sm:p-5 lg:p-6 dark:bg-emerald-950/40 dark:ring-emerald-900;
+    @apply rounded-2xl bg-emerald-50 p-4 ring-1 ring-emerald-200 sm:p-5 lg:p-6 dark:bg-emerald-950/40 dark:ring-emerald-900;
   }
 
   /* Buttons */

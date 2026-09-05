@@ -303,12 +303,23 @@ export function BudgetDuMois() {
 
       <section className="card">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatTile icon={IconTrendingUp} label="Revenu du mois" value={currency.format(summary.totalIncome)} />
-          <StatTile icon={IconWallet} label="Dépensé ce mois" value={currency.format(summary.totalSpent)} />
+          <StatTile
+            icon={IconTrendingUp}
+            label="Revenu du mois"
+            value={currency.format(summary.totalIncome)}
+            color="emerald"
+          />
+          <StatTile
+            icon={IconWallet}
+            label="Dépensé ce mois"
+            value={currency.format(summary.totalSpent)}
+            color="rose"
+          />
           <StatTile
             icon={IconChartBar}
             label="Écart vs budget type"
             value={ecart === null ? "—" : `${ecart > 0 ? "+" : ""}${currency.format(ecart)}`}
+            color="sky"
             tone={ecart === null ? "default" : ecart > 0 ? "warn" : "good"}
             hint={
               ecart === null
@@ -322,6 +333,7 @@ export function BudgetDuMois() {
             icon={IconFlag}
             label="Dépense inhabituelle"
             value={unusualCount === 0 ? "Aucune" : String(unusualCount)}
+            color="amber"
             tone={unusualCount === 0 ? "good" : "warn"}
             hint={unusualCount === 0 ? "Tout est dans les clous" : "À vérifier ci-dessous"}
           />

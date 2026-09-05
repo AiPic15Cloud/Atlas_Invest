@@ -195,18 +195,21 @@ export function Dashboard() {
             icon={IconTrendingUp}
             label="Revenu annuel net"
             value={currency.format(data.totals.income)}
+            color="emerald"
             hint={`${currency.format(data.averages.incomePerMonth)} / mois en moyenne`}
           />
           <StatTile
             icon={IconWallet}
             label="Dépensé sur l'année"
             value={currency.format(data.totals.expenses)}
+            color="rose"
             hint={`${currency.format(data.averages.expensePerMonth)} / mois en moyenne`}
           />
           <StatTile
             icon={IconChartLine}
             label="Reste à vivre"
             value={currency.format(data.totals.reste)}
+            color="sky"
             tone={data.totals.reste < 0 ? "warn" : "good"}
           />
         </div>
