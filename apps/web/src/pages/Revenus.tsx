@@ -169,12 +169,20 @@ export function Revenus() {
                     key={income.id}
                     className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 py-2 last:border-0"
                   >
-                    <div>
-                      <p className="text-sm font-medium">{income.source}</p>
-                      <p className="text-xs text-slate-500">
-                        {income.bankAccountName} · {total > 0 ? percent.format(Number(income.amount) / total) : "—"}{" "}
-                        du mois
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400"
+                        aria-hidden="true"
+                      >
+                        {income.source.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{income.source}</p>
+                        <p className="text-xs text-slate-500">
+                          {income.bankAccountName} ·{" "}
+                          {total > 0 ? percent.format(Number(income.amount) / total) : "—"} du mois
+                        </p>
+                      </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-semibold">{currency.format(Number(income.amount))}</span>
