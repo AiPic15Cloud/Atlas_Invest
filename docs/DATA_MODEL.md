@@ -264,6 +264,35 @@ estimation assumée comme telle (aucun revenu récurrent déclaré ⇒ l'UI le
 dit explicitement plutôt que d'afficher un chiffre trompeur) — conforme à
 la doctrine « ne jamais présenter une estimation comme une certitude ».
 
+### l. Fuites financières (section 12) — comblé par Lot 24, avec une limite connue
+
+`GET /api/savings-opportunities` expose désormais `potentialLeaks` :
+abonnements `NON_EVALUE`/`A_SURVEILLER` (jamais `A_GARDER` ni `A_RESILIER`,
+qui appartiennent déjà aux recommandations confirmées ci-dessus), agrégés
+en montant mensuel/annuel. Concept explicitement distinct de la section 11
+(dépenses regrettées) et des recommandations déjà actées : tant qu'un
+abonnement n'est pas évalué, son montant n'est jamais inclus dans
+`totalAnnual`/`totalMonthlyEquivalent` (le total réellement réallouable
+vers l'épargne) — conforme au principe de la section 12, « le mot
+potentielles est important tant que l'utilisateur n'a pas confirmé ».
+
+**Limite connue, héritée du détecteur d'abonnements (Lot 28, avant ce
+document) et non corrigée ici** : le détecteur repère toute dépense
+récurrente par poste sans distinguer un abonnement (Netflix, assurance) d'un
+poste de budget variable qui revient chaque mois par nature (Courses,
+Restaurant) — ces derniers apparaissent donc aussi comme « fuites
+potentielles », ce qui est trompeur. Corriger cela demanderait d'affiner le
+détecteur lui-même (probablement en excluant les postes de catégorie
+`BESOINS` variable, ou en ajoutant un signal de variance de montant), un
+changement plus large qui affecterait aussi la page Abonnements existante —
+volontairement laissé à un lot séparé plutôt que raccommodé ici.
+
+Non traité (section 12) : frais bancaire, doublon de charge (au-delà de la
+détection déjà existante au moment de l'import, `ImportStatement.tsx`), et
+hausse de prix sur une charge récurrente — aucun signal fiable dans le
+modèle de données actuel sans risquer des faux positifs bruyants qui
+éroderaient la confiance plutôt que de l'améliorer.
+
 ## 3. Vérification du garde-fou « jamais compter un transfert deux fois »
 
 Vérifié dans `apps/api/src/routes/transfers.ts` et le schéma : un virement

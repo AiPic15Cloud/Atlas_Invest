@@ -24,13 +24,16 @@ savingsOpportunitiesRouter.get("/", async (req, res) => {
   const accounts = await listAccessibleAccounts(req.userId!);
   const accountIds = accounts.map((a) => a.id);
 
-  const [regretExpenses, subscriptions] = await Promise.all([
+  const [regretExpenses, subscriptions, unconfirmedSubscriptions] = await Promise.all([
     prisma.expense.findMany({
       where: { year, feeling: "REGRET", bankAccountId: { in: accountIds } },
       select: { poste: true, amount: true },
     }),
     prisma.subscription.findMany({
       where: { userId: req.userId!, dismissed: false, status: "A_RESILIER" },
+    }),
+    prisma.subscription.findMany({
+      where: { userId: req.userId!, dismissed: false, status: { in: ["NON_EVALUE", "A_SURVEILLER"] } },
     }),
   ]);
 
@@ -54,6 +57,21 @@ savingsOpportunitiesRouter.get("/", async (req, res) => {
 
   const totalAnnual = regretTotal + subscriptionsAnnualTotal;
 
+  // Fuites potentielles (section 12) : concept distinct des recommandations
+  // ci-dessus, qui portent sur des postes deja confirmes (regrette / decide
+  // a resilier). Ici, l'abonnement n'a pas encore ete evalue ou est encore
+  // "a surveiller" : jamais inclus dans totalAnnual/totalMonthlyEquivalent
+  // tant que l'utilisateur n'a pas tranche, pour ne jamais presenter une
+  // simple hypothese comme de l'argent deja recuperable.
+  const potentialLeakItems = unconfirmedSubscriptions.map((s) => ({
+    id: s.id,
+    poste: s.merchantLabel,
+    status: s.status,
+    monthlyAmount: Number(s.amount),
+    annualCost: Number(s.amount) * 12,
+  }));
+  const potentialLeaksAnnual = potentialLeakItems.reduce((sum, s) => sum + s.annualCost, 0);
+
   res.json({
     year,
     regret: {
@@ -64,5 +82,10 @@ savingsOpportunitiesRouter.get("/", async (req, res) => {
     subscriptionsAnnualTotal,
     totalAnnual,
     totalMonthlyEquivalent: totalAnnual / 12,
+    potentialLeaks: {
+      items: potentialLeakItems.sort((a, b) => b.annualCost - a.annualCost),
+      annualTotal: potentialLeaksAnnual,
+      monthlyTotal: potentialLeaksAnnual / 12,
+    },
   });
 });

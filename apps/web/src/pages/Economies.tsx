@@ -118,6 +118,35 @@ export function Economies() {
         )}
       </section>
 
+      {data.potentialLeaks.items.length > 0 && (
+        <section className="card">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold">Fuites potentielles</h2>
+            <span className="text-sm font-semibold">{currency.format(data.potentialLeaks.monthlyTotal)} / mois</span>
+          </div>
+          <p className="mt-1 text-sm text-slate-500">
+            Des abonnements pas encore évalués ou à surveiller — rien n'est confirmé, ce n'est donc pas compté dans
+            le total ci-dessus tant que tu n'as pas tranché.
+          </p>
+          <ul className="mt-2">
+            {data.potentialLeaks.items.map((item) => (
+              <li key={item.id} className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 py-2 last:border-0">
+                <span className="text-sm">
+                  {item.poste}{" "}
+                  <span className="text-xs text-slate-400">
+                    ({item.status === "NON_EVALUE" ? "non évalué" : "à surveiller"})
+                  </span>
+                </span>
+                <span className="text-sm font-medium">{currency.format(item.monthlyAmount)} / mois</span>
+              </li>
+            ))}
+          </ul>
+          <Link to="/abonnements" className="mt-3 inline-block text-sm link">
+            Passer ces abonnements en revue
+          </Link>
+        </section>
+      )}
+
       <section className="card">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">Dépenses regrettées</h2>

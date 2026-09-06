@@ -347,6 +347,11 @@ export interface SavingsOpportunities {
   subscriptionsAnnualTotal: number;
   totalAnnual: number;
   totalMonthlyEquivalent: number;
+  potentialLeaks: {
+    items: { id: string; poste: string; status: SubscriptionStatus; monthlyAmount: number; annualCost: number }[];
+    annualTotal: number;
+    monthlyTotal: number;
+  };
 }
 
 export interface Transfer {
