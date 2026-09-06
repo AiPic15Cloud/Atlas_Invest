@@ -626,6 +626,22 @@ export interface MonthlyChallengeResponse {
   stretchReached: boolean;
 }
 
+export type SavedEuroAllocation = "OBJECTIF" | "SECURITE" | "INVESTISSEMENT" | "DISPONIBLE";
+
+export interface SavedEuroEvent {
+  id: string;
+  description: string;
+  amount: number;
+  allocation: SavedEuroAllocation;
+  savingsGoalId: string | null;
+  createdAt: string;
+}
+
+export interface SavedEurosResponse {
+  events: SavedEuroEvent[];
+  total: number;
+}
+
 export interface RecordsResponse {
   currentStreak: number;
   bestStreak: number;

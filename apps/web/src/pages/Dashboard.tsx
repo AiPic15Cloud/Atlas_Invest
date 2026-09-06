@@ -15,6 +15,7 @@ import {
   IconChartLine,
   IconPlus,
   IconTarget,
+  IconScissors,
 } from "../components/icons";
 import type { ComponentType } from "react";
 import type { IconProps } from "../components/icons";
@@ -27,6 +28,10 @@ import type {
   MonthlyGoal,
   MonthlyGoalsResponse,
   RecordsResponse,
+  SavedEuroAllocation,
+  SavedEurosResponse,
+  SavingsGoal,
+  SavingsGoalsResponse,
 } from "../api/types";
 
 const CATEGORY_BAR_COLOR: Record<BudgetCategory, string> = {
@@ -352,8 +357,153 @@ export function Dashboard() {
 
       <MonthlyChallengeSection year={selected.year} month={selected.month} />
       <RecordsSection />
+      <SavedEurosSection />
       <MonthlyGoalsSection year={selected.year} month={selected.month} />
     </div>
+  );
+}
+
+const ALLOCATION_LABELS: Record<SavedEuroAllocation, string> = {
+  OBJECTIF: "Un objectif",
+  SECURITE: "Épargne de précaution",
+  INVESTISSEMENT: "Investissement",
+  DISPONIBLE: "Garder disponible",
+};
+
+function SavedEurosSection() {
+  const currency = useCurrencyFormatter();
+  const [data, setData] = useState<SavedEurosResponse | null>(null);
+  const [goals, setGoals] = useState<SavingsGoal[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState("");
+  const [allocation, setAllocation] = useState<SavedEuroAllocation>("DISPONIBLE");
+  const [savingsGoalId, setSavingsGoalId] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function load() {
+    try {
+      const [savedRes, goalsRes] = await Promise.all([
+        apiFetch<SavedEurosResponse>("/api/saved-euros"),
+        apiFetch<SavingsGoalsResponse>("/api/savings-goals"),
+      ]);
+      setData(savedRes);
+      setGoals(goalsRes.goals.filter((g) => !g.achieved));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Impossible de charger les euros sauvés.");
+    }
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function handleAdd() {
+    const parsedAmount = Number(amount.replace(",", "."));
+    if (!description.trim() || !Number.isFinite(parsedAmount) || parsedAmount <= 0) return;
+    if (allocation === "OBJECTIF" && !savingsGoalId) {
+      setError("Choisis un objectif.");
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      await apiFetch("/api/saved-euros", {
+        method: "POST",
+        body: JSON.stringify({
+          description: description.trim(),
+          amount: parsedAmount,
+          allocation,
+          savingsGoalId: allocation === "OBJECTIF" ? savingsGoalId : undefined,
+        }),
+      });
+      setDescription("");
+      setAmount("");
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (!data) return null;
+
+  return (
+    <section className="card">
+      <h2 className="font-semibold flex items-center gap-2">
+        <IconScissors className="h-5 w-5 text-copper-600" />
+        Euros sauvés
+      </h2>
+      <p className="mt-1 text-sm text-[#8a7358]">
+        Tu as renoncé à une dépense ? Note-la ici et choisis où faire vraiment aller cet argent — sinon ce n'est
+        qu'une bonne intention.
+      </p>
+      {data.total > 0 && (
+        <p className="mt-2 text-sm font-semibold text-[#2b1d14] dark:text-[#f3e9dc]">
+          {currency.format(data.total)} sauvés au total
+        </p>
+      )}
+      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+
+      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-4">
+        <input
+          className="input sm:col-span-2"
+          placeholder="Ex. Commande annulée"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+        <input
+          className="input"
+          placeholder="Montant"
+          inputMode="decimal"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+        />
+        <select
+          className="input"
+          value={allocation}
+          onChange={(e) => setAllocation(e.target.value as SavedEuroAllocation)}
+        >
+          {(Object.keys(ALLOCATION_LABELS) as SavedEuroAllocation[]).map((key) => (
+            <option key={key} value={key}>
+              {ALLOCATION_LABELS[key]}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {allocation === "OBJECTIF" && (
+        <select className="input mt-2" value={savingsGoalId} onChange={(e) => setSavingsGoalId(e.target.value)}>
+          <option value="">Choisis un objectif...</option>
+          {goals.map((g) => (
+            <option key={g.id} value={g.id}>
+              {g.name}
+            </option>
+          ))}
+        </select>
+      )}
+
+      <button onClick={handleAdd} disabled={submitting} className="mt-3 btn btn-primary">
+        {submitting ? "..." : "Enregistrer"}
+      </button>
+
+      {data.events.length > 0 && (
+        <ul className="mt-3">
+          {data.events.slice(0, 5).map((e) => (
+            <li
+              key={e.id}
+              className="flex items-center justify-between gap-3 border-b border-[#ece0cb] py-2 last:border-0 dark:border-[#3a2a1c]"
+            >
+              <span className="flex-1 text-sm">
+                {e.description} <span className="text-xs text-[#a8927a]">— {ALLOCATION_LABELS[e.allocation]}</span>
+              </span>
+              <span className="text-sm font-medium">{currency.format(e.amount)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 

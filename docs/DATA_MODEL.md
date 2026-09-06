@@ -146,10 +146,9 @@ explicitement en base l'usage de ce champ décrit en section 4 ci-dessous.
 `FinancingScore` n'ont aucun équivalent actuel. Attendu — c'est la Phase 8,
 loin dans l'ordre recommandé (section 76).
 
-### i. Gamification (Phase 5) : défi mensuel, streak et records comblés par Lots 18-19
+### i. Gamification (Phase 5) : comblée pour l'essentiel par les Lots 18-20
 
-`SavedEuroEvent` (section 54, « euros sauvés ») n'a toujours aucun
-équivalent. Le Lot 18 ajoute `MonthlyChallenge` (section 51) : une cible
+Le Lot 18 ajoute `MonthlyChallenge` (section 51) : une cible
 d'épargne par foyer et par mois, avec un stretch goal optionnel
 obligatoirement supérieur à la cible. Contrairement à `MonthlyGoal`
 (« Nos victoires », checklist libre cochée manuellement), l'avancement
@@ -169,6 +168,29 @@ regrettées (fonctions pures `computeSavingsStreak`/`computePersonalRecords`,
 testées). Aucune mécanique punitive : un mois sans épargne interrompt
 silencieusement la série en cours sans effacer le record déjà atteint, et
 « même une petite épargne » (tout montant > 0) suffit à la maintenir.
+
+Le Lot 20 ajoute `SavedEuroEvent` (section 54, « euros sauvés ») : une
+dépense volontairement évitée, avec un choix d'affectation obligatoire
+(objectif / sécurité / investissement / garder disponible). Contrairement à
+un simple journal, le choix a un effet réel quand il en a un : « objectif »
+crée une vraie `GoalContribution` et augmente `SavingsGoal.currentAmount`
+(même transaction que le flux de contribution manuelle existant),
+« sécurité » augmente `EmergencyFundProfile.currentSavedAmount` (refusé
+avec le même message que `PATCH /emergency-fund/progress` si le
+questionnaire n'a pas encore été rempli). « Investissement » et « garder
+disponible » n'ont pas d'accumulateur existant à incrémenter : l'événement
+est quand même stocké, ce qui suffit à satisfaire la doctrine (« affectée
+ou au moins enregistrée comme telle ») sans fabriquer un total qui
+n'existe nulle part ailleurs. Ne touche jamais `Income`/`Expense` — ce
+n'est pas un flux réel, seulement une trace de décision, donc aucun risque
+de double compter une même somme dans le calcul de l'épargne réelle
+(records du Lot 19, Tableau de bord).
+
+Reste manquant en Phase 5 : niveaux financiers (section 58, explicitement
+« phase ultérieure » dans la spec), sweep hebdomadaire et défis
+hebdomadaires (sections 55-56) — non traités, plus proches d'une
+automatisation bancaire réelle (prélèvement automatique) que du reste de
+cette maquette pédagogique.
 
 ### j. Nature des flux — revenus comblés par Lot 15, sorties/transferts déjà couverts (section 9)
 

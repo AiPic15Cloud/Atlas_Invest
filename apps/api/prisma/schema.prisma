@@ -111,6 +111,7 @@ model User {
   expenseAssignments   ExpenseAssignment[]
   monthlyBudgetOverrides MonthlyBudgetOverride[]
   anticipatedExpenses    AnticipatedExpense[]
+  savedEuroEvents        SavedEuroEvent[]
 }
 
 model BankAccount {
@@ -720,8 +721,37 @@ model SavingsGoal {
   userId String
 
   contributions GoalContribution[]
+  savedEuroEvents SavedEuroEvent[]
 
   @@index([userId])
+}
+
+enum SavedEuroAllocation {
+  OBJECTIF
+  SECURITE
+  INVESTISSEMENT
+  DISPONIBLE
+}
+
+// Euros sauves (section 54) : une depense volontairement evitee, jamais
+// consideree comme de l'epargne reelle tant qu'elle n'est pas effectivement
+// affectee (objectif/securite) ou au moins enregistree comme telle
+// (investissement/garder disponible). Ne touche jamais Income/Expense — pas
+// un flux reel, seulement un choix d'affectation trace.
+model SavedEuroEvent {
+  id          String              @id @default(cuid())
+  description String
+  amount      Decimal             @db.Decimal(12, 2)
+  allocation  SavedEuroAllocation
+  createdAt   DateTime            @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  savingsGoal   SavingsGoal? @relation(fields: [savingsGoalId], references: [id], onDelete: SetNull)
+  savingsGoalId String?
+
+  @@index([userId, createdAt])
 }
 
 // Historique des contributions a un objectif (section 19 : "contributions
