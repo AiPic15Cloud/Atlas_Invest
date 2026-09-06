@@ -550,6 +550,23 @@ export interface DebtCockpitLoan {
   neverPaysOff: boolean;
 }
 
+export interface EarlyRepaymentProjection {
+  monthsRemaining: number | null;
+  endDate: string | null;
+  estimatedRemainingInterest: number | null;
+  neverPaysOff: boolean;
+}
+
+export interface EarlyRepaymentResponse {
+  newRemainingBalance: number;
+  before: EarlyRepaymentProjection;
+  after: EarlyRepaymentProjection;
+  interestSaved: number | null;
+  monthsSaved: number | null;
+  reducedMonthlyPayment: number | null;
+  emergencyFundImpact: { currentSavedAmount: number; remainingAfter: number } | null;
+}
+
 export interface DebtCockpitResponse {
   totalDebt: number;
   totalRemainingBalance: number;

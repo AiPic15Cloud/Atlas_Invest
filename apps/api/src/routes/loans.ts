@@ -4,6 +4,7 @@ import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
 import { applyLoanPayment, loanPaymentSplitIsValid } from "../utils/loanPayment.js";
 import { computeDebtCockpit, projectLoan } from "../utils/debtCockpit.js";
+import { simulateEarlyRepayment } from "../utils/earlyRepayment.js";
 import { listAccessibleAccounts } from "../utils/accountAccess.js";
 import type { Loan, LoanPayment } from "@prisma/client";
 
@@ -150,6 +151,49 @@ async function loadOwnLoan(userId: string, id: string) {
   if (!loan || loan.userId !== userId) return { error: 404 as const };
   return { loan };
 }
+
+const simulateEarlyRepaymentSchema = z.object({
+  extraPayment: z.number().finite().positive(),
+});
+
+// Simulation "Et si je rembourse X € maintenant ?" (section 36) : lecture
+// seule, ne modifie jamais le pret ni l'epargne de precaution.
+loansRouter.post("/:id/simulate-early-repayment", async (req, res) => {
+  const result = await loadOwnLoan(req.userId!, req.params.id);
+  if ("error" in result) {
+    res.status(404).json({ error: "Prêt introuvable." });
+    return;
+  }
+  const parsed = simulateEarlyRepaymentSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Montant invalide." });
+    return;
+  }
+
+  const simulation = simulateEarlyRepayment(
+    {
+      id: result.loan.id,
+      label: result.loan.label,
+      principalAmount: Number(result.loan.principalAmount),
+      remainingBalance: Number(result.loan.remainingBalance),
+      monthlyPayment: Number(result.loan.monthlyPayment),
+      interestRate: result.loan.interestRate !== null ? Number(result.loan.interestRate) : null,
+      endDate: result.loan.endDate,
+    },
+    parsed.data.extraPayment,
+    new Date(),
+  );
+
+  const emergencyFund = await prisma.emergencyFundProfile.findUnique({ where: { userId: req.userId! } });
+  const emergencyFundImpact = emergencyFund
+    ? {
+        currentSavedAmount: Number(emergencyFund.currentSavedAmount),
+        remainingAfter: Math.round((Number(emergencyFund.currentSavedAmount) - parsed.data.extraPayment) * 100) / 100,
+      }
+    : null;
+
+  res.json({ ...simulation, emergencyFundImpact });
+});
 
 const updateSchema = z.object({
   label: z.string().trim().min(1).max(80).optional(),

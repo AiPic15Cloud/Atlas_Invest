@@ -45,7 +45,7 @@ par ligne, soit de migrer vers le modèle `Transaction`/`TransactionSplit`
 cible. À traiter comme un lot dédié — c'est un changement de schéma qui
 touche `Expense`, `ExpenseAssignment`, et tous les endpoints qui les lisent.
 
-### b. Prêts : ventilation et cockpit dette — comblés par Lots 5 et 22 (section 34-35)
+### b. Prêts : ventilation, cockpit dette et remboursement anticipé — comblés par Lots 5, 22 et 23 (section 34-36)
 
 `LoanPayment` (ajouté au Lot 5, avant ce document) enregistre, mensualité
 par mensualité, la répartition capital / intérêts / assurance ; seule la
@@ -66,6 +66,19 @@ plutôt que de produire une date de fin absurde. La liste des prêts
 (`GET /api/loans`) réutilise la même fonction de projection, pour que la
 durée restante affichée soit toujours identique entre la fiche d'un prêt et
 le cockpit global.
+
+Le Lot 23 ajoute la simulation de remboursement anticipé (section 36,
+« Et si je rembourse 5 000 € maintenant ? »), également sans nouvelle
+table : `POST /api/loans/:id/simulate-early-repayment` est une pure
+lecture — ne modifie jamais `Loan` ni `EmergencyFundProfile` — qui compare,
+via la même fonction de projection que le cockpit, la situation du prêt
+avant et après un remboursement hypothétique (capital restant dû, durée
+restante, intérêts économisés), propose une mensualité réduite alternative
+qui conserverait la même date de fin, et signale l'impact sur l'épargne de
+précaution quand un profil existe. N'inclut pas d'« impact sur le score de
+financement » (section 40) : ce score appartient à la Phase 8, non
+commencée — mieux vaut l'omettre que d'inventer un chiffre qui n'existe pas
+encore ailleurs dans l'app.
 
 ### c. Patrimoine : historique de valorisation — comblé par Lot 10 (section 32)
 

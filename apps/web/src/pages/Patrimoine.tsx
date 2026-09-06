@@ -13,6 +13,7 @@ import type {
   WealthItem,
   WealthResponse,
   WealthVariationResponse,
+  EarlyRepaymentResponse,
 } from "../api/types";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" });
@@ -559,6 +560,7 @@ export function Patrimoine() {
                         </p>
                       );
                     })()}
+                    <EarlyRepaymentSimulator loanId={loan.id} />
                   </div>
                 )}
               </div>
@@ -639,6 +641,81 @@ export function Patrimoine() {
             ))}
           </ul>
         </section>
+      )}
+    </div>
+  );
+}
+
+function EarlyRepaymentSimulator({ loanId }: { loanId: string }) {
+  const currency = useCurrencyFormatter();
+  const [amount, setAmount] = useState("");
+  const [result, setResult] = useState<EarlyRepaymentResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleSimulate() {
+    const parsed = Number(amount.replace(",", "."));
+    if (!Number.isFinite(parsed) || parsed <= 0) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await apiFetch<EarlyRepaymentResponse>(`/api/loans/${loanId}/simulate-early-repayment`, {
+        method: "POST",
+        body: JSON.stringify({ extraPayment: parsed }),
+      });
+      setResult(res);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="mt-3 border-t border-slate-100 pt-3 dark:border-slate-800">
+      <p className="text-xs font-semibold uppercase text-slate-400">Et si je remboursais par anticipation ?</p>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <input
+          className="w-40 input"
+          placeholder="Montant (€)"
+          inputMode="decimal"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+        />
+        <button onClick={handleSimulate} disabled={loading} className="btn btn-outline btn-sm">
+          {loading ? "..." : "Simuler"}
+        </button>
+      </div>
+      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+      {result && (
+        <div className="mt-2 text-xs text-slate-600 dark:text-slate-400">
+          <p>
+            Capital restant dû après : <span className="font-medium">{currency.format(result.newRemainingBalance)}</span>
+          </p>
+          {result.monthsSaved !== null && (
+            <p>
+              Durée restante : {result.after.monthsRemaining} mois au lieu de {result.before.monthsRemaining} (
+              {result.monthsSaved} mois gagnés)
+            </p>
+          )}
+          {result.interestSaved !== null ? (
+            <p>Intérêts économisés : {currency.format(result.interestSaved)}</p>
+          ) : (
+            <p>Intérêts économisés : non disponible (taux inconnu)</p>
+          )}
+          {result.reducedMonthlyPayment !== null && (
+            <p>
+              Ou bien, en gardant la même date de fin : mensualité ramenée à {currency.format(result.reducedMonthlyPayment)}
+            </p>
+          )}
+          {result.emergencyFundImpact && (
+            <p className={result.emergencyFundImpact.remainingAfter < 0 ? "text-red-600" : ""}>
+              Épargne de précaution : {currency.format(result.emergencyFundImpact.currentSavedAmount)} →{" "}
+              {currency.format(result.emergencyFundImpact.remainingAfter)}
+              {result.emergencyFundImpact.remainingAfter < 0 && " (montant supérieur à ton épargne disponible)"}
+            </p>
+          )}
+        </div>
       )}
     </div>
   );
