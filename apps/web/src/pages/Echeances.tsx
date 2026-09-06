@@ -2,7 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import { IconClock } from "../components/icons";
-import type { BankAccountsResponse, ProvisionsResponse, RecurringChargesResponse } from "../api/types";
+import type {
+  AnticipatedExpensesResponse,
+  BankAccountsResponse,
+  ProvisionsResponse,
+  RecurringChargesResponse,
+  RiskyMonthsResponse,
+} from "../api/types";
+
+const MONTH_LABEL = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" });
 
 export function Echeances() {
   const currency = useCurrencyFormatter();
@@ -21,6 +29,13 @@ export function Echeances() {
   const [provisionAnnualAmount, setProvisionAnnualAmount] = useState("");
   const [provisionSubmitting, setProvisionSubmitting] = useState(false);
 
+  const [riskyMonths, setRiskyMonths] = useState<RiskyMonthsResponse | null>(null);
+  const [anticipated, setAnticipated] = useState<AnticipatedExpensesResponse | null>(null);
+  const [anticipatedLabel, setAnticipatedLabel] = useState("");
+  const [anticipatedAmount, setAnticipatedAmount] = useState("");
+  const [anticipatedMonth, setAnticipatedMonth] = useState("");
+  const [anticipatedSubmitting, setAnticipatedSubmitting] = useState(false);
+
   const availableAccounts = useMemo(
     () => [...(accounts?.mine ?? []), ...(accounts?.joint ?? [])],
     [accounts],
@@ -28,16 +43,57 @@ export function Echeances() {
 
   async function load() {
     try {
-      const [chargesRes, accountsRes, provisionsRes] = await Promise.all([
+      const [chargesRes, accountsRes, provisionsRes, riskyMonthsRes, anticipatedRes] = await Promise.all([
         apiFetch<RecurringChargesResponse>("/api/recurring-charges"),
         apiFetch<BankAccountsResponse>("/api/bank-accounts"),
         apiFetch<ProvisionsResponse>("/api/provisions"),
+        apiFetch<RiskyMonthsResponse>("/api/risky-months"),
+        apiFetch<AnticipatedExpensesResponse>("/api/risky-months/anticipated"),
       ]);
       setData(chargesRes);
       setAccounts(accountsRes);
       setProvisions(provisionsRes);
+      setRiskyMonths(riskyMonthsRes);
+      setAnticipated(anticipatedRes);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Impossible de charger le calendrier des échéances.");
+    }
+  }
+
+  async function handleAddAnticipated() {
+    const parsedAmount = Number(anticipatedAmount.replace(",", "."));
+    if (!anticipatedLabel.trim() || !Number.isFinite(parsedAmount) || parsedAmount <= 0 || !anticipatedMonth) return;
+    const [yearStr, monthStr] = anticipatedMonth.split("-");
+    setAnticipatedSubmitting(true);
+    setError(null);
+    try {
+      await apiFetch("/api/risky-months/anticipated", {
+        method: "POST",
+        body: JSON.stringify({
+          label: anticipatedLabel.trim(),
+          amount: parsedAmount,
+          year: Number(yearStr),
+          month: Number(monthStr),
+        }),
+      });
+      setAnticipatedLabel("");
+      setAnticipatedAmount("");
+      setAnticipatedMonth("");
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    } finally {
+      setAnticipatedSubmitting(false);
+    }
+  }
+
+  async function handleDeleteAnticipated(id: string) {
+    if (!confirm("Supprimer cette dépense anticipée ?")) return;
+    try {
+      await apiFetch(`/api/risky-months/anticipated/${id}`, { method: "DELETE" });
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
     }
   }
 
@@ -315,6 +371,94 @@ export function Echeances() {
           className="mt-3 btn btn-primary"
         >
           {provisionSubmitting ? "..." : "Ajouter la provision"}
+        </button>
+      </section>
+
+      <section className="card">
+        <h2 className="font-semibold">Mois à risque</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Estimation sur les 6 prochains mois, à partir de ton revenu récurrent actuel et de tes charges connues
+          (échéances + provisions). Ajoute une dépense ponctuelle déjà prévue (Noël, impôts, gros entretien...)
+          pour voir si elle ferait basculer un mois en déficit.
+        </p>
+
+        {riskyMonths && !riskyMonths.hasIncomeData && (
+          <p className="mt-2 text-xs text-amber-600">
+            Aucun revenu récurrent déclaré ce mois-ci : cette estimation ne peut pas être calculée.
+          </p>
+        )}
+
+        {riskyMonths && riskyMonths.hasIncomeData && (
+          <ul className="mt-3">
+            {riskyMonths.months.map((m) => (
+              <li
+                key={`${m.year}-${m.month}`}
+                className="border-b border-slate-100 dark:border-slate-800 py-2 last:border-0"
+              >
+                <p className={`text-sm ${m.risky ? "font-medium text-red-700 dark:text-red-400" : ""}`}>
+                  <span className="capitalize">{MONTH_LABEL.format(new Date(m.year, m.month - 1, 1))}</span>
+                  {m.risky && " — probablement tendu"}
+                </p>
+                <p className="text-xs text-slate-400">
+                  Revenus attendus ~{currency.format(m.projectedIncome)} · Charges prévues ~
+                  {currency.format(m.projectedCharges)}
+                  {m.risky && m.requiredMonthlyProvision !== null && (
+                    <> — il faudrait provisionner environ {currency.format(m.requiredMonthlyProvision)}/mois jusque-là.</>
+                  )}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {anticipated && anticipated.expenses.length > 0 && (
+          <div className="mt-3">
+            <h3 className="text-xs font-semibold uppercase text-slate-400">Dépenses ponctuelles anticipées</h3>
+            <ul className="mt-1">
+              {anticipated.expenses.map((e) => (
+                <li
+                  key={e.id}
+                  className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 py-2 last:border-0"
+                >
+                  <span className="flex-1 text-sm">
+                    {e.label}{" "}
+                    <span className="text-slate-400 capitalize">
+                      — {MONTH_LABEL.format(new Date(e.year, e.month - 1, 1))}
+                    </span>
+                  </span>
+                  <span className="text-sm font-medium">{currency.format(e.amount)}</span>
+                  <button onClick={() => handleDeleteAnticipated(e.id)} className="text-xs text-red-500 underline">
+                    Supprimer
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-4">
+          <input
+            className="input sm:col-span-2"
+            placeholder="Libellé (ex. Noël)"
+            value={anticipatedLabel}
+            onChange={(e) => setAnticipatedLabel(e.target.value)}
+          />
+          <input
+            className="input"
+            placeholder="Montant"
+            inputMode="decimal"
+            value={anticipatedAmount}
+            onChange={(e) => setAnticipatedAmount(e.target.value)}
+          />
+          <input
+            className="input"
+            type="month"
+            value={anticipatedMonth}
+            onChange={(e) => setAnticipatedMonth(e.target.value)}
+          />
+        </div>
+        <button onClick={handleAddAnticipated} disabled={anticipatedSubmitting} className="mt-3 btn btn-secondary">
+          {anticipatedSubmitting ? "..." : "Ajouter la dépense anticipée"}
         </button>
       </section>
 

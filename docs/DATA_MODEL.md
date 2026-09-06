@@ -168,6 +168,23 @@ livret→courant...) n'existe pas explicitement mais se déduit déjà des
 types de comptes source/destination (`BankAccountType`) ; non ajoutée ici
 faute d'un besoin d'affichage concret identifié.
 
+### k. Mois à risque (section 29) — comblé par Lot 17
+
+`AnticipatedExpense` (ajouté au Lot 17) porte une dépense ponctuelle future
+déjà connue (libellé, montant, mois/année cible) — Noël, impôts, gros
+entretien — qui n'est ni une échéance récurrente (`RecurringCharge`) ni
+encore survenue. `GET /api/risky-months` projette les 6 prochains mois à
+partir d'un revenu de référence (revenu récurrent du mois en cours,
+`Income.nature = RECURRENT`) et de charges de référence (`RecurringCharge`
+actives + `Provision` actives déjà mensualisées), en y ajoutant les
+dépenses anticipées déclarées pour chaque mois ; un mois est signalé
+« probablement tendu » dès que les charges projetées dépassent le revenu
+projeté, avec le versement mensuel qu'il faudrait provisionner d'ici là
+pour lisser l'écart (fonction pure `computeRiskyMonths`, testée). Reste une
+estimation assumée comme telle (aucun revenu récurrent déclaré ⇒ l'UI le
+dit explicitement plutôt que d'afficher un chiffre trompeur) — conforme à
+la doctrine « ne jamais présenter une estimation comme une certitude ».
+
 ## 3. Vérification du garde-fou « jamais compter un transfert deux fois »
 
 Vérifié dans `apps/api/src/routes/transfers.ts` et le schéma : un virement

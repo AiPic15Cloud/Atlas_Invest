@@ -413,6 +413,38 @@ export interface RecurringChargesResponse {
   subscriptionsWithoutDate: { id: string; poste: string; amount: number }[];
 }
 
+export interface AnticipatedExpense {
+  id: string;
+  label: string;
+  amount: number;
+  year: number;
+  month: number;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface AnticipatedExpensesResponse {
+  expenses: AnticipatedExpense[];
+}
+
+export interface RiskyMonth {
+  year: number;
+  month: number;
+  monthsUntil: number;
+  projectedIncome: number;
+  projectedCharges: number;
+  shortfall: number;
+  risky: boolean;
+  requiredMonthlyProvision: number | null;
+}
+
+export interface RiskyMonthsResponse {
+  baselineIncome: number;
+  baselineCharges: number;
+  hasIncomeData: boolean;
+  months: RiskyMonth[];
+}
+
 export type WealthCategory = "IMMOBILIER" | "VEHICULE" | "PLACEMENT" | "AUTRE_ACTIF" | "CREDIT" | "AUTRE_DETTE";
 export type WealthKind = "ASSET" | "LIABILITY";
 

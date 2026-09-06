@@ -89,6 +89,7 @@ model User {
   importCategoryMemory ImportCategoryMemory[]
   expenseAssignments   ExpenseAssignment[]
   monthlyBudgetOverrides MonthlyBudgetOverride[]
+  anticipatedExpenses    AnticipatedExpense[]
 }
 
 model BankAccount {
@@ -473,6 +474,25 @@ model Provision {
   userId String
 
   @@index([userId])
+}
+
+// Depense ponctuelle future deja connue (Noel, impots, gros entretien...) mais
+// pas encore une echeance recurrente : utilisee par la detection des "mois a
+// risque" (section 29) pour reperer un mois ou les charges depasseraient le
+// revenu recurrent, sans attendre que la depense soit reellement survenue.
+model AnticipatedExpense {
+  id        String   @id @default(cuid())
+  label     String
+  amount    Decimal  @db.Decimal(12, 2)
+  year      Int
+  month     Int
+  note      String?
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@index([userId, year, month])
 }
 
 // Echeance recurrente declaree manuellement (loyer, credit, facture...) :
