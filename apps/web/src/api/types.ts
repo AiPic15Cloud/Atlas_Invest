@@ -452,6 +452,8 @@ export interface SavingsGoal {
   monthlyContribution: number | null;
   monthsRemaining: number | null;
   requiredMonthlyContribution: number | null;
+  observedMonthlyPace: number | null;
+  priority: number | null;
   achieved: boolean;
   createdAt: string;
 }

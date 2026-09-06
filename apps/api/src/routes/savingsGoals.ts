@@ -2,13 +2,23 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
-import type { SavingsGoal } from "@prisma/client";
+import { computeObservedMonthlyPace } from "../utils/goalPace.js";
+import type { GoalContribution, SavingsGoal } from "@prisma/client";
 
 export const savingsGoalsRouter = Router();
 
 savingsGoalsRouter.use(requireAuth);
 
-function serializeGoal(goal: SavingsGoal) {
+function serializeContribution(contribution: GoalContribution) {
+  return {
+    id: contribution.id,
+    amount: Number(contribution.amount),
+    userId: contribution.userId,
+    createdAt: contribution.createdAt,
+  };
+}
+
+function serializeGoal(goal: SavingsGoal & { contributions?: GoalContribution[] }) {
   const target = Number(goal.targetAmount);
   const current = Number(goal.currentAmount);
   const remaining = Math.max(target - current, 0);
@@ -29,6 +39,12 @@ function serializeGoal(goal: SavingsGoal) {
     requiredMonthlyContribution = Math.round((remaining / monthsUntilTarget) * 100) / 100;
   }
 
+  const observedMonthlyPace = goal.contributions
+    ? computeObservedMonthlyPace(
+        goal.contributions.map((c) => ({ amount: Number(c.amount), date: c.createdAt })),
+      )
+    : null;
+
   return {
     id: goal.id,
     name: goal.name,
@@ -40,6 +56,8 @@ function serializeGoal(goal: SavingsGoal) {
     monthlyContribution,
     monthsRemaining,
     requiredMonthlyContribution,
+    observedMonthlyPace,
+    priority: goal.priority,
     achieved: goal.achieved || current >= target,
     createdAt: goal.createdAt,
   };
@@ -48,7 +66,8 @@ function serializeGoal(goal: SavingsGoal) {
 savingsGoalsRouter.get("/", async (req, res) => {
   const goals = await prisma.savingsGoal.findMany({
     where: { userId: req.userId! },
-    orderBy: { createdAt: "asc" },
+    include: { contributions: true },
+    orderBy: [{ priority: { sort: "asc", nulls: "last" } }, { createdAt: "asc" }],
   });
   res.json({ goals: goals.map(serializeGoal) });
 });
@@ -90,6 +109,7 @@ const updateSchema = z.object({
   currentAmount: z.number().finite().min(0).optional(),
   targetDate: z.string().datetime().nullable().optional(),
   monthlyContribution: z.number().finite().positive().nullable().optional(),
+  priority: z.number().int().min(1).nullable().optional(),
 });
 
 savingsGoalsRouter.patch("/:id", async (req, res) => {
@@ -119,6 +139,9 @@ savingsGoalsRouter.patch("/:id", async (req, res) => {
 
 const contributeSchema = z.object({ amount: z.number().finite() });
 
+// Chaque contribution est historisée (section 19 : "contributions par
+// utilisateur"), pas seulement agrégée dans currentAmount, pour pouvoir
+// calculer un rythme réellement observé plus tard.
 savingsGoalsRouter.post("/:id/contribute", async (req, res) => {
   const result = await loadOwnGoal(req.userId!, req.params.id);
   if ("error" in result) {
@@ -131,11 +154,32 @@ savingsGoalsRouter.post("/:id/contribute", async (req, res) => {
     return;
   }
   const newAmount = Math.max(Number(result.goal.currentAmount) + parsed.data.amount, 0);
-  const goal = await prisma.savingsGoal.update({
-    where: { id: result.goal.id },
-    data: { currentAmount: newAmount, achieved: newAmount >= Number(result.goal.targetAmount) },
-  });
+
+  const [, goal] = await prisma.$transaction([
+    prisma.goalContribution.create({
+      data: { goalId: result.goal.id, userId: req.userId!, amount: parsed.data.amount },
+    }),
+    prisma.savingsGoal.update({
+      where: { id: result.goal.id },
+      data: { currentAmount: newAmount, achieved: newAmount >= Number(result.goal.targetAmount) },
+      include: { contributions: true },
+    }),
+  ]);
+
   res.json({ goal: serializeGoal(goal) });
+});
+
+savingsGoalsRouter.get("/:id/contributions", async (req, res) => {
+  const result = await loadOwnGoal(req.userId!, req.params.id);
+  if ("error" in result) {
+    res.status(404).json({ error: "Objectif introuvable." });
+    return;
+  }
+  const contributions = await prisma.goalContribution.findMany({
+    where: { goalId: result.goal.id },
+    orderBy: { createdAt: "desc" },
+  });
+  res.json({ contributions: contributions.map(serializeContribution) });
 });
 
 savingsGoalsRouter.delete("/:id", async (req, res) => {

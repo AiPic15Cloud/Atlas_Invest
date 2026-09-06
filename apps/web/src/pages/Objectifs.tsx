@@ -92,6 +92,37 @@ export function Objectifs() {
     }
   }
 
+  // Les objectifs sont déjà triés par priorité (puis par date de création)
+  // par le backend : "monter"/"descendre" renormalise l'ordre affiché en
+  // priorités 1..N puis échange les deux objectifs concernés (section 20).
+  async function handleMove(id: string, direction: -1 | 1) {
+    if (!goals) return;
+    const index = goals.findIndex((g) => g.id === id);
+    const targetIndex = index + direction;
+    if (index === -1 || targetIndex < 0 || targetIndex >= goals.length) return;
+
+    const reordered = [...goals];
+    [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
+
+    const updates = reordered
+      .map((g, i) => ({ id: g.id, newPriority: i + 1, changed: g.priority !== i + 1 }))
+      .filter((u) => u.changed);
+
+    try {
+      await Promise.all(
+        updates.map((u) =>
+          apiFetch(`/api/savings-goals/${u.id}`, {
+            method: "PATCH",
+            body: JSON.stringify({ priority: u.newPriority }),
+          }),
+        ),
+      );
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    }
+  }
+
   if (error && !goals) return <p className="text-sm text-red-600">{error}</p>;
   if (!goals) return <p className="text-sm text-slate-500">Chargement...</p>;
 
@@ -158,13 +189,31 @@ export function Objectifs() {
             <section key={goal.id} className="card">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
+                  <div className="flex flex-col">
+                    <button
+                      onClick={() => handleMove(goal.id, -1)}
+                      disabled={index === 0}
+                      className="text-xs leading-none text-slate-400 hover:text-violet-600 disabled:opacity-20"
+                      aria-label={`Monter ${goal.name} en priorité`}
+                    >
+                      ▲
+                    </button>
+                    <button
+                      onClick={() => handleMove(goal.id, 1)}
+                      disabled={index === goals.length - 1}
+                      className="text-xs leading-none text-slate-400 hover:text-violet-600 disabled:opacity-20"
+                      aria-label={`Descendre ${goal.name} en priorité`}
+                    >
+                      ▼
+                    </button>
+                  </div>
                   <div
                     className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${GOAL_CHIP_CLASS[GOAL_COLORS[index % GOAL_COLORS.length]]}`}
                   >
                     <IconFlag className="h-4 w-4" />
                   </div>
                   <h3 className="font-semibold">
-                    {goal.name} {goal.achieved && <span className="text-emerald-600">✓ atteint</span>}
+                    #{index + 1} {goal.name} {goal.achieved && <span className="text-emerald-600">✓ atteint</span>}
                   </h3>
                 </div>
                 <button onClick={() => handleDelete(goal.id)} className="text-xs text-red-500 underline">
@@ -194,6 +243,24 @@ export function Objectifs() {
               {goal.monthlyContribution !== null && goal.monthsRemaining !== null && !goal.achieved && (
                 <p className="mt-1 text-xs text-slate-500">
                   À {currency.format(goal.monthlyContribution)} / mois, encore environ {goal.monthsRemaining} mois.
+                </p>
+              )}
+
+              {goal.observedMonthlyPace !== null && (
+                <p className="mt-1 text-xs text-slate-500">
+                  Rythme réellement observé : {currency.format(goal.observedMonthlyPace)} / mois
+                  {goal.monthlyContribution !== null && (
+                    <>
+                      {" "}
+                      (prévu : {currency.format(goal.monthlyContribution)} / mois
+                      {goal.observedMonthlyPace < goal.monthlyContribution ? (
+                        <span className="text-amber-600"> — en retard</span>
+                      ) : (
+                        <span className="text-emerald-600"> — au rythme prévu</span>
+                      )}
+                      )
+                    </>
+                  )}
                 </p>
               )}
 

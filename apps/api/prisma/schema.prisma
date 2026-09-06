@@ -85,6 +85,7 @@ model User {
   twoFactorBackupCodes TwoFactorBackupCode[]
   loans                Loan[]
   provisions           Provision[]
+  goalContributions    GoalContribution[]
   importCategoryMemory ImportCategoryMemory[]
   expenseAssignments   ExpenseAssignment[]
   monthlyBudgetOverrides MonthlyBudgetOverride[]
@@ -591,6 +592,9 @@ model SavingsGoal {
   currentAmount       Decimal   @default(0) @db.Decimal(12, 2)
   targetDate          DateTime?
   monthlyContribution Decimal?  @db.Decimal(12, 2)
+  // Priorite declaree par l'utilisateur (section 20) : plus petit = plus
+  // prioritaire. Null = pas encore classe.
+  priority            Int?
   achieved            Boolean   @default(false)
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
@@ -598,5 +602,24 @@ model SavingsGoal {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
 
+  contributions GoalContribution[]
+
   @@index([userId])
+}
+
+// Historique des contributions a un objectif (section 19 : "contributions
+// par utilisateur"), pour comparer le rythme prevu (monthlyContribution) au
+// rythme reellement observe plutot que de ne garder qu'un total agrege.
+model GoalContribution {
+  id        String   @id @default(cuid())
+  amount    Decimal  @db.Decimal(12, 2)
+  createdAt DateTime @default(now())
+
+  goal   SavingsGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  goalId String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@index([goalId, createdAt])
 }

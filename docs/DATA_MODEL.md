@@ -62,12 +62,15 @@ un historique (`AssetValuation`). Toute mise à jour écrase la valeur
 précédente — impossible de reconstituer « performance des placements »
 séparément des flux apportés (section 31) sans cet historique.
 
-### d. Objectifs : pas de contributions ni de priorité (section 19-20)
+### d. Objectifs : contributions et priorité — comblé partiellement par Lot 8 (section 19-20)
 
-`SavingsGoal.currentAmount` est un compteur unique, pas une liste de
-`GoalContribution` par utilisateur et par date. Pas de champ `priority` ni
-`individuel`/`commun`. La comparaison « rythme prévu vs réellement observé »
-(section 19) n'est donc pas calculable finement aujourd'hui.
+`GoalContribution` (ajouté au Lot 8) historise chaque contribution
+(montant, date, utilisateur) plutôt que de ne garder que le total agrégé
+`SavingsGoal.currentAmount` ; le rythme réellement observé est recalculé
+depuis cet historique et comparé à `monthlyContribution` (rythme prévu).
+`SavingsGoal.priority` (entier, null = non classé) permet de classer les
+objectifs (section 20), avec réorganisation depuis le frontend. Reste
+manquant : la distinction `individuel`/`commun` par objectif.
 
 ### e. Enveloppes virtuelles limitées à l'épargne de précaution (section 18)
 
