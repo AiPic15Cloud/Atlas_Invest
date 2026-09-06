@@ -506,6 +506,13 @@ model Loan {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
+  // Archivage plutot que suppression immediate (section 66 : "les
+  // suppressions importantes doivent privilegier l'archivage") — supprimer
+  // un pret pour de bon perdrait en cascade tout son historique
+  // LoanPayment (ventilation capital/interets deja construite, Lot 5).
+  // Null = actif ; sinon la date d'archivage.
+  archivedAt DateTime?
+
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
 

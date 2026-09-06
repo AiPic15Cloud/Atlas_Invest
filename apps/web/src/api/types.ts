@@ -481,6 +481,7 @@ export interface Loan {
   monthsRemaining: number | null;
   projectedPayoffDate: string | null;
   paidOff: boolean;
+  archivedAt: string | null;
   createdAt: string;
 }
 

@@ -175,6 +175,8 @@ export function Patrimoine() {
   const [loanSubmitting, setLoanSubmitting] = useState(false);
   const [paymentTotalInputs, setPaymentTotalInputs] = useState<Record<string, string>>({});
   const [paymentInterestInputs, setPaymentInterestInputs] = useState<Record<string, string>>({});
+  const [archivedLoans, setArchivedLoans] = useState<Loan[] | null>(null);
+  const [showArchivedLoans, setShowArchivedLoans] = useState(false);
 
   async function load() {
     try {
@@ -191,6 +193,15 @@ export function Patrimoine() {
       setLoans(res.loans);
     } catch (err) {
       setLoanError(err instanceof ApiError ? err.message : "Impossible de charger les prêts.");
+    }
+  }
+
+  async function loadArchivedLoans() {
+    try {
+      const res = await apiFetch<LoansResponse>("/api/loans/archived");
+      setArchivedLoans(res.loans);
+    } catch (err) {
+      setLoanError(err instanceof ApiError ? err.message : "Impossible de charger les prêts archivés.");
     }
   }
 
@@ -286,9 +297,20 @@ export function Patrimoine() {
   }
 
   async function handleDeleteLoan(id: string) {
-    if (!confirm("Supprimer ce prêt ?")) return;
+    if (!confirm("Archiver ce prêt ? Il ne comptera plus dans le patrimoine, mais son historique reste consultable dans les prêts archivés.")) return;
     try {
       await apiFetch(`/api/loans/${id}`, { method: "DELETE" });
+      await loadLoans();
+      await load();
+    } catch (err) {
+      setLoanError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    }
+  }
+
+  async function handleRestoreLoan(id: string) {
+    try {
+      await apiFetch(`/api/loans/${id}/restore`, { method: "POST" });
+      await loadArchivedLoans();
       await loadLoans();
       await load();
     } catch (err) {
@@ -473,7 +495,7 @@ export function Patrimoine() {
                     {loan.label} {loan.paidOff && <span className="text-emerald-600">✓ remboursé</span>}
                   </h3>
                   <button onClick={() => handleDeleteLoan(loan.id)} className="text-xs text-red-500 underline">
-                    Supprimer
+                    Archiver
                   </button>
                 </div>
 
@@ -539,6 +561,43 @@ export function Patrimoine() {
         )}
         {loans && loans.length === 0 && (
           <p className="mt-3 text-sm text-slate-500">Aucun prêt en cours déclaré pour l'instant.</p>
+        )}
+
+        <button
+          onClick={() => {
+            const next = !showArchivedLoans;
+            setShowArchivedLoans(next);
+            if (next && !archivedLoans) loadArchivedLoans();
+          }}
+          className="mt-4 text-xs link"
+        >
+          {showArchivedLoans ? "Masquer les prêts archivés" : "Voir les prêts archivés"}
+        </button>
+
+        {showArchivedLoans && (
+          <div className="mt-2 rounded-md border border-slate-200 dark:border-slate-700 p-3">
+            <p className="text-xs text-slate-500">
+              Un prêt archivé ne compte plus dans le patrimoine, mais son historique de remboursement reste
+              consultable ici.
+            </p>
+            {archivedLoans && archivedLoans.length === 0 && (
+              <p className="mt-2 text-sm text-slate-500">Aucun prêt archivé.</p>
+            )}
+            {archivedLoans && archivedLoans.length > 0 && (
+              <ul className="mt-2 space-y-2">
+                {archivedLoans.map((loan) => (
+                  <li key={loan.id} className="flex items-center justify-between text-sm">
+                    <span>
+                      {loan.label} — {currency.format(loan.remainingBalance)} restant dû au moment de l'archivage
+                    </span>
+                    <button onClick={() => handleRestoreLoan(loan.id)} className="text-xs link">
+                      Restaurer
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         )}
       </section>
 

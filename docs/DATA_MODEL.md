@@ -105,10 +105,16 @@ spec : `BUDGET_ITEM_MODIFIED` ("budget courses passé de 350 à 400 €"),
 `LOAN_MODIFIED` ("prêt modifié") ajoutés au Lot 12, et
 `EXPENSE_RECATEGORIZED` (changement de `category` sur une `Expense`)
 ajouté au Lot 13 — tous vérifiés par test avec les valeurs exactes de la
-spec. Reste manquant : le soft delete généralisé ("les suppressions
-importantes doivent privilégier l'archivage") — changement structurel
-majeur touchant la plupart des modèles, volontairement laissé à un lot
-dédié plutôt que traité en marge de ceux-ci.
+spec. Le soft delete lui-même (« privilégier l'archivage ») est amorcé au
+Lot 14 sur `Loan` — le cas le plus clairement justifié, puisqu'une
+suppression SQL y perdrait en cascade l'historique `LoanPayment` déjà
+construit (ventilation capital/intérêts, Lot 5) : `Loan.archivedAt`
+(nullable) exclut le prêt du patrimoine net et des listes par défaut sans
+supprimer la ligne ni son historique, avec restauration possible. Reste
+volontairement non généralisé aux autres modèles (`WealthItem`,
+`SavingsGoal`, `Expense`...) — chacun aurait sa propre justification (ou
+non) à établir au cas par cas plutôt que par un changement structurel
+unique appliqué partout.
 
 ### g'. Rapprochement bancaire (section 68) — comblé par Lot 7
 

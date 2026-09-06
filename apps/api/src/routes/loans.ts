@@ -41,12 +41,16 @@ function serializeLoan(loan: Loan) {
     monthsRemaining,
     projectedPayoffDate,
     paidOff,
+    archivedAt: loan.archivedAt,
     createdAt: loan.createdAt,
   };
 }
 
+// N'inclut jamais les prets archives (section 66) : ils ne comptent plus
+// dans le patrimoine net ni dans la liste par defaut, mais restent en base
+// avec leur historique LoanPayment, consultables via GET /archived.
 export async function loansFor(userId: string) {
-  return prisma.loan.findMany({ where: { userId }, orderBy: { createdAt: "asc" } });
+  return prisma.loan.findMany({ where: { userId, archivedAt: null }, orderBy: { createdAt: "asc" } });
 }
 
 export function loansRemainingTotal(loans: Loan[]) {
@@ -239,12 +243,33 @@ loansRouter.post("/:id/payments", async (req, res) => {
   res.json({ loan: serializeLoan(loan) });
 });
 
+// Archive plutot que de supprimer (section 66 : "les suppressions
+// importantes doivent privilegier l'archivage") — sinon la suppression
+// SQL emporterait en cascade tout l'historique LoanPayment du pret.
 loansRouter.delete("/:id", async (req, res) => {
   const result = await loadOwnLoan(req.userId!, req.params.id);
   if ("error" in result) {
     res.status(404).json({ error: "Prêt introuvable." });
     return;
   }
-  await prisma.loan.delete({ where: { id: result.loan.id } });
+  await prisma.loan.update({ where: { id: result.loan.id }, data: { archivedAt: new Date() } });
   res.status(204).send();
+});
+
+loansRouter.get("/archived", async (req, res) => {
+  const loans = await prisma.loan.findMany({
+    where: { userId: req.userId!, archivedAt: { not: null } },
+    orderBy: { archivedAt: "desc" },
+  });
+  res.json({ loans: loans.map(serializeLoan) });
+});
+
+loansRouter.post("/:id/restore", async (req, res) => {
+  const result = await loadOwnLoan(req.userId!, req.params.id);
+  if ("error" in result) {
+    res.status(404).json({ error: "Prêt introuvable." });
+    return;
+  }
+  const loan = await prisma.loan.update({ where: { id: result.loan.id }, data: { archivedAt: null } });
+  res.json({ loan: serializeLoan(loan) });
 });
