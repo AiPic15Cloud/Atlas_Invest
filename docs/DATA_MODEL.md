@@ -97,19 +97,18 @@ le schéma — elle est actuellement gérée au cas par cas côté code applicat
 (ex. `hasEstimate` dans la réponse du Tableau de bord), pas comme une
 propriété structurée des données.
 
-### g. `AuditLog` partiel — complété par Lot 12 pour 3 des 4 exemples de la spec (section 66)
+### g. `AuditLog` — les 4 exemples de la spec couverts (Lots 12-13), section 66
 
-`CorrectionLog` couvre désormais aussi `BUDGET_ITEM_MODIFIED` (poste du
-budget type), `GOAL_TARGET_MODIFIED` (montant cible d'un objectif) et
-`LOAN_MODIFIED` (capital/mensualité/taux d'un prêt) — les trois premiers
-exemples cités mot pour mot par la spec ("budget courses passé de 350 à
-400 €", "objectif passé de 5 000 à 10 000 €", "prêt modifié"), vérifiés
-par test avec ces valeurs exactes. Reste manquant : la recatégorisation
-d'une transaction (pas encore de champ `category` historisé sur
-`Expense`), et surtout le soft delete généralisé ("les suppressions
+`CorrectionLog` couvre désormais les 4 exemples cités mot pour mot par la
+spec : `BUDGET_ITEM_MODIFIED` ("budget courses passé de 350 à 400 €"),
+`GOAL_TARGET_MODIFIED` ("objectif passé de 5 000 à 10 000 €"),
+`LOAN_MODIFIED` ("prêt modifié") ajoutés au Lot 12, et
+`EXPENSE_RECATEGORIZED` (changement de `category` sur une `Expense`)
+ajouté au Lot 13 — tous vérifiés par test avec les valeurs exactes de la
+spec. Reste manquant : le soft delete généralisé ("les suppressions
 importantes doivent privilégier l'archivage") — changement structurel
 majeur touchant la plupart des modèles, volontairement laissé à un lot
-dédié plutôt que traité en marge de celui-ci.
+dédié plutôt que traité en marge de ceux-ci.
 
 ### g'. Rapprochement bancaire (section 68) — comblé par Lot 7
 

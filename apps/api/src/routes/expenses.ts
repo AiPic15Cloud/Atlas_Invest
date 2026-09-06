@@ -330,6 +330,19 @@ expensesRouter.patch("/:id", async (req, res) => {
     return;
   }
 
+  // Une transaction recatégorisée est une modification importante a
+  // historiser (section 66, dernier des 4 exemples cites par la spec).
+  if (parsed.data.category !== undefined && parsed.data.category !== result.expense.category) {
+    await prisma.correctionLog.create({
+      data: {
+        userId: req.userId!,
+        type: "EXPENSE_RECATEGORIZED",
+        label: `Dépense "${result.expense.poste}" recatégorisée`,
+        detail: `${result.expense.category} → ${parsed.data.category}`,
+      },
+    });
+  }
+
   const expense = await prisma.expense.update({
     where: { id: result.expense.id },
     data: parsed.data,

@@ -588,6 +588,7 @@ enum CorrectionType {
   BUDGET_ITEM_MODIFIED
   GOAL_TARGET_MODIFIED
   LOAN_MODIFIED
+  EXPENSE_RECATEGORIZED
 }
 
 // Journal des corrections manuelles de l'utilisateur (marquage

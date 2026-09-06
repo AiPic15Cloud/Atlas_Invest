@@ -12,6 +12,7 @@ const TYPE_LABELS: Record<CorrectionType, string> = {
   BUDGET_ITEM_MODIFIED: "Budget type modifié",
   GOAL_TARGET_MODIFIED: "Objectif modifié",
   LOAN_MODIFIED: "Prêt modifié",
+  EXPENSE_RECATEGORIZED: "Dépense recatégorisée",
 };
 
 const TYPE_COLORS: Record<CorrectionType, string> = {
@@ -21,6 +22,7 @@ const TYPE_COLORS: Record<CorrectionType, string> = {
   BUDGET_ITEM_MODIFIED: "bg-violet-100 text-violet-800 dark:bg-violet-900/50 dark:text-violet-300",
   GOAL_TARGET_MODIFIED: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300",
   LOAN_MODIFIED: "bg-rose-100 text-rose-800 dark:bg-rose-900/50 dark:text-rose-300",
+  EXPENSE_RECATEGORIZED: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300",
 };
 
 export function Historique() {
@@ -61,6 +63,7 @@ export function Historique() {
             "BUDGET_ITEM_MODIFIED",
             "GOAL_TARGET_MODIFIED",
             "LOAN_MODIFIED",
+            "EXPENSE_RECATEGORIZED",
             "TRANSFER_SUGGESTION_DISMISSED",
           ] as const
         ).map((t) => (

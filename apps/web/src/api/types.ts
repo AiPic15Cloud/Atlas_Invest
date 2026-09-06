@@ -576,7 +576,8 @@ export type CorrectionType =
   | "TRANSFER_SUGGESTION_DISMISSED"
   | "BUDGET_ITEM_MODIFIED"
   | "GOAL_TARGET_MODIFIED"
-  | "LOAN_MODIFIED";
+  | "LOAN_MODIFIED"
+  | "EXPENSE_RECATEGORIZED";
 
 export interface CorrectionLogEntry {
   id: string;

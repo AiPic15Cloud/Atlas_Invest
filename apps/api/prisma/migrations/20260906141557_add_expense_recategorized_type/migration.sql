@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "CorrectionType" ADD VALUE 'EXPENSE_RECATEGORIZED';
