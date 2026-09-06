@@ -277,6 +277,12 @@ export function Echeances() {
 
       <section className="card">
         <h2 className="font-semibold">Échéances du mois, par date</h2>
+        {sortedCharges.length > 0 && (
+          <p className="mt-1 text-sm text-slate-500">
+            Total des échéances actives : {currency.format(data.totalMonthlyActive)} / mois ·{" "}
+            {currency.format(data.totalAnnualActive)} / an
+          </p>
+        )}
         {sortedCharges.length === 0 ? (
           <p className="mt-2 text-sm text-slate-500">Aucune échéance déclarée pour l'instant.</p>
         ) : (
@@ -294,7 +300,10 @@ export function Echeances() {
                 <span className="flex-1 text-sm">
                   {c.label} <span className="text-slate-400">— {c.bankAccountName}</span>
                 </span>
-                <span className="text-sm font-medium">{currency.format(Number(c.amount))}</span>
+                <span className="text-right text-sm">
+                  <span className="font-medium">{currency.format(Number(c.amount))}</span>
+                  <span className="block text-xs text-slate-400">{currency.format(c.annualAmount)} / an</span>
+                </span>
                 <button
                   onClick={() => handleToggleActive(c.id, !c.active)}
                   className="text-xs text-slate-500 underline"

@@ -327,6 +327,23 @@ certaine, contraire au garde-fou 78). Fonction pure testée
 (`computeDecisionRealCost`), vérifiée avec l'exemple exact de la spec
 (280 + 70 + 140 + 50 = 540 €/mois).
 
+### o. Annualisation des échéances récurrentes (section 13) — comblé par Lot 27
+
+La spec donne l'exemple explicite « 14,99 €/mois → 179,88 €/an » pour les
+dépenses récurrentes ; `RecurringCharge` (échéances, section 34) exposait
+uniquement le montant mensuel. `GET /api/recurring-charges` calcule
+désormais `annualAmount` par échéance (`amount * 12`, arrondi aux
+centimes) ainsi que `totalMonthlyActive`/`totalAnnualActive` sur les
+échéances actives uniquement (une échéance suspendue ne doit pas gonfler
+un total qui prétend refléter l'engagement réel du foyer). Calcul
+identique en esprit à celui déjà utilisé pour les abonnements
+(`subscriptions.ts`, `savingsOpportunities.ts`) — pas de nouvelle
+définition concurrente de « équivalent annuel ». Frontend (Échéances) :
+montant annuel affiché sous chaque échéance, total en tête de section.
+Pas de fonction pure dédiée (multiplication directe, déjà le précédent
+établi pour ce type de calcul trivial ailleurs dans le code) mais vérifié
+bout en bout par API avec l'exemple exact de la spec.
+
 ## 3. Vérification du garde-fou « jamais compter un transfert deux fois »
 
 Vérifié dans `apps/api/src/routes/transfers.ts` et le schéma : un virement

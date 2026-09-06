@@ -14,6 +14,7 @@ function serializeCharge(charge: RecurringCharge, bankAccountName: string) {
     id: charge.id,
     label: charge.label,
     amount: charge.amount.toString(),
+    annualAmount: Math.round(Number(charge.amount) * 12 * 100) / 100,
     dayOfMonth: charge.dayOfMonth,
     active: charge.active,
     bankAccountId: charge.bankAccountId,
@@ -69,6 +70,9 @@ recurringChargesRouter.get("/", async (req, res) => {
     };
   });
 
+  const activeCharges = charges.filter((c) => c.active);
+  const totalMonthlyActive = activeCharges.reduce((sum, c) => sum + Number(c.amount), 0);
+
   res.json({
     charges: charges.map((c) => serializeCharge(c, accountNameById.get(c.bankAccountId) ?? "")),
     accounts: accountsProjection,
@@ -77,6 +81,8 @@ recurringChargesRouter.get("/", async (req, res) => {
       poste: s.merchantLabel,
       amount: Number(s.amount),
     })),
+    totalMonthlyActive: Math.round(totalMonthlyActive * 100) / 100,
+    totalAnnualActive: Math.round(totalMonthlyActive * 12 * 100) / 100,
   });
 });
 

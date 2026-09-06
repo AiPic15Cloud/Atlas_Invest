@@ -390,6 +390,7 @@ export interface RecurringCharge {
   id: string;
   label: string;
   amount: string;
+  annualAmount: number;
   dayOfMonth: number;
   active: boolean;
   bankAccountId: string;
@@ -416,6 +417,8 @@ export interface RecurringChargesResponse {
   charges: RecurringCharge[];
   accounts: RecurringChargeAccountProjection[];
   subscriptionsWithoutDate: { id: string; poste: string; amount: number }[];
+  totalMonthlyActive: number;
+  totalAnnualActive: number;
 }
 
 export interface AnticipatedExpense {
