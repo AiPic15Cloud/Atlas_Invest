@@ -4,6 +4,7 @@ import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
 import { listAccessibleAccounts } from "../utils/accountAccess.js";
 import { BUDGET_METHODS, computeBudgetBreakdown, type BudgetMethodKey } from "../constants/budgetMethods.js";
+import { computeAnnualTotals, computeMonthlyAverages } from "../utils/annualSummary.js";
 
 export const dashboardRouter = Router();
 
@@ -60,8 +61,8 @@ dashboardRouter.get("/", async (req, res) => {
     m.reste = m.income - m.expense;
   }
 
-  const totalIncome = monthly.reduce((sum, m) => sum + m.income, 0);
-  const totalExpenses = monthly.reduce((sum, m) => sum + m.expense, 0);
+  const annualTotals = computeAnnualTotals(monthly);
+  const monthlyAverages = computeMonthlyAverages(annualTotals, windowMonths.length);
 
   // "Argent réellement disponible" : le solde en banque n'est pas l'argent
   // disponible tant que des échéances connues et des dépenses essentielles
@@ -117,15 +118,8 @@ dashboardRouter.get("/", async (req, res) => {
   res.json({
     year,
     fiscalYearStartMonth,
-    totals: {
-      income: totalIncome,
-      expenses: totalExpenses,
-      reste: totalIncome - totalExpenses,
-    },
-    averages: {
-      incomePerMonth: totalIncome / 12,
-      expensePerMonth: totalExpenses / 12,
-    },
+    totals: annualTotals,
+    averages: monthlyAverages,
     monthly,
     availableMoney,
     budgetTemplate: template
