@@ -65,6 +65,10 @@ model MonthlyChallenge {
   month              Int
   targetAmount       Decimal  @db.Decimal(12, 2)
   stretchGoalAmount  Decimal? @db.Decimal(12, 2)
+  // Recompense controlee (section 57) : part du depassement de l'objectif
+  // qui devient "budget plaisir" plutot que de l'epargne supplementaire.
+  // Null = fonctionnalite non activee par le foyer.
+  rewardPercent      Decimal? @db.Decimal(5, 2)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 

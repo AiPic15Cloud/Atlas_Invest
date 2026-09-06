@@ -5,6 +5,7 @@ import { requireAuth } from "../middleware/auth.js";
 import { listAccessibleAccounts } from "../utils/accountAccess.js";
 import { sumByCategory } from "../utils/expenseCategoryTotals.js";
 import { computeChallengeProgress } from "../utils/monthlyChallenge.js";
+import { computeControlledReward } from "../utils/controlledReward.js";
 import type { MonthlyChallenge } from "@prisma/client";
 
 export const monthlyChallengeRouter = Router();
@@ -18,6 +19,7 @@ function serializeChallenge(challenge: MonthlyChallenge) {
     month: challenge.month,
     targetAmount: Number(challenge.targetAmount),
     stretchGoalAmount: challenge.stretchGoalAmount !== null ? Number(challenge.stretchGoalAmount) : null,
+    rewardPercent: challenge.rewardPercent !== null ? Number(challenge.rewardPercent) : null,
     createdAt: challenge.createdAt,
   };
 }
@@ -39,7 +41,7 @@ monthlyChallengeRouter.get("/", async (req, res) => {
   }
   const user = await prisma.user.findUniqueOrThrow({ where: { id: req.userId! } });
   if (!user.householdId) {
-    res.json({ challenge: null, saved: 0, remaining: 0, achieved: false, stretchReached: false });
+    res.json({ challenge: null, saved: 0, remaining: 0, achieved: false, stretchReached: false, reward: null });
     return;
   }
 
@@ -66,7 +68,7 @@ monthlyChallengeRouter.get("/", async (req, res) => {
   ).EPARGNE;
 
   if (!challenge) {
-    res.json({ challenge: null, saved, remaining: 0, achieved: false, stretchReached: false });
+    res.json({ challenge: null, saved, remaining: 0, achieved: false, stretchReached: false, reward: null });
     return;
   }
 
@@ -76,7 +78,12 @@ monthlyChallengeRouter.get("/", async (req, res) => {
     saved,
   );
 
-  res.json({ challenge: serializeChallenge(challenge), ...progress });
+  const reward =
+    challenge.rewardPercent !== null
+      ? computeControlledReward(Number(challenge.targetAmount), saved, Number(challenge.rewardPercent))
+      : null;
+
+  res.json({ challenge: serializeChallenge(challenge), ...progress, reward });
 });
 
 const upsertSchema = z.object({
@@ -84,6 +91,7 @@ const upsertSchema = z.object({
   month: z.number().int().min(1).max(12),
   targetAmount: z.number().finite().positive(),
   stretchGoalAmount: z.number().finite().positive().nullable().optional(),
+  rewardPercent: z.number().finite().min(0).max(100).nullable().optional(),
 });
 
 // Un seul defi par foyer et par mois : poser un nouveau montant pour un mois
@@ -114,10 +122,12 @@ monthlyChallengeRouter.post("/", async (req, res) => {
       month: parsed.data.month,
       targetAmount: parsed.data.targetAmount,
       stretchGoalAmount: parsed.data.stretchGoalAmount ?? null,
+      rewardPercent: parsed.data.rewardPercent ?? null,
     },
     update: {
       targetAmount: parsed.data.targetAmount,
       stretchGoalAmount: parsed.data.stretchGoalAmount ?? null,
+      rewardPercent: parsed.data.rewardPercent ?? null,
     },
   });
 

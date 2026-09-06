@@ -225,11 +225,28 @@ n'est pas un flux réel, seulement une trace de décision, donc aucun risque
 de double compter une même somme dans le calcul de l'épargne réelle
 (records du Lot 19, Tableau de bord).
 
-Reste manquant en Phase 5 : niveaux financiers (section 58, explicitement
-« phase ultérieure » dans la spec), sweep hebdomadaire et défis
-hebdomadaires (sections 55-56) — non traités, plus proches d'une
-automatisation bancaire réelle (prélèvement automatique) que du reste de
-cette maquette pédagogique.
+Le Lot 33 ajoute `MonthlyChallenge.rewardPercent` (section 57, «
+récompense contrôlée ») : quand l'épargne réelle dépasse la cible du défi
+mensuel, un pourcentage configurable du dépassement (`null` = fonctionnalité
+non activée) devient un « budget plaisir », le reste une épargne
+supplémentaire — les deux parts calculées pour sommer exactement au
+dépassement même en cas d'arrondi (`computeControlledReward`, testée avec
+l'exemple exact de la spec : 600 → 800, 10 % → 20 € plaisir / 180 €
+épargne).
+
+Reste manquant en Phase 5, et bloqué par une limite structurelle du modèle
+de données plutôt que par un choix de scope : le sweep hebdomadaire et les
+défis hebdomadaires (sections 55-56) nécessitent de savoir dans quelle
+semaine calendaire une dépense est survenue, or `Expense` ne stocke qu'une
+année et un mois (`year`/`month`), jamais un jour précis — cohérent avec
+« Mon mois » qui est volontairement une saisie mensuelle, pas un relevé
+transaction par transaction daté. Tenter un découpage hebdomadaire sans
+cette donnée obligerait à deviner la semaine de chaque dépense, exactement
+le type de fausse précision que la doctrine interdit (section 78). Ajouter
+une date précise à `Expense` est un changement structurel qui mérite son
+propre lot, pas un raccommodage au passage. Niveaux financiers (section
+58) restent également non traités, explicitement « phase ultérieure »
+dans la spec elle-même.
 
 ### j. Nature des flux — revenus comblés par Lot 15, sorties/transferts déjà couverts (section 9)
 

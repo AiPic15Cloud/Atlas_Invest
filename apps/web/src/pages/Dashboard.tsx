@@ -590,6 +590,7 @@ function MonthlyChallengeSection({ year, month }: { year: number; month: number 
   const [editing, setEditing] = useState(false);
   const [targetAmount, setTargetAmount] = useState("");
   const [stretchGoalAmount, setStretchGoalAmount] = useState("");
+  const [rewardPercent, setRewardPercent] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   async function load() {
@@ -611,6 +612,7 @@ function MonthlyChallengeSection({ year, month }: { year: number; month: number 
     const parsedTarget = Number(targetAmount.replace(",", "."));
     if (!Number.isFinite(parsedTarget) || parsedTarget <= 0) return;
     const parsedStretch = stretchGoalAmount ? Number(stretchGoalAmount.replace(",", ".")) : null;
+    const parsedReward = rewardPercent ? Number(rewardPercent.replace(",", ".")) : null;
     setSubmitting(true);
     setError(null);
     try {
@@ -621,10 +623,12 @@ function MonthlyChallengeSection({ year, month }: { year: number; month: number 
           month,
           targetAmount: parsedTarget,
           stretchGoalAmount: parsedStretch && parsedStretch > 0 ? parsedStretch : null,
+          rewardPercent: parsedReward !== null && parsedReward >= 0 ? parsedReward : null,
         }),
       });
       setTargetAmount("");
       setStretchGoalAmount("");
+      setRewardPercent("");
       await load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
@@ -666,10 +670,20 @@ function MonthlyChallengeSection({ year, month }: { year: number; month: number 
               {data.stretchReached ? " — atteint !" : ""}
             </p>
           )}
+          {data.reward && (
+            <p className="mt-2 text-sm text-[#8a7358]">
+              Dépassement de {currency.format(data.reward.overshoot)} →{" "}
+              <span className="font-semibold text-[#2b1d14] dark:text-[#f3e9dc]">
+                {currency.format(data.reward.funBudget)} plaisir
+              </span>
+              , {currency.format(data.reward.extraSavings)} épargne supplémentaire
+            </p>
+          )}
           <button
             onClick={() => {
               setTargetAmount(String(data.challenge!.targetAmount));
               setStretchGoalAmount(data.challenge!.stretchGoalAmount !== null ? String(data.challenge!.stretchGoalAmount) : "");
+              setRewardPercent(data.challenge!.rewardPercent !== null ? String(data.challenge!.rewardPercent) : "");
               setEditing(true);
             }}
             className="mt-3 text-xs text-[#a8927a] underline"
@@ -700,7 +714,18 @@ function MonthlyChallengeSection({ year, month }: { year: number; month: number 
               value={stretchGoalAmount}
               onChange={(e) => setStretchGoalAmount(e.target.value)}
             />
+            <input
+              className="input"
+              placeholder="% récompense plaisir (optionnel)"
+              inputMode="decimal"
+              value={rewardPercent}
+              onChange={(e) => setRewardPercent(e.target.value)}
+            />
           </div>
+          <p className="mt-1 text-xs text-[#a8927a]">
+            Si renseigné, une part du dépassement de la cible devient budget plaisir plutôt que de l'épargne
+            supplémentaire.
+          </p>
           <div className="mt-2 flex gap-2">
             <button onClick={handleSave} disabled={submitting} className="btn btn-primary btn-sm">
               {submitting ? "..." : "Valider"}

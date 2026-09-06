@@ -676,7 +676,14 @@ export interface MonthlyChallenge {
   month: number;
   targetAmount: number;
   stretchGoalAmount: number | null;
+  rewardPercent: number | null;
   createdAt: string;
+}
+
+export interface ControlledReward {
+  overshoot: number;
+  funBudget: number;
+  extraSavings: number;
 }
 
 export interface MonthlyChallengeResponse {
@@ -685,6 +692,7 @@ export interface MonthlyChallengeResponse {
   remaining: number;
   achieved: boolean;
   stretchReached: boolean;
+  reward: ControlledReward | null;
 }
 
 export type SavedEuroAllocation = "OBJECTIF" | "SECURITE" | "INVESTISSEMENT" | "DISPONIBLE";
