@@ -146,19 +146,29 @@ explicitement en base l'usage de ce champ décrit en section 4 ci-dessous.
 `FinancingScore` n'ont aucun équivalent actuel. Attendu — c'est la Phase 8,
 loin dans l'ordre recommandé (section 76).
 
-### i. Gamification (Phase 5) : défi mensuel comblé par Lot 18, reste à faire
+### i. Gamification (Phase 5) : défi mensuel, streak et records comblés par Lots 18-19
 
-`SavedEuroEvent`, streaks, records n'ont toujours aucun équivalent —
-attendu, Phase 5 à peine entamée. Le Lot 18 ajoute `MonthlyChallenge`
-(section 51) : une cible d'épargne par foyer et par mois, avec un stretch
-goal optionnel obligatoirement supérieur à la cible. Contrairement à
-`MonthlyGoal` (« Nos victoires », checklist libre cochée manuellement),
-l'avancement n'est jamais saisi ni stocké : il est recalculé à chaque
-lecture à partir de l'épargne réellement enregistrée (même somme
-catégorie `EPARGNE` que « argent construit » au Tableau de bord), pour ne
-jamais diverger de ce chiffre affiché ailleurs. Un seul défi actif par
-mois — reposer une cible remplace l'ancienne plutôt que d'en empiler une
-concurrente.
+`SavedEuroEvent` (section 54, « euros sauvés ») n'a toujours aucun
+équivalent. Le Lot 18 ajoute `MonthlyChallenge` (section 51) : une cible
+d'épargne par foyer et par mois, avec un stretch goal optionnel
+obligatoirement supérieur à la cible. Contrairement à `MonthlyGoal`
+(« Nos victoires », checklist libre cochée manuellement), l'avancement
+n'est jamais saisi ni stocké : il est recalculé à chaque lecture à partir
+de l'épargne réellement enregistrée (même somme catégorie `EPARGNE` que
+« argent construit » au Tableau de bord), pour ne jamais diverger de ce
+chiffre affiché ailleurs. Un seul défi actif par mois — reposer une cible
+remplace l'ancienne plutôt que d'en empiler une concurrente.
+
+Le Lot 19 ajoute la série de mois consécutifs avec épargne et les records
+personnels (sections 52-53) — sans aucune nouvelle table : `GET
+/api/records` reconstruit tout l'historique mensuel (revenu, épargne,
+dépenses regrettées) depuis `Income`/`Expense` existants et calcule, à
+chaque lecture, la série en cours, le record de série, le meilleur mois
+d'épargne, le meilleur taux d'épargne et le meilleur mois de dépenses
+regrettées (fonctions pures `computeSavingsStreak`/`computePersonalRecords`,
+testées). Aucune mécanique punitive : un mois sans épargne interrompt
+silencieusement la série en cours sans effacer le record déjà atteint, et
+« même une petite épargne » (tout montant > 0) suffit à la maintenir.
 
 ### j. Nature des flux — revenus comblés par Lot 15, sorties/transferts déjà couverts (section 9)
 

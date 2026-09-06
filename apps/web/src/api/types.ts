@@ -626,6 +626,14 @@ export interface MonthlyChallengeResponse {
   stretchReached: boolean;
 }
 
+export interface RecordsResponse {
+  currentStreak: number;
+  bestStreak: number;
+  bestEpargneMonth: { year: number; month: number; amount: number } | null;
+  bestSavingsRateMonth: { year: number; month: number; rate: number } | null;
+  bestRegretMonth: { year: number; month: number; amount: number } | null;
+}
+
 export interface EmergencyFundCriterionBreakdown {
   key: string;
   question: string;

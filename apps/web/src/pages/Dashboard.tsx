@@ -26,6 +26,7 @@ import type {
   MonthlyChallengeResponse,
   MonthlyGoal,
   MonthlyGoalsResponse,
+  RecordsResponse,
 } from "../api/types";
 
 const CATEGORY_BAR_COLOR: Record<BudgetCategory, string> = {
@@ -350,12 +351,87 @@ export function Dashboard() {
       </div>
 
       <MonthlyChallengeSection year={selected.year} month={selected.month} />
+      <RecordsSection />
       <MonthlyGoalsSection year={selected.year} month={selected.month} />
     </div>
   );
 }
 
 const MONTH_NAME = new Intl.DateTimeFormat("fr-FR", { month: "long" });
+const MONTH_YEAR_NAME = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" });
+
+function RecordsSection() {
+  const currency = useCurrencyFormatter();
+  const [data, setData] = useState<RecordsResponse | null>(null);
+
+  useEffect(() => {
+    apiFetch<RecordsResponse>("/api/records")
+      .then(setData)
+      .catch(() => setData(null));
+  }, []);
+
+  if (!data) return null;
+  const hasAnyRecord = data.bestEpargneMonth || data.bestSavingsRateMonth || data.bestRegretMonth || data.bestStreak > 0;
+  if (!hasAnyRecord) return null;
+
+  return (
+    <section className="card">
+      <h2 className="font-semibold flex items-center gap-2">
+        <IconTrendingUp className="h-5 w-5 text-copper-600" />
+        Série et records
+      </h2>
+      <p className="mt-1 text-sm text-[#8a7358]">
+        Le foyer joue contre son propre historique, pas contre quelqu'un d'autre.
+      </p>
+
+      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="rounded-lg bg-[#f6efe1] p-3 dark:bg-[#3a2a1c]">
+          <p className="text-xs text-[#a8927a]">Série en cours</p>
+          <p className="text-lg font-semibold text-[#2b1d14] dark:text-[#f3e9dc]">
+            {data.currentStreak} mois consécutif{data.currentStreak > 1 ? "s" : ""} avec épargne
+          </p>
+          <p className="text-xs text-[#a8927a]">Record : {data.bestStreak} mois</p>
+        </div>
+
+        {data.bestEpargneMonth && (
+          <div className="rounded-lg bg-[#f6efe1] p-3 dark:bg-[#3a2a1c]">
+            <p className="text-xs text-[#a8927a]">Record d'épargne</p>
+            <p className="text-lg font-semibold text-[#2b1d14] dark:text-[#f3e9dc]">
+              {currency.format(data.bestEpargneMonth.amount)}
+            </p>
+            <p className="text-xs text-[#a8927a] capitalize">
+              {MONTH_YEAR_NAME.format(new Date(data.bestEpargneMonth.year, data.bestEpargneMonth.month - 1, 1))}
+            </p>
+          </div>
+        )}
+
+        {data.bestSavingsRateMonth && (
+          <div className="rounded-lg bg-[#f6efe1] p-3 dark:bg-[#3a2a1c]">
+            <p className="text-xs text-[#a8927a]">Meilleur taux d'épargne</p>
+            <p className="text-lg font-semibold text-[#2b1d14] dark:text-[#f3e9dc]">
+              {Math.round(data.bestSavingsRateMonth.rate * 100)} %
+            </p>
+            <p className="text-xs text-[#a8927a] capitalize">
+              {MONTH_YEAR_NAME.format(new Date(data.bestSavingsRateMonth.year, data.bestSavingsRateMonth.month - 1, 1))}
+            </p>
+          </div>
+        )}
+
+        {data.bestRegretMonth && (
+          <div className="rounded-lg bg-[#f6efe1] p-3 dark:bg-[#3a2a1c]">
+            <p className="text-xs text-[#a8927a]">Meilleur mois de dépenses regrettées</p>
+            <p className="text-lg font-semibold text-[#2b1d14] dark:text-[#f3e9dc]">
+              {currency.format(data.bestRegretMonth.amount)}
+            </p>
+            <p className="text-xs text-[#a8927a] capitalize">
+              {MONTH_YEAR_NAME.format(new Date(data.bestRegretMonth.year, data.bestRegretMonth.month - 1, 1))}
+            </p>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
 
 function MonthlyChallengeSection({ year, month }: { year: number; month: number }) {
   const currency = useCurrencyFormatter();
