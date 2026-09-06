@@ -514,6 +514,17 @@ export interface SavingsGoalsResponse {
   goals: SavingsGoal[];
 }
 
+export interface SurplusAllocationLine {
+  goalId: string;
+  goalName: string;
+  amount: number;
+}
+
+export interface SurplusAllocationResponse {
+  allocations: SurplusAllocationLine[];
+  leftover: number;
+}
+
 export type HouseholdSplitMode =
   | "PRORATA_REVENUS"
   | "PARTS_EGALES"

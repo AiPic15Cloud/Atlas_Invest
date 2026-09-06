@@ -67,15 +67,29 @@ calcul de « performance des placements séparée des flux apportés »
 (section 31), qui demanderait de distinguer les valorisations des apports
 (virements/versements) — non traité dans ce lot.
 
-### d. Objectifs : contributions et priorité — comblé partiellement par Lot 8 (section 19-20)
+### d. Objectifs : contributions et priorité — comblé partiellement par Lots 8 et 16 (section 19-21)
 
 `GoalContribution` (ajouté au Lot 8) historise chaque contribution
 (montant, date, utilisateur) plutôt que de ne garder que le total agrégé
 `SavingsGoal.currentAmount` ; le rythme réellement observé est recalculé
 depuis cet historique et comparé à `monthlyContribution` (rythme prévu).
 `SavingsGoal.priority` (entier, null = non classé) permet de classer les
-objectifs (section 20), avec réorganisation depuis le frontend. Reste
-manquant : la distinction `individuel`/`commun` par objectif.
+objectifs (section 20), avec réorganisation depuis le frontend.
+
+Le Lot 16 ajoute `GET /api/savings-goals/surplus-allocation?available=X`,
+qui propose une répartition d'un surplus disponible entre les objectifs
+non atteints, dans l'ordre de priorité déclaré : chaque objectif reçoit au
+plus sa `monthlyContribution` prévue (ou tout son `remaining` si aucune
+mensualité n'est définie), le reliquat est reporté sur le suivant, et ce
+qui n'a pas pu être affecté est renvoyé comme `leftover` plutôt que
+silencieusement ignoré. C'est une fonction pure (`computeSurplusAllocation`,
+`apps/api/src/utils/surplusAllocation.ts`), aucune écriture n'est faite :
+conformément à la section 21 (« Atlas propose la décision ; il n'a pas
+besoin d'exécuter automatiquement un virement bancaire »), le frontend
+(page Objectifs) l'affiche comme une simple suggestion — l'utilisateur
+reste libre de contribuer manuellement, ou pas.
+
+Reste manquant : la distinction `individuel`/`commun` par objectif.
 
 ### e. Enveloppes virtuelles génériques — comblé par Lot 11 (section 18)
 

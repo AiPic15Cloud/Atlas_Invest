@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import { IconFlag } from "../components/icons";
-import type { SavingsGoal, SavingsGoalsResponse } from "../api/types";
+import type { DashboardResponse, SavingsGoal, SavingsGoalsResponse, SurplusAllocationResponse } from "../api/types";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" });
 
@@ -28,6 +28,11 @@ export function Objectifs() {
 
   const [contributionInputs, setContributionInputs] = useState<Record<string, string>>({});
 
+  const [availableInput, setAvailableInput] = useState("");
+  const [surplus, setSurplus] = useState<SurplusAllocationResponse | null>(null);
+  const [surplusError, setSurplusError] = useState<string | null>(null);
+  const [surplusLoading, setSurplusLoading] = useState(false);
+
   async function load() {
     try {
       const res = await apiFetch<SavingsGoalsResponse>("/api/savings-goals");
@@ -39,7 +44,33 @@ export function Objectifs() {
 
   useEffect(() => {
     load();
+    // Pré-remplit avec l'argent réellement disponible du mois (voir Accueil),
+    // que l'utilisateur peut ensuite ajuster avant de voir la proposition.
+    apiFetch<DashboardResponse>(`/api/dashboard?year=${new Date().getFullYear()}`)
+      .then((res) => {
+        if (res.availableMoney.amount > 0) {
+          setAvailableInput(String(Math.round(res.availableMoney.amount * 100) / 100));
+        }
+      })
+      .catch(() => {});
   }, []);
+
+  async function handleComputeSurplus() {
+    const amount = Number(availableInput.replace(",", "."));
+    if (!Number.isFinite(amount)) return;
+    setSurplusLoading(true);
+    setSurplusError(null);
+    try {
+      const res = await apiFetch<SurplusAllocationResponse>(
+        `/api/savings-goals/surplus-allocation?available=${amount}`,
+      );
+      setSurplus(res);
+    } catch (err) {
+      setSurplusError(err instanceof ApiError ? err.message : "Impossible de calculer la proposition.");
+    } finally {
+      setSurplusLoading(false);
+    }
+  }
 
   async function handleAdd() {
     const parsedTarget = Number(targetAmount.replace(",", "."));
@@ -180,6 +211,50 @@ export function Objectifs() {
           {submitting ? "..." : "Créer l'objectif"}
         </button>
       </section>
+
+      {goals.length > 0 && goals.some((g) => !g.achieved) && (
+        <section className="card">
+          <h2 className="font-semibold">Que faire du surplus ce mois-ci ?</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Indique l'argent disponible à répartir : Atlas propose une répartition entre tes objectifs selon leur
+            ordre de priorité — c'est une suggestion, aucun virement n'est effectué automatiquement.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <input
+              className="w-40 input"
+              placeholder="Montant disponible"
+              inputMode="decimal"
+              value={availableInput}
+              onChange={(e) => setAvailableInput(e.target.value)}
+            />
+            <button onClick={handleComputeSurplus} disabled={surplusLoading} className="btn btn-secondary">
+              {surplusLoading ? "..." : "Voir la proposition"}
+            </button>
+          </div>
+          {surplusError && <p className="mt-2 text-sm text-red-600">{surplusError}</p>}
+          {surplus && (
+            <div className="mt-3 space-y-1">
+              {surplus.allocations.length === 0 ? (
+                <p className="text-sm text-slate-500">Aucune affectation possible avec ce montant.</p>
+              ) : (
+                <ul className="text-sm">
+                  {surplus.allocations.map((line) => (
+                    <li key={line.goalId} className="flex justify-between border-b border-slate-100 py-1 dark:border-slate-800">
+                      <span>{line.goalName}</span>
+                      <span className="font-medium">{currency.format(line.amount)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {surplus.leftover > 0 && (
+                <p className="mt-1 text-xs text-slate-500">
+                  Reste non affecté (tous les objectifs sont couverts) : {currency.format(surplus.leftover)}
+                </p>
+              )}
+            </div>
+          )}
+        </section>
+      )}
 
       {goals.length === 0 ? (
         <p className="text-sm text-slate-500">Aucun objectif pour l'instant.</p>

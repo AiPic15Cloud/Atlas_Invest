@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
 import { computeObservedMonthlyPace } from "../utils/goalPace.js";
+import { computeSurplusAllocation } from "../utils/surplusAllocation.js";
 import type { GoalContribution, SavingsGoal } from "@prisma/client";
 
 export const savingsGoalsRouter = Router();
@@ -204,4 +205,39 @@ savingsGoalsRouter.delete("/:id", async (req, res) => {
   }
   await prisma.savingsGoal.delete({ where: { id: result.goal.id } });
   res.status(204).send();
+});
+
+const surplusQuerySchema = z.object({
+  available: z.coerce.number().finite(),
+});
+
+// Propose une repartition du surplus disponible entre les objectifs non
+// atteints, dans l'ordre de priorite declare (section 20-21) — une
+// suggestion affichee, jamais un virement execute automatiquement.
+savingsGoalsRouter.get("/surplus-allocation", async (req, res) => {
+  const parsed = surplusQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Montant disponible invalide." });
+    return;
+  }
+
+  const goals = await prisma.savingsGoal.findMany({
+    where: { userId: req.userId!, achieved: false },
+    orderBy: [{ priority: { sort: "asc", nulls: "last" } }, { createdAt: "asc" }],
+  });
+
+  const result = computeSurplusAllocation(
+    parsed.data.available,
+    goals.map((g) => ({
+      id: g.id,
+      remaining: Math.max(Number(g.targetAmount) - Number(g.currentAmount), 0),
+      monthlyContribution: g.monthlyContribution !== null ? Number(g.monthlyContribution) : null,
+    })),
+  );
+
+  const goalById = new Map(goals.map((g) => [g.id, g]));
+  res.json({
+    allocations: result.allocations.map((a) => ({ goalId: a.goalId, goalName: goalById.get(a.goalId)!.name, amount: a.amount })),
+    leftover: result.leftover,
+  });
 });
