@@ -447,7 +447,29 @@ model Loan {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
 
+  payments LoanPayment[]
+
   @@index([userId])
+}
+
+// Mensualite enregistree pour un pret (spec section 34) : seule la part
+// capital reduit Loan.remainingBalance et compte comme dette remboursee
+// (construction de patrimoine) — interets et assurance sont consommes,
+// pas rembourses. Avant ce modele, l'ancien endpoint record-payment
+// traitait a tort la mensualite entiere comme du capital.
+model LoanPayment {
+  id               String   @id @default(cuid())
+  date             DateTime
+  totalAmount      Decimal  @db.Decimal(12, 2)
+  principalAmount  Decimal  @db.Decimal(12, 2)
+  interestAmount   Decimal  @default(0) @db.Decimal(12, 2)
+  insuranceAmount  Decimal  @default(0) @db.Decimal(12, 2)
+  createdAt        DateTime @default(now())
+
+  loan   Loan   @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  loanId String
+
+  @@index([loanId, date])
 }
 
 model WealthItem {

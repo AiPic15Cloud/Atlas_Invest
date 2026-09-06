@@ -26,7 +26,8 @@ export function Patrimoine() {
   const [loanInterestRate, setLoanInterestRate] = useState("");
   const [loanStartDate, setLoanStartDate] = useState("");
   const [loanSubmitting, setLoanSubmitting] = useState(false);
-  const [paymentInputs, setPaymentInputs] = useState<Record<string, string>>({});
+  const [paymentTotalInputs, setPaymentTotalInputs] = useState<Record<string, string>>({});
+  const [paymentInterestInputs, setPaymentInterestInputs] = useState<Record<string, string>>({});
 
   async function load() {
     try {
@@ -119,12 +120,17 @@ export function Patrimoine() {
   }
 
   async function handleRecordPayment(id: string) {
-    const raw = paymentInputs[id];
-    const amountPaid = Number((raw ?? "").replace(",", "."));
-    if (!Number.isFinite(amountPaid) || amountPaid <= 0) return;
+    const totalAmount = Number((paymentTotalInputs[id] ?? "").replace(",", "."));
+    const interestPlusInsurance = Number((paymentInterestInputs[id] ?? "0").replace(",", ".") || "0");
+    if (!Number.isFinite(totalAmount) || totalAmount <= 0) return;
+    if (!Number.isFinite(interestPlusInsurance) || interestPlusInsurance < 0) return;
     try {
-      await apiFetch(`/api/loans/${id}/record-payment`, { method: "POST", body: JSON.stringify({ amount: amountPaid }) });
-      setPaymentInputs((prev) => ({ ...prev, [id]: "" }));
+      await apiFetch(`/api/loans/${id}/payments`, {
+        method: "POST",
+        body: JSON.stringify({ totalAmount, interestAmount: interestPlusInsurance, insuranceAmount: 0 }),
+      });
+      setPaymentTotalInputs((prev) => ({ ...prev, [id]: "" }));
+      setPaymentInterestInputs((prev) => ({ ...prev, [id]: "" }));
       await loadLoans();
       await load();
     } catch (err) {
@@ -351,17 +357,38 @@ export function Patrimoine() {
                 </p>
 
                 {!loan.paidOff && (
-                  <div className="mt-3 flex items-center gap-2">
-                    <input
-                      className="w-40 input"
-                      placeholder="Remboursement (€)"
-                      inputMode="decimal"
-                      value={paymentInputs[loan.id] ?? ""}
-                      onChange={(e) => setPaymentInputs((prev) => ({ ...prev, [loan.id]: e.target.value }))}
-                    />
-                    <button onClick={() => handleRecordPayment(loan.id)} className="btn btn-secondary">
-                      Enregistrer un remboursement
-                    </button>
+                  <div className="mt-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input
+                        className="w-40 input"
+                        placeholder="Mensualité totale (€)"
+                        inputMode="decimal"
+                        value={paymentTotalInputs[loan.id] ?? ""}
+                        onChange={(e) => setPaymentTotalInputs((prev) => ({ ...prev, [loan.id]: e.target.value }))}
+                      />
+                      <input
+                        className="w-48 input"
+                        placeholder="dont intérêts + assurance (€)"
+                        inputMode="decimal"
+                        value={paymentInterestInputs[loan.id] ?? ""}
+                        onChange={(e) => setPaymentInterestInputs((prev) => ({ ...prev, [loan.id]: e.target.value }))}
+                      />
+                      <button onClick={() => handleRecordPayment(loan.id)} className="btn btn-secondary">
+                        Enregistrer la mensualité
+                      </button>
+                    </div>
+                    {(() => {
+                      const total = Number((paymentTotalInputs[loan.id] ?? "").replace(",", "."));
+                      const interest = Number((paymentInterestInputs[loan.id] ?? "0").replace(",", ".") || "0");
+                      if (!Number.isFinite(total) || total <= 0) return null;
+                      const principal = total - (Number.isFinite(interest) ? interest : 0);
+                      return (
+                        <p className="mt-1 text-xs text-slate-500">
+                          → {currency.format(Math.max(principal, 0))} de capital remboursé
+                          {interest > 0 && <> · {currency.format(interest)} consommés (intérêts/assurance)</>}
+                        </p>
+                      );
+                    })()}
                   </div>
                 )}
               </div>

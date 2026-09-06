@@ -2,7 +2,8 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
-import type { Loan } from "@prisma/client";
+import { applyLoanPayment, loanPaymentSplitIsValid } from "../utils/loanPayment.js";
+import type { Loan, LoanPayment } from "@prisma/client";
 
 export const loansRouter = Router();
 
@@ -129,24 +130,80 @@ loansRouter.patch("/:id", async (req, res) => {
   res.json({ loan: serializeLoan(loan) });
 });
 
-const paymentSchema = z.object({ amount: z.number().finite().positive() });
+function serializeLoanPayment(payment: LoanPayment) {
+  return {
+    id: payment.id,
+    date: payment.date,
+    totalAmount: Number(payment.totalAmount),
+    principalAmount: Number(payment.principalAmount),
+    interestAmount: Number(payment.interestAmount),
+    insuranceAmount: Number(payment.insuranceAmount),
+    createdAt: payment.createdAt,
+  };
+}
 
-loansRouter.post("/:id/record-payment", async (req, res) => {
+loansRouter.get("/:id/payments", async (req, res) => {
   const result = await loadOwnLoan(req.userId!, req.params.id);
   if ("error" in result) {
     res.status(404).json({ error: "Prêt introuvable." });
     return;
   }
-  const parsed = paymentSchema.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: "Montant invalide." });
+  const payments = await prisma.loanPayment.findMany({
+    where: { loanId: result.loan.id },
+    orderBy: { date: "desc" },
+  });
+  res.json({ payments: payments.map(serializeLoanPayment) });
+});
+
+const recordPaymentSchema = z.object({
+  date: z.string().datetime().optional(),
+  totalAmount: z.number().finite().positive(),
+  interestAmount: z.number().finite().min(0).default(0),
+  insuranceAmount: z.number().finite().min(0).default(0),
+});
+
+// Enregistre une mensualite en ventilant capital / interets / assurance
+// (spec section 34) : seul le capital rembourse la dette, interets et
+// assurance sont consommes. Remplace l'ancien /record-payment qui
+// traitait a tort la mensualite entiere comme du capital rembourse.
+loansRouter.post("/:id/payments", async (req, res) => {
+  const result = await loadOwnLoan(req.userId!, req.params.id);
+  if ("error" in result) {
+    res.status(404).json({ error: "Prêt introuvable." });
     return;
   }
-  const newRemaining = Math.max(Number(result.loan.remainingBalance) - parsed.data.amount, 0);
-  const loan = await prisma.loan.update({
-    where: { id: result.loan.id },
-    data: { remainingBalance: newRemaining, paidOff: newRemaining <= 0 },
-  });
+  const parsed = recordPaymentSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Données invalides." });
+    return;
+  }
+  const { totalAmount, interestAmount, insuranceAmount } = parsed.data;
+  const principalAmount = totalAmount - interestAmount - insuranceAmount;
+
+  if (!loanPaymentSplitIsValid({ totalAmount, principalAmount, interestAmount, insuranceAmount })) {
+    res.status(400).json({ error: "Les intérêts et l'assurance ne peuvent pas dépasser le montant total de la mensualité." });
+    return;
+  }
+
+  const newRemaining = applyLoanPayment(Number(result.loan.remainingBalance), principalAmount);
+
+  const [loan] = await prisma.$transaction([
+    prisma.loan.update({
+      where: { id: result.loan.id },
+      data: { remainingBalance: newRemaining, paidOff: newRemaining <= 0 },
+    }),
+    prisma.loanPayment.create({
+      data: {
+        loanId: result.loan.id,
+        date: parsed.data.date ? new Date(parsed.data.date) : new Date(),
+        totalAmount,
+        principalAmount,
+        interestAmount,
+        insuranceAmount,
+      },
+    }),
+  ]);
+
   res.json({ loan: serializeLoan(loan) });
 });
 
