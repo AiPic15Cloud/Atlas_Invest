@@ -28,6 +28,7 @@ import { riskyMonthsRouter } from "./routes/riskyMonths.js";
 import { monthlyChallengeRouter } from "./routes/monthlyChallenge.js";
 import { recordsRouter } from "./routes/records.js";
 import { savedEurosRouter } from "./routes/savedEuros.js";
+import { stressTestsRouter } from "./routes/stressTests.js";
 
 const app = express();
 
@@ -64,6 +65,7 @@ app.use("/api/risky-months", riskyMonthsRouter);
 app.use("/api/monthly-challenge", monthlyChallengeRouter);
 app.use("/api/records", recordsRouter);
 app.use("/api/saved-euros", savedEurosRouter);
+app.use("/api/stress-tests", stressTestsRouter);
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);

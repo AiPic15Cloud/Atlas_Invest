@@ -762,6 +762,25 @@ export interface ProvisionsResponse {
   activeMonthlyTotal: number;
 }
 
+export type StressTestScenario =
+  | { type: "INCOME_LOSS"; monthlyAmount: number }
+  | { type: "INCOME_DROP_PERCENT"; percent: number }
+  | { type: "ONE_OFF_EXPENSE"; amount: number }
+  | { type: "RECURRING_EXPENSE_INCREASE"; monthlyAmount: number };
+
+export interface StressTestResponse {
+  baselineMonthlyIncome: number;
+  baselineMonthlyExpenses: number;
+  availableBuffer: number;
+  hasEmergencyFund: boolean;
+  newMonthlyIncome: number;
+  newMonthlyExpenses: number;
+  newMonthlyBalance: number;
+  bufferAfterShock: number;
+  monthsSustainable: number | null;
+  sustainableIndefinitely: boolean;
+}
+
 export interface DashboardResponse {
   year: number;
   fiscalYearStartMonth: number;

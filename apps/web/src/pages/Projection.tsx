@@ -2,9 +2,20 @@ import { useEffect, useMemo, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import { IconChartLine } from "../components/icons";
-import type { DashboardResponse } from "../api/types";
+import type { DashboardResponse, StressTestResponse, StressTestScenario } from "../api/types";
 
 const MONTH_OPTIONS = [6, 12, 24, 36];
+
+const STRESS_PRESETS: { key: string; label: string; build: (amount: number) => StressTestScenario }[] = [
+  { key: "INCOME_LOSS", label: "Perte d'un revenu", build: (amount) => ({ type: "INCOME_LOSS", monthlyAmount: amount }) },
+  { key: "INCOME_DROP_PERCENT", label: "Baisse de revenu (%)", build: (amount) => ({ type: "INCOME_DROP_PERCENT", percent: amount }) },
+  { key: "ONE_OFF_EXPENSE", label: "Dépense imprévue", build: (amount) => ({ type: "ONE_OFF_EXPENSE", amount }) },
+  {
+    key: "RECURRING_EXPENSE_INCREASE",
+    label: "Hausse d'une charge (ex. loyer)",
+    build: (amount) => ({ type: "RECURRING_EXPENSE_INCREASE", monthlyAmount: amount }),
+  },
+];
 
 interface ExtraCharge {
   id: string;
@@ -25,6 +36,12 @@ export function Projection() {
   const [newLabel, setNewLabel] = useState("");
   const [newAmount, setNewAmount] = useState("");
   const [monthsToProject, setMonthsToProject] = useState(12);
+
+  const [stressPreset, setStressPreset] = useState(STRESS_PRESETS[0].key);
+  const [stressAmount, setStressAmount] = useState("");
+  const [stressResult, setStressResult] = useState<StressTestResponse | null>(null);
+  const [stressError, setStressError] = useState<string | null>(null);
+  const [stressLoading, setStressLoading] = useState(false);
 
   useEffect(() => {
     apiFetch<DashboardResponse>(`/api/dashboard?year=${now.getFullYear()}`)
@@ -47,6 +64,26 @@ export function Projection() {
 
   function handleRemoveCharge(id: string) {
     setExtraCharges((prev) => prev.filter((c) => c.id !== id));
+  }
+
+  async function handleRunStressTest() {
+    const amount = Number(stressAmount.replace(",", "."));
+    if (!Number.isFinite(amount) || amount < 0) return;
+    const preset = STRESS_PRESETS.find((p) => p.key === stressPreset);
+    if (!preset) return;
+    setStressLoading(true);
+    setStressError(null);
+    try {
+      const res = await apiFetch<StressTestResponse>("/api/stress-tests/simulate", {
+        method: "POST",
+        body: JSON.stringify(preset.build(amount)),
+      });
+      setStressResult(res);
+    } catch (err) {
+      setStressError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    } finally {
+      setStressLoading(false);
+    }
   }
 
   const simulation = useMemo(() => {
@@ -220,6 +257,64 @@ export function Projection() {
             </tbody>
           </table>
         </div>
+      </section>
+
+      <section className="card">
+        <h2 className="font-semibold">Tests de résistance</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Un choc ponctuel — pas un changement durable comme ci-dessus. Combien de mois le foyer pourrait-il
+          l'absorber, en s'appuyant sur ton épargne de précaution déjà construite ?
+        </p>
+
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <select className="input" value={stressPreset} onChange={(e) => setStressPreset(e.target.value)}>
+            {STRESS_PRESETS.map((p) => (
+              <option key={p.key} value={p.key}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+          <input
+            className="input"
+            placeholder={stressPreset === "INCOME_DROP_PERCENT" ? "Pourcentage (ex. 30)" : "Montant (€)"}
+            inputMode="decimal"
+            value={stressAmount}
+            onChange={(e) => setStressAmount(e.target.value)}
+          />
+          <button onClick={handleRunStressTest} disabled={stressLoading} className="btn btn-primary">
+            {stressLoading ? "..." : "Tester"}
+          </button>
+        </div>
+        {stressError && <p className="mt-2 text-sm text-red-600">{stressError}</p>}
+
+        {stressResult && (
+          <div className="mt-3 text-sm text-slate-600 dark:text-slate-400">
+            {!stressResult.hasEmergencyFund && (
+              <p className="text-amber-600">
+                Aucune épargne de précaution renseignée : ce test suppose un tampon de 0 €, donc le pire des cas.
+              </p>
+            )}
+            <p className="mt-1">
+              Nouveau rythme mensuel :{" "}
+              <span className={stressResult.newMonthlyBalance < 0 ? "font-medium text-red-600" : "font-medium text-emerald-600"}>
+                {currency.format(stressResult.newMonthlyBalance)}
+              </span>{" "}
+              (revenu {currency.format(stressResult.newMonthlyIncome)} − dépenses{" "}
+              {currency.format(stressResult.newMonthlyExpenses)})
+            </p>
+            {stressResult.bufferAfterShock < 0 && (
+              <p className="mt-1 text-amber-600">
+                Ton épargne de précaution ne couvrirait pas ce choc immédiat (manque{" "}
+                {currency.format(Math.abs(stressResult.bufferAfterShock))}).
+              </p>
+            )}
+            <p className="mt-2 font-medium text-[#2b1d14] dark:text-[#f3e9dc]">
+              {stressResult.sustainableIndefinitely
+                ? "À ce rythme, le foyer pourrait absorber ce choc indéfiniment."
+                : `Le foyer pourrait absorber ce choc pendant environ ${stressResult.monthsSustainable} mois.`}
+            </p>
+          </div>
+        )}
       </section>
     </div>
   );

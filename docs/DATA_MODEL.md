@@ -293,6 +293,25 @@ hausse de prix sur une charge récurrente — aucun signal fiable dans le
 modèle de données actuel sans risquer des faux positifs bruyants qui
 éroderaient la confiance plutôt que de l'améliorer.
 
+### m. Stress tests (section 60) — comblé par Lot 25
+
+`POST /api/stress-tests/simulate` (aucune nouvelle table — bac à sable pur,
+section 59) projette l'effet d'un choc ponctuel : perte de revenu (montant
+fixe ou pourcentage), dépense imprévue, ou hausse d'une charge récurrente.
+Le rythme de référence est la moyenne mensuelle glissante sur 12 mois —
+même convention que `averages.incomePerMonth`/`expensePerMonth` du Tableau
+de bord (`computeAnnualTotals`/`computeMonthlyAverages`, Lot 1), réutilisée
+telle quelle pour ne jamais afficher une deuxième définition de « moyenne
+mensuelle » qui contredirait celle déjà connue de l'utilisateur. Le tampon
+disponible est l'épargne de précaution déjà construite
+(`EmergencyFundProfile.currentSavedAmount`), jamais le solde bancaire brut
+qui inclut de l'argent déjà affecté ailleurs. Distingue explicitement deux
+échecs différents plutôt que de les confondre : un tampon insuffisant pour
+absorber le choc immédiat (`bufferAfterShock < 0`) peut coexister avec un
+rythme mensuel qui resterait positif ensuite (`sustainableIndefinitely`) —
+les deux sont montrés séparément côté frontend. Fonction pure testée
+(`simulateStressTest`).
+
 ## 3. Vérification du garde-fou « jamais compter un transfert deux fois »
 
 Vérifié dans `apps/api/src/routes/transfers.ts` et le schéma : un virement
