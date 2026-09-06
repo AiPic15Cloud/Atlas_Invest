@@ -155,6 +155,15 @@ export function BudgetDuMois() {
     await loadMonth();
   }
 
+  async function handleSetSplits(id: string, splits: { category: ExpenseCategory; amount: number }[] | null) {
+    if (splits === null) {
+      await apiFetch(`/api/expenses/${id}/splits`, { method: "DELETE" });
+    } else {
+      await apiFetch(`/api/expenses/${id}/splits`, { method: "PUT", body: JSON.stringify({ splits }) });
+    }
+    await loadMonth();
+  }
+
   async function handleCopyTemplate() {
     const account = availableAccounts[0];
     if (!account) {
@@ -430,7 +439,13 @@ export function BudgetDuMois() {
                   </div>
                   <ul>
                     {items.map((expense) => (
-                      <ExpenseRow key={expense.id} expense={expense} onDelete={handleDelete} onSetFeeling={handleSetFeeling} />
+                      <ExpenseRow
+                        key={expense.id}
+                        expense={expense}
+                        onDelete={handleDelete}
+                        onSetFeeling={handleSetFeeling}
+                        onSetSplits={handleSetSplits}
+                      />
                     ))}
                   </ul>
                 </div>
@@ -447,12 +462,17 @@ function ExpenseRow({
   expense,
   onDelete,
   onSetFeeling,
+  onSetSplits,
 }: {
   expense: Expense;
   onDelete: (id: string) => void;
   onSetFeeling: (id: string, feeling: ExpenseFeeling) => void;
+  onSetSplits: (id: string, splits: { category: ExpenseCategory; amount: number }[] | null) => Promise<void>;
 }) {
   const currency = useCurrencyFormatter();
+  const [splitOpen, setSplitOpen] = useState(false);
+  const isSplit = expense.splits.length > 0;
+
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-[#ece0cb] dark:border-[#3a2a1c] py-2 last:border-0">
       <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -475,8 +495,21 @@ function ExpenseRow({
                 regrettée
               </span>
             )}
+            {isSplit && (
+              <span className="ml-2 rounded-full bg-copper-100 px-2 py-0.5 text-xs font-normal text-copper-700 dark:bg-copper-500/15 dark:text-copper-300">
+                divisée
+              </span>
+            )}
           </p>
-          <p className="text-xs text-[#8a7358]">{expense.bankAccountName}</p>
+          <p className="text-xs text-[#8a7358]">
+            {expense.bankAccountName}
+            {isSplit && (
+              <>
+                {" · "}
+                {expense.splits.map((s) => `${currency.format(Number(s.amount))} ${CATEGORY_LABELS[s.category]}`).join(" · ")}
+              </>
+            )}
+          </p>
         </div>
       </div>
       <div className="ml-auto flex shrink-0 items-center gap-3">
@@ -496,11 +529,160 @@ function ExpenseRow({
             </button>
           ))}
         </div>
+        <button onClick={() => setSplitOpen((v) => !v)} className="text-xs text-[#a8927a] hover:text-copper-600">
+          {isSplit ? "Modifier" : "Diviser"}
+        </button>
         <button onClick={() => onDelete(expense.id)} className="text-xs text-[#a8927a] hover:text-terracotta-600">
           Supprimer
         </button>
       </div>
+      {splitOpen && (
+        <div className="w-full basis-full">
+          <ExpenseSplitEditor
+            expense={expense}
+            onSave={async (splits) => {
+              await onSetSplits(expense.id, splits);
+              setSplitOpen(false);
+            }}
+            onRemove={async () => {
+              await onSetSplits(expense.id, null);
+              setSplitOpen(false);
+            }}
+            onCancel={() => setSplitOpen(false)}
+          />
+        </div>
+      )}
     </li>
+  );
+}
+
+// Decoupe une depense entre plusieurs categories (Lot 4, spec section 10).
+// Editeur inline plutot qu'une modale : reste simple pour un cas d'usage
+// occasionnel (2-3 parts), pas besoin d'un composant separe.
+function ExpenseSplitEditor({
+  expense,
+  onSave,
+  onRemove,
+  onCancel,
+}: {
+  expense: Expense;
+  onSave: (splits: { category: ExpenseCategory; amount: number }[]) => Promise<void>;
+  onRemove: () => Promise<void>;
+  onCancel: () => void;
+}) {
+  const currency = useCurrencyFormatter();
+  const [rows, setRows] = useState<{ category: ExpenseCategory; amount: string }[]>(() =>
+    expense.splits.length > 0
+      ? expense.splits.map((s) => ({ category: s.category, amount: s.amount }))
+      : [
+          { category: expense.category, amount: "" },
+          { category: CATEGORY_ORDER.find((c) => c !== expense.category)!, amount: "" },
+        ],
+  );
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const total = Number(expense.amount);
+  const sum = rows.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+  const remaining = total - sum;
+  const isBalanced = Math.abs(remaining) <= 0.01;
+
+  function updateRow(index: number, patch: Partial<{ category: ExpenseCategory; amount: string }>) {
+    setRows((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
+  }
+
+  function addRow() {
+    setRows((prev) => [...prev, { category: expense.category, amount: "" }]);
+  }
+
+  function removeRow(index: number) {
+    setRows((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function handleSave() {
+    setError(null);
+    if (rows.length < 2) {
+      setError("Ajoute au moins 2 parts, sinon retire simplement le découpage.");
+      return;
+    }
+    const parsed = rows.map((r) => ({ category: r.category, amount: Number(r.amount) }));
+    if (parsed.some((r) => !Number.isFinite(r.amount) || r.amount <= 0)) {
+      setError("Chaque part doit avoir un montant positif.");
+      return;
+    }
+    if (!isBalanced) {
+      setError(`La somme des parts (${currency.format(sum)}) doit être égale au montant de la dépense (${currency.format(total)}).`);
+      return;
+    }
+    setSaving(true);
+    try {
+      await onSave(parsed);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="mt-1 rounded-lg border border-[#e8dcc9] bg-[#fdf6ee] p-3 dark:border-[#3a2a1c] dark:bg-[#332417]/40">
+      <p className="text-xs font-medium text-[#4a3826] dark:text-[#cbb89e]">
+        Diviser {expense.poste} ({currency.format(total)})
+      </p>
+      <div className="mt-2 space-y-2">
+        {rows.map((row, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <select
+              value={row.category}
+              onChange={(e) => updateRow(i, { category: e.target.value as ExpenseCategory })}
+              className="input px-2 py-1.5 text-sm"
+            >
+              {CATEGORY_ORDER.map((cat) => (
+                <option key={cat} value={cat}>{CATEGORY_LABELS[cat]}</option>
+              ))}
+            </select>
+            <input
+              type="number"
+              step="0.01"
+              value={row.amount}
+              onChange={(e) => updateRow(i, { amount: e.target.value })}
+              placeholder="0,00"
+              className="w-24 input px-2 py-1.5 text-sm"
+              aria-label={`Montant pour ${CATEGORY_LABELS[row.category]}`}
+            />
+            {rows.length > 2 && (
+              <button
+                onClick={() => removeRow(i)}
+                className="text-xs text-[#a8927a] hover:text-terracotta-600"
+                aria-label="Retirer cette part"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+        <button onClick={addRow} className="text-xs link">
+          + Ajouter une part
+        </button>
+        <span className={`text-xs ${isBalanced ? "text-olive-600" : "text-terracotta-600"}`}>
+          Reste à répartir : {currency.format(remaining)}
+        </span>
+      </div>
+      {error && <p className="mt-2 text-xs text-terracotta-600">{error}</p>}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button onClick={handleSave} disabled={saving} className="btn btn-primary btn-sm">
+          Enregistrer
+        </button>
+        <button onClick={onCancel} className="btn btn-outline btn-sm">
+          Annuler
+        </button>
+        {expense.splits.length > 0 && (
+          <button onClick={onRemove} className="text-xs text-[#a8927a] hover:text-terracotta-600">
+            Retirer le découpage
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 

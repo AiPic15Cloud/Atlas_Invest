@@ -152,6 +152,13 @@ export interface BudgetTemplateResponse {
 
 export type ExpenseFeeling = "SATISFAIT" | "NEUTRE" | "REGRET";
 
+export interface ExpenseSplit {
+  id: string;
+  category: ExpenseCategory;
+  amount: string;
+  note: string | null;
+}
+
 export interface Expense {
   id: string;
   year: number;
@@ -166,6 +173,7 @@ export interface Expense {
   feeling: ExpenseFeeling | null;
   feelingReviewed: boolean;
   createdAt: string;
+  splits: ExpenseSplit[];
 }
 
 export interface MonthlyComparisonColumn {
