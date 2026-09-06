@@ -153,12 +153,26 @@ model BalanceCheckpoint {
   @@index([bankAccountId, year, month])
 }
 
+enum IncomeNature {
+  RECURRENT
+  EXCEPTIONNEL
+  REMBOURSEMENT
+  AUTRE
+}
+
 model Income {
-  id        String   @id @default(cuid())
-  year      Int
-  month     Int
-  source    String
-  amount    Decimal  @db.Decimal(12, 2)
+  id     String       @id @default(cuid())
+  year   Int
+  month  Int
+  source String
+  amount Decimal      @db.Decimal(12, 2)
+  // Nature du flux (section 9) : par defaut RECURRENT — hypothese la plus
+  // courante pour un salaire, retrocompatible avec tous les revenus deja
+  // saisis avant l'ajout de ce champ. Ne pas distinguer un revenu
+  // exceptionnel (prime, remboursement) d'un revenu recurrent gonflerait
+  // silencieusement les moyennes utilisees pour les projections.
+  nature IncomeNature @default(RECURRENT)
+
   createdAt DateTime @default(now())
 
   bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)

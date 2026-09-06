@@ -9,12 +9,15 @@ export const incomesRouter = Router();
 
 incomesRouter.use(requireAuth);
 
+const INCOME_NATURES = ["RECURRENT", "EXCEPTIONNEL", "REMBOURSEMENT", "AUTRE"] as const;
+
 function serializeIncome(income: Income & { bankAccount: { name: string } }) {
   return {
     id: income.id,
     year: income.year,
     month: income.month,
     source: income.source,
+    nature: income.nature,
     amount: income.amount.toString(),
     bankAccountId: income.bankAccountId,
     bankAccountName: income.bankAccount.name,
@@ -62,35 +65,44 @@ incomesRouter.get("/summary", async (req, res) => {
   const accounts = await listAccessibleAccounts(req.userId!);
   const incomes = await prisma.income.findMany({
     where: { year: parsed.data.year, bankAccountId: { in: accounts.map((a) => a.id) } },
-    select: { id: true, month: true, source: true, amount: true, bankAccount: { select: { name: true } } },
+    select: { id: true, month: true, source: true, nature: true, amount: true, bankAccount: { select: { name: true } } },
     orderBy: { createdAt: "asc" },
   });
 
   const totalsByMonth = Array.from({ length: 12 }, () => 0);
+  // Total des revenus non recurrents (exceptionnel/remboursement/autre) par
+  // mois : expose separement pour ne jamais laisser une prime ponctuelle se
+  // fondre silencieusement dans un total qui a l'air d'un revenu regulier.
+  const nonRecurrentTotalByMonth = Array.from({ length: 12 }, () => 0);
   const byMonth = Array.from({ length: 12 }, (_, i) => ({
     month: i + 1,
     total: 0,
-    incomes: [] as { id: string; source: string; amount: string; bankAccountName: string }[],
+    incomes: [] as { id: string; source: string; nature: string; amount: string; bankAccountName: string }[],
   }));
   for (const income of incomes) {
     const amount = Number(income.amount);
     totalsByMonth[income.month - 1] += amount;
     byMonth[income.month - 1].total += amount;
+    if (income.nature !== "RECURRENT") {
+      nonRecurrentTotalByMonth[income.month - 1] += amount;
+    }
     byMonth[income.month - 1].incomes.push({
       id: income.id,
       source: income.source,
+      nature: income.nature,
       amount: income.amount.toString(),
       bankAccountName: income.bankAccount.name,
     });
   }
 
-  res.json({ year: parsed.data.year, totalsByMonth, byMonth });
+  res.json({ year: parsed.data.year, totalsByMonth, nonRecurrentTotalByMonth, byMonth });
 });
 
 const createIncomeSchema = z.object({
   year: z.number().int().min(2000).max(2100),
   month: z.number().int().min(1).max(12),
   source: z.string().trim().min(1).max(80),
+  nature: z.enum(INCOME_NATURES).optional(),
   amount: z.number().finite().positive("Le montant doit être positif."),
   bankAccountId: z.string().min(1),
 });
@@ -127,6 +139,7 @@ async function loadOwnedIncome(userId: string, incomeId: string) {
 
 const updateIncomeSchema = z.object({
   source: z.string().trim().min(1).max(80).optional(),
+  nature: z.enum(INCOME_NATURES).optional(),
   amount: z.number().finite().positive("Le montant doit être positif.").optional(),
 });
 
@@ -201,6 +214,7 @@ incomesRouter.post("/copy-month", async (req, res) => {
         year: toYear,
         month: toMonth,
         source: income.source,
+        nature: income.nature,
         amount: income.amount,
         bankAccountId: income.bankAccountId,
       })),

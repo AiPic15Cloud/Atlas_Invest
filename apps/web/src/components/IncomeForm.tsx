@@ -1,16 +1,24 @@
 import { useState, type FormEvent } from "react";
-import type { BankAccount } from "../api/types";
+import type { BankAccount, IncomeNature } from "../api/types";
 
 const COMMON_SOURCES = ["Salaire", "Freelance", "Dividendes", "Allocations", "Autre"];
 
+export const INCOME_NATURE_LABELS: Record<IncomeNature, string> = {
+  RECURRENT: "Récurrent",
+  EXCEPTIONNEL: "Exceptionnel",
+  REMBOURSEMENT: "Remboursement",
+  AUTRE: "Autre",
+};
+
 interface IncomeFormProps {
   accounts: BankAccount[];
-  onSubmit: (data: { source: string; amount: number; bankAccountId: string }) => Promise<void>;
+  onSubmit: (data: { source: string; nature: IncomeNature; amount: number; bankAccountId: string }) => Promise<void>;
   onCancel: () => void;
 }
 
 export function IncomeForm({ accounts, onSubmit, onCancel }: IncomeFormProps) {
   const [source, setSource] = useState("");
+  const [nature, setNature] = useState<IncomeNature>("RECURRENT");
   const [amount, setAmount] = useState("");
   const [bankAccountId, setBankAccountId] = useState(accounts[0]?.id ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +38,7 @@ export function IncomeForm({ accounts, onSubmit, onCancel }: IncomeFormProps) {
     }
     setSubmitting(true);
     try {
-      await onSubmit({ source, amount: parsedAmount, bankAccountId });
+      await onSubmit({ source, nature, amount: parsedAmount, bankAccountId });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue.");
       setSubmitting(false);
@@ -72,6 +80,23 @@ export function IncomeForm({ accounts, onSubmit, onCancel }: IncomeFormProps) {
           {accounts.map((account) => (
             <option key={account.id} value={account.id}>
               {account.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label htmlFor="income-nature" className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
+          Nature
+        </label>
+        <select
+          id="income-nature"
+          value={nature}
+          onChange={(e) => setNature(e.target.value as IncomeNature)}
+          className="w-full input px-3 py-1.5 text-sm"
+        >
+          {(Object.keys(INCOME_NATURE_LABELS) as IncomeNature[]).map((n) => (
+            <option key={n} value={n}>
+              {INCOME_NATURE_LABELS[n]}
             </option>
           ))}
         </select>

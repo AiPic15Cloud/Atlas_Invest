@@ -1,0 +1,5 @@
+-- CreateEnum
+CREATE TYPE "IncomeNature" AS ENUM ('RECURRENT', 'EXCEPTIONNEL', 'REMBOURSEMENT', 'AUTRE');
+
+-- AlterTable
+ALTER TABLE "Income" ADD COLUMN     "nature" "IncomeNature" NOT NULL DEFAULT 'RECURRENT';

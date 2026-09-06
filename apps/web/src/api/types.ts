@@ -96,11 +96,14 @@ export interface AccountEnvelopesResponse {
   overAllocated: boolean;
 }
 
+export type IncomeNature = "RECURRENT" | "EXCEPTIONNEL" | "REMBOURSEMENT" | "AUTRE";
+
 export interface Income {
   id: string;
   year: number;
   month: number;
   source: string;
+  nature: IncomeNature;
   amount: string;
   bankAccountId: string;
   bankAccountName: string;
@@ -110,12 +113,13 @@ export interface Income {
 export interface IncomeSummaryMonth {
   month: number;
   total: number;
-  incomes: { id: string; source: string; amount: string; bankAccountName: string }[];
+  incomes: { id: string; source: string; nature: IncomeNature; amount: string; bankAccountName: string }[];
 }
 
 export interface IncomeSummary {
   year: number;
   totalsByMonth: number[];
+  nonRecurrentTotalByMonth: number[];
   byMonth: IncomeSummaryMonth[];
 }
 

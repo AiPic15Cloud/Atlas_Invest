@@ -138,6 +138,22 @@ loin dans l'ordre recommandé (section 76).
 MonthlyGoal` (« Nos victoires ») est une checklist libre, pas un moteur de
 défi avec avancement calculé sur l'épargne réelle. Attendu — Phase 5.
 
+### j. Nature des flux — revenus comblés par Lot 15, sorties/transferts déjà couverts (section 9)
+
+`Income.nature` (ajouté au Lot 15 : `RECURRENT`/`EXCEPTIONNEL`/
+`REMBOURSEMENT`/`AUTRE`, défaut `RECURRENT` pour rester rétrocompatible)
+distingue désormais un salaire récurrent d'une prime ponctuelle, exposée
+sur la page Revenus (badge + total non récurrent du mois affiché
+séparément). Pour les sorties, la taxonomie de la spec (consommation /
+épargne / investissement / remboursement de capital / intérêts /
+assurance / frais financiers) est déjà couverte par construction ailleurs
+— catégories `BudgetCategory`, ventilation `LoanPayment` (Lot 5) — sans
+qu'un champ `nature` dédié sur `Expense` soit nécessaire. Pour les
+transferts, la sous-taxonomie (personnel→livret, personnel→joint,
+livret→courant...) n'existe pas explicitement mais se déduit déjà des
+types de comptes source/destination (`BankAccountType`) ; non ajoutée ici
+faute d'un besoin d'affichage concret identifié.
+
 ## 3. Vérification du garde-fou « jamais compter un transfert deux fois »
 
 Vérifié dans `apps/api/src/routes/transfers.ts` et le schéma : un virement

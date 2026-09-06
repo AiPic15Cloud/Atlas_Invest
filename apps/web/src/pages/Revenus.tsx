@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
-import { IncomeForm } from "../components/IncomeForm";
+import { IncomeForm, INCOME_NATURE_LABELS } from "../components/IncomeForm";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import { IconTrendingUp } from "../components/icons";
-import type { BankAccountsResponse, Income, IncomeSummary } from "../api/types";
+import type { BankAccountsResponse, Income, IncomeNature, IncomeSummary } from "../api/types";
 
 const MONTH_NAMES = [
   "Janvier",
@@ -83,7 +83,7 @@ export function Revenus() {
     setMonth(next.month);
   }
 
-  async function handleAdd(data: { source: string; amount: number; bankAccountId: string }) {
+  async function handleAdd(data: { source: string; nature: IncomeNature; amount: number; bankAccountId: string }) {
     await apiFetch("/api/incomes", { method: "POST", body: JSON.stringify({ ...data, year, month }) });
     setAdding(false);
     await Promise.all([loadMonth(), loadSummary()]);
@@ -145,6 +145,16 @@ export function Revenus() {
                 )}
               </div>
             </div>
+            {(() => {
+              const nonRecurrent = summary?.nonRecurrentTotalByMonth?.[month - 1] ?? 0;
+              if (nonRecurrent <= 0) return null;
+              return (
+                <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                  dont {currency.format(nonRecurrent)} non récurrents (exceptionnel/remboursement) — à ne pas compter
+                  comme un revenu régulier dans tes prévisions.
+                </p>
+              );
+            })()}
 
             {copyOpen && (
               <CopyMonthPanel
@@ -177,7 +187,14 @@ export function Revenus() {
                         {income.source.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-sm font-medium">{income.source}</p>
+                        <p className="text-sm font-medium">
+                          {income.source}
+                          {income.nature !== "RECURRENT" && (
+                            <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/50 dark:text-amber-300">
+                              {INCOME_NATURE_LABELS[income.nature]}
+                            </span>
+                          )}
+                        </p>
                         <p className="text-xs text-slate-500">
                           {income.bankAccountName} ·{" "}
                           {total > 0 ? percent.format(Number(income.amount) / total) : "—"} du mois
