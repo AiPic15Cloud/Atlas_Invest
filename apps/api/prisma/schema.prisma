@@ -112,6 +112,7 @@ model User {
   monthlyBudgetOverrides MonthlyBudgetOverride[]
   anticipatedExpenses    AnticipatedExpense[]
   savedEuroEvents        SavedEuroEvent[]
+  wealthSnapshots        WealthSnapshot[]
 }
 
 model BankAccount {
@@ -595,6 +596,24 @@ model LoanPayment {
   loanId String
 
   @@index([loanId, date])
+}
+
+// Photo mensuelle du patrimoine net (section 31) : necessaire pour expliquer
+// une variation ("Patrimoine : +820 € ce mois"), impossible a calculer sans
+// une valeur de reference au debut du mois. Mise a jour a chaque lecture du
+// patrimoine pour le mois en cours ; un mois passe reste fige des que le
+// mois change (plus jamais reecrit).
+model WealthSnapshot {
+  id        String   @id @default(cuid())
+  year      Int
+  month     Int
+  netWorth  Decimal  @db.Decimal(12, 2)
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@unique([userId, year, month])
 }
 
 model WealthItem {

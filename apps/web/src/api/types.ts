@@ -504,6 +504,20 @@ export interface WealthResponse {
   categories: Record<WealthCategory, WealthCategoryDefinition>;
 }
 
+export interface WealthVariationResponse {
+  available: boolean;
+  reason?: string;
+  currentMonth: { year: number; month: number };
+  currentNetWorth: number;
+  previousMonth?: { year: number; month: number };
+  previousNetWorth?: number;
+  totalVariation?: number;
+  epargne?: number;
+  investissement?: number;
+  capitalRembourse?: number;
+  unexplained?: number;
+}
+
 export interface Loan {
   id: string;
   label: string;

@@ -62,10 +62,23 @@ comme l'exige la section 34.
 dernière valorisation (utilisé par tous les calculs de patrimoine net
 existants) mais ne change plus jamais sans qu'un point de valorisation daté
 et sourcé ne l'explique — y compris via l'ancien PATCH générique.
-`GET /:id/valuations` expose l'historique complet. Reste manquant : le
-calcul de « performance des placements séparée des flux apportés »
-(section 31), qui demanderait de distinguer les valorisations des apports
-(virements/versements) — non traité dans ce lot.
+`GET /:id/valuations` expose l'historique complet.
+
+Le Lot 21 ajoute la variation du patrimoine (section 31) séparément :
+`WealthSnapshot` (une photo du patrimoine net par utilisateur et par mois,
+réécrite à chaque lecture pour le mois en cours mais jamais pour un mois
+déjà passé) sert de référence pour calculer `GET /api/wealth/variation`.
+La variation totale du mois est décomposée en flux mesurables — épargne et
+investissement (catégories `Expense` du mois), capital immobilier
+remboursé (somme des `LoanPayment.principalAmount` du mois) — et tout ce
+que ces flux n'expliquent pas est affiché comme un solde « à expliquer »
+plutôt que présenté comme une fausse « performance des placements » : sans
+historique de contribution par actif, impossible d'isoler la performance
+réelle des apports avec certitude (doctrine section 2 et 68 : ne jamais
+présenter une estimation comme une certitude, ne jamais cacher un écart).
+N'apparaît qu'à partir du deuxième mois d'utilisation (aucune photo du
+mois précédent avant ça) — assumé et expliqué à l'écran plutôt que
+silencieusement absent.
 
 ### d. Objectifs : contributions et priorité — comblé partiellement par Lots 8 et 16 (section 19-21)
 

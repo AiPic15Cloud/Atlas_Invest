@@ -4,6 +4,9 @@ import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
 import { WEALTH_CATEGORIES, wealthItemSignedAmount, type WealthCategoryKey } from "../constants/wealth.js";
 import { loansFor, loansRemainingTotal } from "./loans.js";
+import { listAccessibleAccounts } from "../utils/accountAccess.js";
+import { sumByCategory } from "../utils/expenseCategoryTotals.js";
+import { computeWealthVariationBreakdown } from "../utils/wealthVariation.js";
 import type { AssetValuation, WealthItem } from "@prisma/client";
 
 export const wealthRouter = Router();
@@ -53,6 +56,26 @@ async function wealthItemsFor(userId: string) {
   });
 }
 
+async function computeMyNetWorth(userId: string) {
+  const [bankTotal, items, loans] = await Promise.all([bankAccountsTotal(userId), wealthItemsFor(userId), loansFor(userId)]);
+  const itemsTotal = items.reduce((sum, i) => sum + wealthItemSignedAmount(i.category as WealthCategoryKey, Number(i.amount)), 0);
+  const loansTotal = loansRemainingTotal(loans);
+  return bankTotal + itemsTotal - loansTotal;
+}
+
+// Enregistre le patrimoine net du mois en cours (section 31) : ecrase la
+// valeur du mois en cours a chaque appel (photo la plus recente), mais ne
+// touche jamais un mois deja passe, qui reste fige des que le calendrier
+// avance.
+async function recordWealthSnapshot(userId: string, netWorth: number) {
+  const now = new Date();
+  await prisma.wealthSnapshot.upsert({
+    where: { userId_year_month: { userId, year: now.getFullYear(), month: now.getMonth() + 1 } },
+    create: { userId, year: now.getFullYear(), month: now.getMonth() + 1, netWorth },
+    update: { netWorth },
+  });
+}
+
 wealthRouter.get("/", async (req, res) => {
   const user = await prisma.user.findUniqueOrThrow({ where: { id: req.userId! } });
   if (!user.householdId) {
@@ -72,6 +95,7 @@ wealthRouter.get("/", async (req, res) => {
   const myItemsTotal = myItems.reduce((sum, i) => sum + wealthItemSignedAmount(i.category as WealthCategoryKey, Number(i.amount)), 0);
   const myLoansTotal = loansRemainingTotal(myLoans);
   const myNetWorth = myBankTotal + myItemsTotal - myLoansTotal;
+  await recordWealthSnapshot(user.id, myNetWorth);
 
   const household = await Promise.all(
     members.map(async (member) => {
@@ -113,6 +137,80 @@ wealthRouter.get("/", async (req, res) => {
     household,
     householdNetWorth,
     categories: WEALTH_CATEGORIES,
+  });
+});
+
+// Explique la progression du patrimoine net d'un mois sur l'autre (section
+// 31) : decompose en flux mesurables (epargne, investissement, capital
+// immobilier rembourse) et laisse le reste comme un solde "a expliquer"
+// plutot que d'inventer une "performance des placements" qu'on ne peut pas
+// isoler avec certitude sans historique de contribution par actif.
+wealthRouter.get("/variation", async (req, res) => {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const previous = new Date(currentYear, currentMonth - 2, 1);
+  const previousYear = previous.getFullYear();
+  const previousMonth = previous.getMonth() + 1;
+
+  const currentNetWorth = await computeMyNetWorth(req.userId!);
+  await recordWealthSnapshot(req.userId!, currentNetWorth);
+
+  const previousSnapshot = await prisma.wealthSnapshot.findUnique({
+    where: { userId_year_month: { userId: req.userId!, year: previousYear, month: previousMonth } },
+  });
+
+  if (!previousSnapshot) {
+    res.json({
+      available: false,
+      reason: "Pas encore de photo du mois précédent : reviens le mois prochain pour voir la progression.",
+      currentMonth: { year: currentYear, month: currentMonth },
+      currentNetWorth,
+    });
+    return;
+  }
+
+  const accounts = await listAccessibleAccounts(req.userId!);
+  const accountIds = accounts.map((a) => a.id);
+  const [expenses, loans] = await Promise.all([
+    prisma.expense.findMany({
+      where: { bankAccountId: { in: accountIds }, year: currentYear, month: currentMonth },
+      select: { category: true, amount: true, splits: { select: { category: true, amount: true } } },
+    }),
+    loansFor(req.userId!),
+  ]);
+
+  const categoryTotals = sumByCategory(
+    expenses.map((e) => ({
+      amount: Number(e.amount),
+      category: e.category,
+      splits: e.splits.map((s) => ({ category: s.category, amount: Number(s.amount) })),
+    })),
+    ["EPARGNE", "INVESTISSEMENT"],
+  );
+
+  const monthStart = new Date(currentYear, currentMonth - 1, 1);
+  const monthEnd = new Date(currentYear, currentMonth, 1);
+  const payments = await prisma.loanPayment.findMany({
+    where: { loanId: { in: loans.map((l) => l.id) }, date: { gte: monthStart, lt: monthEnd } },
+    select: { principalAmount: true },
+  });
+  const capitalRembourse = payments.reduce((sum, p) => sum + Number(p.principalAmount), 0);
+
+  const breakdown = computeWealthVariationBreakdown({
+    totalVariation: currentNetWorth - Number(previousSnapshot.netWorth),
+    epargne: categoryTotals.EPARGNE,
+    investissement: categoryTotals.INVESTISSEMENT,
+    capitalRembourse,
+  });
+
+  res.json({
+    available: true,
+    previousMonth: { year: previousYear, month: previousMonth },
+    currentMonth: { year: currentYear, month: currentMonth },
+    previousNetWorth: Number(previousSnapshot.netWorth),
+    currentNetWorth,
+    ...breakdown,
   });
 });
 

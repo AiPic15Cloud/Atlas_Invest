@@ -11,6 +11,7 @@ import type {
   WealthCategory,
   WealthItem,
   WealthResponse,
+  WealthVariationResponse,
 } from "../api/types";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" });
@@ -374,6 +375,8 @@ export function Patrimoine() {
         </div>
       </section>
 
+      <WealthVariationSection />
+
       <section className="card">
         <h2 className="font-semibold">Ajouter un bien, placement ou crédit</h2>
         <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-4">
@@ -635,5 +638,67 @@ export function Patrimoine() {
         </section>
       )}
     </div>
+  );
+}
+
+function WealthVariationSection() {
+  const currency = useCurrencyFormatter();
+  const [data, setData] = useState<WealthVariationResponse | null>(null);
+
+  useEffect(() => {
+    apiFetch<WealthVariationResponse>("/api/wealth/variation")
+      .then(setData)
+      .catch(() => setData(null));
+  }, []);
+
+  if (!data) return null;
+
+  return (
+    <section className="card">
+      <h2 className="font-semibold flex items-center gap-2">
+        <IconChartLine className="h-5 w-5 text-violet-600" />
+        Variation du patrimoine
+      </h2>
+
+      {!data.available ? (
+        <p className="mt-2 text-sm text-slate-500">{data.reason}</p>
+      ) : (
+        <>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+            Patrimoine :{" "}
+            <span className={`font-semibold ${data.totalVariation! >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+              {data.totalVariation! >= 0 ? "+" : ""}
+              {currency.format(data.totalVariation!)}
+            </span>{" "}
+            depuis {dateFormat.format(new Date(data.previousMonth!.year, data.previousMonth!.month - 1, 1))}
+          </p>
+          <ul className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+            <li className="flex justify-between border-b border-slate-100 py-1 dark:border-slate-800">
+              <span>Épargne</span>
+              <span>{currency.format(data.epargne!)}</span>
+            </li>
+            <li className="flex justify-between border-b border-slate-100 py-1 dark:border-slate-800">
+              <span>Investissement</span>
+              <span>{currency.format(data.investissement!)}</span>
+            </li>
+            <li className="flex justify-between border-b border-slate-100 py-1 dark:border-slate-800">
+              <span>Capital immobilier remboursé</span>
+              <span>{currency.format(data.capitalRembourse!)}</span>
+            </li>
+            <li className="flex justify-between py-1">
+              <span>Performance des placements et autres variations</span>
+              <span>
+                {data.unexplained! >= 0 ? "+" : ""}
+                {currency.format(data.unexplained!)}
+              </span>
+            </li>
+          </ul>
+          <p className="mt-2 text-xs text-slate-400">
+            La performance des placements ne peut pas être isolée avec certitude sans historique de contribution par
+            actif : cette ligne regroupe ce que les flux ci-dessus n'expliquent pas.
+          </p>
+        </>
+      )}
+    </section>
   );
 }
