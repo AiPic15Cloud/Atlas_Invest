@@ -454,15 +454,15 @@ function ExpenseRow({
 }) {
   const currency = useCurrencyFormatter();
   return (
-    <li className="flex items-center justify-between border-b border-[#ece0cb] dark:border-[#3a2a1c] py-2 last:border-0">
-      <div className="flex items-center gap-3">
+    <li className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-[#ece0cb] dark:border-[#3a2a1c] py-2 last:border-0">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         <div
           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${CATEGORY_AVATAR_CLASS[expense.category]}`}
           aria-hidden="true"
         >
           {expense.poste.charAt(0).toUpperCase()}
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="text-sm font-medium">
             {expense.poste}
             {expense.unusual && (
@@ -479,7 +479,7 @@ function ExpenseRow({
           <p className="text-xs text-[#8a7358]">{expense.bankAccountName}</p>
         </div>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="ml-auto flex shrink-0 items-center gap-3">
         <span className="text-sm font-semibold">{currency.format(Number(expense.amount))}</span>
         <div className="flex gap-0.5" role="group" aria-label="Ressenti sur cette dépense">
           {FEELING_ORDER.map((feeling) => (
