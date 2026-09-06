@@ -570,7 +570,13 @@ export interface EmergencyFundCriterionBreakdown {
   options: { value: number; label: string }[];
 }
 
-export type CorrectionType = "WASTEFUL_EXPENSE" | "SUBSCRIPTION_STATUS";
+export type CorrectionType =
+  | "WASTEFUL_EXPENSE"
+  | "SUBSCRIPTION_STATUS"
+  | "TRANSFER_SUGGESTION_DISMISSED"
+  | "BUDGET_ITEM_MODIFIED"
+  | "GOAL_TARGET_MODIFIED"
+  | "LOAN_MODIFIED";
 
 export interface CorrectionLogEntry {
   id: string;

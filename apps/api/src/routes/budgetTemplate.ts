@@ -169,6 +169,20 @@ budgetTemplateRouter.patch("/items/:id", async (req, res) => {
     return;
   }
 
+  // Un changement de montant type est une modification importante a
+  // historiser (section 66, exemple explicite : "budget courses passe de
+  // 350 a 400 €").
+  if (parsed.data.monthlyAmount !== undefined && parsed.data.monthlyAmount !== Number(result.item.monthlyAmount)) {
+    await prisma.correctionLog.create({
+      data: {
+        userId: req.userId!,
+        type: "BUDGET_ITEM_MODIFIED",
+        label: `Poste "${result.item.name}" modifié`,
+        detail: `${Number(result.item.monthlyAmount)} € → ${parsed.data.monthlyAmount} €`,
+      },
+    });
+  }
+
   await prisma.budgetItem.update({ where: { id: result.item.id }, data: parsed.data });
   const template = await prisma.budgetTemplate.findUniqueOrThrow({ where: { id: result.item.templateId } });
   res.json({ template: await serializeTemplate(template) });

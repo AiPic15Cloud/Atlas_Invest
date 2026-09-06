@@ -8,11 +8,19 @@ const dateFormat = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "lo
 const TYPE_LABELS: Record<CorrectionType, string> = {
   WASTEFUL_EXPENSE: "Ressenti sur une dépense",
   SUBSCRIPTION_STATUS: "Abonnement",
+  TRANSFER_SUGGESTION_DISMISSED: "Suggestion de virement écartée",
+  BUDGET_ITEM_MODIFIED: "Budget type modifié",
+  GOAL_TARGET_MODIFIED: "Objectif modifié",
+  LOAN_MODIFIED: "Prêt modifié",
 };
 
 const TYPE_COLORS: Record<CorrectionType, string> = {
   WASTEFUL_EXPENSE: "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300",
   SUBSCRIPTION_STATUS: "bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300",
+  TRANSFER_SUGGESTION_DISMISSED: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+  BUDGET_ITEM_MODIFIED: "bg-violet-100 text-violet-800 dark:bg-violet-900/50 dark:text-violet-300",
+  GOAL_TARGET_MODIFIED: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300",
+  LOAN_MODIFIED: "bg-rose-100 text-rose-800 dark:bg-rose-900/50 dark:text-rose-300",
 };
 
 export function Historique() {
@@ -45,7 +53,17 @@ export function Historique() {
       </div>
 
       <div className="flex gap-2">
-        {(["ALL", "WASTEFUL_EXPENSE", "SUBSCRIPTION_STATUS"] as const).map((t) => (
+        {(
+          [
+            "ALL",
+            "WASTEFUL_EXPENSE",
+            "SUBSCRIPTION_STATUS",
+            "BUDGET_ITEM_MODIFIED",
+            "GOAL_TARGET_MODIFIED",
+            "LOAN_MODIFIED",
+            "TRANSFER_SUGGESTION_DISMISSED",
+          ] as const
+        ).map((t) => (
           <button
             key={t}
             onClick={() => setFilter(t)}

@@ -126,6 +126,38 @@ loansRouter.patch("/:id", async (req, res) => {
   const remainingBalance = parsed.data.remainingBalance ?? Number(result.loan.remainingBalance);
   if ("remainingBalance" in parsed.data) data.paidOff = remainingBalance <= 0;
 
+  // Les conditions d'un pret (capital, mensualite, taux, capital restant
+  // saisi a la main) sont des modifications importantes a historiser
+  // (section 66, exemple explicite : "pret modifie").
+  const trackedFields: { key: keyof typeof parsed.data; label: string; suffix: string }[] = [
+    { key: "principalAmount", label: "capital initial", suffix: " €" },
+    { key: "remainingBalance", label: "capital restant dû", suffix: " €" },
+    { key: "monthlyPayment", label: "mensualité", suffix: " €" },
+    { key: "interestRate", label: "taux", suffix: " %" },
+  ];
+  const formatPrevious = (value: unknown) => (value === null ? "non renseigné" : `${Number(value)}`);
+  const changes = trackedFields
+    .filter((f) => {
+      const previous = result.loan[f.key as keyof typeof result.loan];
+      const previousNumber = previous === null ? null : Number(previous);
+      return parsed.data[f.key] !== undefined && parsed.data[f.key] !== previousNumber;
+    })
+    .map((f) => {
+      const previous = result.loan[f.key as keyof typeof result.loan];
+      return `${f.label} : ${formatPrevious(previous)}${previous === null ? "" : f.suffix} → ${parsed.data[f.key]}${f.suffix}`;
+    });
+
+  if (changes.length > 0) {
+    await prisma.correctionLog.create({
+      data: {
+        userId: req.userId!,
+        type: "LOAN_MODIFIED",
+        label: `Prêt "${result.loan.label}" modifié`,
+        detail: changes.join(" ; "),
+      },
+    });
+  }
+
   const loan = await prisma.loan.update({ where: { id: result.loan.id }, data });
   res.json({ loan: serializeLoan(loan) });
 });

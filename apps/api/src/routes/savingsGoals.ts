@@ -133,6 +133,20 @@ savingsGoalsRouter.patch("/:id", async (req, res) => {
   const currentAmount = parsed.data.currentAmount ?? Number(result.goal.currentAmount);
   if (currentAmount >= targetAmount) data.achieved = true;
 
+  // Un objectif dont la cible change est une modification importante a
+  // historiser (section 66, exemple explicite : "objectif passe de 5000 a
+  // 10000 €").
+  if (parsed.data.targetAmount !== undefined && parsed.data.targetAmount !== Number(result.goal.targetAmount)) {
+    await prisma.correctionLog.create({
+      data: {
+        userId: req.userId!,
+        type: "GOAL_TARGET_MODIFIED",
+        label: `Objectif "${result.goal.name}" modifié`,
+        detail: `${Number(result.goal.targetAmount)} € → ${parsed.data.targetAmount} €`,
+      },
+    });
+  }
+
   const goal = await prisma.savingsGoal.update({ where: { id: result.goal.id }, data });
   res.json({ goal: serializeGoal(goal) });
 });
