@@ -2,7 +2,22 @@ import { useEffect, useMemo, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import { IconArrowsExchange } from "../components/icons";
-import type { BankAccountsResponse, TransfersResponse } from "../api/types";
+import type { BankAccountsResponse, TransferCandidatesResponse, TransfersResponse } from "../api/types";
+
+const MONTH_LABELS = [
+  "janvier",
+  "février",
+  "mars",
+  "avril",
+  "mai",
+  "juin",
+  "juillet",
+  "août",
+  "septembre",
+  "octobre",
+  "novembre",
+  "décembre",
+];
 
 function today() {
   return new Date().toISOString().slice(0, 10);
@@ -12,7 +27,9 @@ export function Transferts() {
   const currency = useCurrencyFormatter();
   const [data, setData] = useState<TransfersResponse | null>(null);
   const [accounts, setAccounts] = useState<BankAccountsResponse | null>(null);
+  const [candidates, setCandidates] = useState<TransferCandidatesResponse["candidates"] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [candidateBusyKey, setCandidateBusyKey] = useState<string | null>(null);
 
   const [fromAccountId, setFromAccountId] = useState("");
   const [toAccountId, setToAccountId] = useState("");
@@ -28,14 +45,48 @@ export function Transferts() {
 
   async function load() {
     try {
-      const [transfersRes, accountsRes] = await Promise.all([
+      const [transfersRes, accountsRes, candidatesRes] = await Promise.all([
         apiFetch<TransfersResponse>("/api/transfers"),
         apiFetch<BankAccountsResponse>("/api/bank-accounts"),
+        apiFetch<TransferCandidatesResponse>("/api/transfers/candidates"),
       ]);
       setData(transfersRes);
       setAccounts(accountsRes);
+      setCandidates(candidatesRes.candidates);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Impossible de charger les transferts.");
+    }
+  }
+
+  async function handleConvertCandidate(expenseId: string, incomeId: string) {
+    const key = `${expenseId}:${incomeId}`;
+    setCandidateBusyKey(key);
+    try {
+      await apiFetch("/api/transfers/candidates/convert", {
+        method: "POST",
+        body: JSON.stringify({ expenseId, incomeId }),
+      });
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    } finally {
+      setCandidateBusyKey(null);
+    }
+  }
+
+  async function handleDismissCandidate(expenseId: string, incomeId: string) {
+    const key = `${expenseId}:${incomeId}`;
+    setCandidateBusyKey(key);
+    try {
+      await apiFetch("/api/transfers/candidates/dismiss", {
+        method: "POST",
+        body: JSON.stringify({ expenseId, incomeId }),
+      });
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    } finally {
+      setCandidateBusyKey(null);
     }
   }
 
@@ -97,6 +148,52 @@ export function Transferts() {
           part, pour ne jamais fausser tes totaux.
         </p>
       </div>
+
+      {candidates && candidates.length > 0 && (
+        <section className="card border border-amber-200 dark:border-amber-900">
+          <h2 className="font-semibold text-amber-800 dark:text-amber-400">
+            Virements probablement mal saisis ({candidates.length})
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Ces dépenses et revenus ont le même montant, le même mois, et concernent deux comptes différents — ça
+            ressemble à un virement interne plutôt qu'à une vraie dépense/un vrai revenu. Rien n'est modifié tant que
+            tu ne valides pas.
+          </p>
+          <ul className="mt-3 space-y-2">
+            {candidates.map((c) => {
+              const key = `${c.expenseId}:${c.incomeId}`;
+              const busy = candidateBusyKey === key;
+              return (
+                <li
+                  key={key}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-100 dark:border-amber-900/50 p-2 text-sm"
+                >
+                  <span>
+                    {c.fromAccountName} → {c.toAccountName} — {currency.format(c.amount)} ({MONTH_LABELS[c.month - 1]}{" "}
+                    {c.year})
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleConvertCandidate(c.expenseId, c.incomeId)}
+                      disabled={busy}
+                      className="btn btn-primary px-2 py-1 text-xs"
+                    >
+                      {busy ? "..." : "Convertir en virement"}
+                    </button>
+                    <button
+                      onClick={() => handleDismissCandidate(c.expenseId, c.incomeId)}
+                      disabled={busy}
+                      className="text-xs text-slate-400 hover:text-slate-600"
+                    >
+                      Ce n'en est pas un
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       {availableAccounts.length < 2 ? (
         <p className="card text-sm text-slate-500">

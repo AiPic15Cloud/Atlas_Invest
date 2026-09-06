@@ -347,6 +347,22 @@ export interface TransfersResponse {
   transfers: Transfer[];
 }
 
+export interface TransferCandidate {
+  expenseId: string;
+  incomeId: string;
+  fromAccountId: string;
+  fromAccountName: string;
+  toAccountId: string;
+  toAccountName: string;
+  amount: number;
+  year: number;
+  month: number;
+}
+
+export interface TransferCandidatesResponse {
+  candidates: TransferCandidate[];
+}
+
 export interface RecurringCharge {
   id: string;
   label: string;

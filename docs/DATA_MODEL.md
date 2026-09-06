@@ -125,12 +125,15 @@ est stocké exclusivement dans la table `Transfer`, jamais recopié dans
 lit la table `Transfer`. **Le garde-fou de la section 78 est respecté par
 construction pour les virements déjà enregistrés comme tels.**
 
-Point de vigilance qui reste ouvert : rien n'empêche aujourd'hui un
-virement bancaire d'être saisi par erreur comme une `Expense` (sortie) sur
-un compte et une `Income` (entrée) sur un autre — l'import bancaire et la
-saisie manuelle n'ont pas de détection qui suggère « ceci ressemble à un
-virement interne, pas à une vraie dépense/un vrai revenu ». C'est un futur
-lot (probablement rattaché à la Phase 1, section 9).
+Point de vigilance comblé par Lot 9 : `findTransferCandidates` (appariement
+1-1 par année/mois/montant sur des comptes différents du foyer) détecte les
+paires `Expense`/`Income` qui ressemblent à un virement mal saisi et le
+signale sur la page Transferts — jamais de conversion automatique,
+toujours une action explicite (convertir en `Transfer`, ou écarter la
+suggestion via `CorrectionLog` type `TRANSFER_SUGGESTION_DISMISSED`).
+Limite connue : la fenêtre de détection est glissante sur 6 mois et la date
+du virement converti est approximée au 1er du mois (Income/Expense n'ont
+pas de date exacte) — signalé explicitement dans la note du virement créé.
 
 ## 4. `initialBalance` : nommage trompeur, pas un bug de calcul
 

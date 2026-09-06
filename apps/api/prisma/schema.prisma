@@ -534,6 +534,10 @@ model WealthItem {
 enum CorrectionType {
   WASTEFUL_EXPENSE
   SUBSCRIPTION_STATUS
+  // Une paire depense/revenu detectee comme virement probable (section 9),
+  // mais que l'utilisateur a explicitement confirme n'en etre pas un.
+  // `detail` porte "expenseId:incomeId" pour ne plus la reproposer.
+  TRANSFER_SUGGESTION_DISMISSED
 }
 
 // Journal des corrections manuelles de l'utilisateur (marquage
