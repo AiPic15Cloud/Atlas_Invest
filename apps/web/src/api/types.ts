@@ -822,10 +822,18 @@ export interface EffortRateResult {
   unavailableReason: string | null;
 }
 
+export interface RealDisposableIncomeResult {
+  theoreticalRemainderAfterCredit: number | null;
+  observedMonthlyExpenses: number;
+  realMargin: number | null;
+  unavailableReason: string | null;
+}
+
 export interface FinancingSimulationWithEffortResponse extends FinancingSimulationResponse {
   monthlyIncome: number;
   existingMonthlyDebt: number;
   effortRate: EffortRateResult;
+  realDisposableIncome: RealDisposableIncomeResult;
 }
 
 export interface DashboardResponse {

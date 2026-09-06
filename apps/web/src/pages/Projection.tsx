@@ -605,6 +605,36 @@ export function Projection() {
                 Repère indicatif, jamais un seuil automatique d'acceptation bancaire.
               </p>
             </div>
+            <div className="sm:col-span-2 border-t border-slate-100 pt-3 dark:border-slate-800">
+              {financingResult.realDisposableIncome.unavailableReason ? (
+                <p>{financingResult.realDisposableIncome.unavailableReason}</p>
+              ) : (
+                <p>
+                  Reste après crédit :{" "}
+                  <span className="font-medium">
+                    {currency.format(financingResult.realDisposableIncome.theoreticalRemainderAfterCredit!)}
+                  </span>{" "}
+                  — Dépenses habituelles observées :{" "}
+                  <span className="font-medium">
+                    {currency.format(financingResult.realDisposableIncome.observedMonthlyExpenses)}
+                  </span>{" "}
+                  — Marge réelle :{" "}
+                  <span
+                    className={
+                      financingResult.realDisposableIncome.realMargin! < 0
+                        ? "font-medium text-red-600"
+                        : "font-medium text-emerald-600"
+                    }
+                  >
+                    {currency.format(financingResult.realDisposableIncome.realMargin!)}
+                  </span>
+                  /mois
+                </p>
+              )}
+              <p className="mt-1 text-xs text-slate-400">
+                Dépenses observées sur les 12 derniers mois, hors remboursements de dette déjà comptés ci-dessus.
+              </p>
+            </div>
           </div>
         )}
       </section>

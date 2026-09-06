@@ -426,6 +426,27 @@ nécessite de définir plusieurs seuils, pas seulement un taux d'effort.
 Fonction pure testée (`computeEffortRate`), vérifiée avec l'exemple exact
 de la spec (24,7 % → 34,3 %).
 
+### s. Reste à vivre réel (section 45) — comblé par Lot 32
+
+Même endpoint `POST /api/financing-simulations/effort-rate`, étendu avec
+`realDisposableIncome` : compare le reste théorique après crédit (revenu
+récurrent − dette existante − nouvelle mensualité) au train de vie
+réellement observé (moyenne mensuelle glissante sur 12 mois, même fenêtre
+que les stress tests du Lot 25).
+
+Point de vigilance explicitement traité pour respecter le garde-fou
+« jamais compter deux fois » (section 78) : les dépenses observées
+excluent la catégorie `REMBOURSEMENT_DETTE`, car ces mensualités sont déjà
+comptées via `existingMonthlyDebt` (`Loan.monthlyPayment`) — un
+utilisateur qui logue aussi son remboursement de prêt comme dépense
+manuelle ne verrait donc jamais ce montant doublé dans la marge réelle.
+Vérifié explicitement en ajoutant une dépense `REMBOURSEMENT_DETTE` de
+test et en confirmant que `observedMonthlyExpenses` restait inchangé.
+
+Fonction pure testée (`computeRealDisposableIncome`), vérifiée avec
+l'exemple exact de la spec (reste après crédit 2 600 € − dépenses
+observées 2 250 € = marge réelle 350 €/mois).
+
 ## 3. Vérification du garde-fou « jamais compter un transfert deux fois »
 
 Vérifié dans `apps/api/src/routes/transfers.ts` et le schéma : un virement

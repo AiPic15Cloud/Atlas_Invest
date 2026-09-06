@@ -5,6 +5,7 @@ import { requireAuth } from "../middleware/auth.js";
 import { listAccessibleAccounts } from "../utils/accountAccess.js";
 import { simulateFinancing } from "../utils/financingSimulator.js";
 import { computeEffortRate } from "../utils/effortRate.js";
+import { computeRealDisposableIncome } from "../utils/realDisposableIncome.js";
 import { loansFor } from "./loans.js";
 
 export const financingSimulationsRouter = Router();
@@ -72,7 +73,13 @@ financingSimulationsRouter.post("/effort-rate", async (req, res) => {
   const accounts = await listAccessibleAccounts(req.userId!);
   const accountIds = accounts.map((a) => a.id);
 
-  const [loans, incomes] = await Promise.all([
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
+    return { year: d.getFullYear(), month: d.getMonth() + 1 };
+  });
+  const years = [...new Set(months.map((m) => m.year))];
+
+  const [loans, incomes, expenses] = await Promise.all([
     loansFor(req.userId!),
     prisma.income.findMany({
       where: {
@@ -82,12 +89,28 @@ financingSimulationsRouter.post("/effort-rate", async (req, res) => {
         nature: "RECURRENT",
       },
     }),
+    // REMBOURSEMENT_DETTE est explicitement exclu : ces mensualites sont
+    // deja comptees via existingMonthlyDebt (Loan.monthlyPayment) et les
+    // recompter ici doublerait leur poids si l'utilisateur les logue aussi
+    // en depense (garde-fou section 78, "jamais compter deux fois").
+    prisma.expense.findMany({
+      where: { bankAccountId: { in: accountIds }, year: { in: years }, category: { not: "REMBOURSEMENT_DETTE" } },
+      select: { year: true, month: true, amount: true },
+    }),
   ]);
 
   const monthlyIncome = incomes.reduce((sum, i) => sum + Number(i.amount), 0);
   const existingMonthlyDebt = loans
     .filter((l) => !l.paidOff && Number(l.remainingBalance) > 0)
     .reduce((sum, l) => sum + Number(l.monthlyPayment), 0);
+
+  const observedMonthlyExpenses =
+    months.reduce((sum, { year, month }) => {
+      const total = expenses
+        .filter((e) => e.year === year && e.month === month)
+        .reduce((s, e) => s + Number(e.amount), 0);
+      return sum + total;
+    }, 0) / months.length;
 
   const effortRate = computeEffortRate({
     monthlyIncome,
@@ -96,5 +119,19 @@ financingSimulationsRouter.post("/effort-rate", async (req, res) => {
     referenceRatePercent: parsed.data.referenceRatePercent,
   });
 
-  res.json({ type: parsed.data.type, ...simulation, monthlyIncome, existingMonthlyDebt, effortRate });
+  const realDisposableIncome = computeRealDisposableIncome({
+    monthlyIncome,
+    existingMonthlyDebt,
+    newMonthlyPayment: simulation.monthlyPaymentWithInsurance,
+    observedMonthlyExpenses,
+  });
+
+  res.json({
+    type: parsed.data.type,
+    ...simulation,
+    monthlyIncome,
+    existingMonthlyDebt,
+    effortRate,
+    realDisposableIncome,
+  });
 });
