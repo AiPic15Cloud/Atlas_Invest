@@ -59,14 +59,16 @@ export function Economies() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      <h1 className="page-title flex items-center gap-2">
+        <IconScissors className="h-6 w-6 text-violet-600" />
+        Recommandations d'économies
+      </h1>
+
       <div className="flex items-center justify-between card p-3">
         <button onClick={() => setYear((y) => y - 1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100 dark:hover:bg-slate-800">
           ← {year - 1}
         </button>
-        <span className="text-lg font-semibold flex items-center gap-2">
-          <IconScissors className="h-5 w-5 text-violet-600" />
-          Recommandations d'économies — {year}
-        </span>
+        <span className="font-medium">{year}</span>
         <button onClick={() => setYear((y) => y + 1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100 dark:hover:bg-slate-800">
           {year + 1} →
         </button>

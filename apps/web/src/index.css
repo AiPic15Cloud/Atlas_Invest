@@ -37,6 +37,15 @@ body {
     @apply rounded-2xl bg-emerald-50 p-4 ring-1 ring-emerald-200 sm:p-5 lg:p-6 dark:bg-emerald-950/40 dark:ring-emerald-900;
   }
 
+  /* Fondu sur le bord droit des conteneurs à défilement horizontal (tableaux
+     comparatifs, carrousels de cartes) — sur mobile, rien n'indiquait qu'il y
+     avait plus de contenu à faire défiler, la table/les cartes semblaient
+     juste coupées au bord de l'écran. */
+  .scroll-fade-x {
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
+    mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
+  }
+
   /* Buttons */
   .btn {
     @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50;

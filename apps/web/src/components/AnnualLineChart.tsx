@@ -84,7 +84,7 @@ export function AnnualLineChart({ monthly, selectedIndex, onSelectMonth }: Annua
       </div>
 
       {showTable ? (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto scroll-fade-x">
           <table className="w-full text-left text-xs">
             <thead className="text-slate-500 dark:text-slate-400">
               <tr>

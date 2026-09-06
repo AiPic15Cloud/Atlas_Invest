@@ -350,7 +350,7 @@ function ScenarioComparison({
         À revenu constant ({currency.format(monthlyIncome)}), voici ce que donnerait chaque méthode — pour comparer
         avant de choisir.
       </p>
-      <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
+      <div className="mt-4 flex gap-3 overflow-x-auto scroll-fade-x pb-1">
         {scenarios.map(({ key, def, targets }) => {
           const isActive = key === activeMethod;
           return (
