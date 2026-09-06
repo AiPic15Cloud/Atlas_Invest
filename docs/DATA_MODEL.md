@@ -276,16 +276,10 @@ abonnement n'est pas évalué, son montant n'est jamais inclus dans
 vers l'épargne) — conforme au principe de la section 12, « le mot
 potentielles est important tant que l'utilisateur n'a pas confirmé ».
 
-**Limite connue, héritée du détecteur d'abonnements (Lot 28, avant ce
-document) et non corrigée ici** : le détecteur repère toute dépense
-récurrente par poste sans distinguer un abonnement (Netflix, assurance) d'un
-poste de budget variable qui revient chaque mois par nature (Courses,
-Restaurant) — ces derniers apparaissent donc aussi comme « fuites
-potentielles », ce qui est trompeur. Corriger cela demanderait d'affiner le
-détecteur lui-même (probablement en excluant les postes de catégorie
-`BESOINS` variable, ou en ajoutant un signal de variance de montant), un
-changement plus large qui affecterait aussi la page Abonnements existante —
-volontairement laissé à un lot séparé plutôt que raccommodé ici.
+**Limite connue, héritée du détecteur d'abonnements (étape #28 du projet,
+antérieure à ce document — à ne pas confondre avec le « Lot 28 » de la
+numérotation utilisée dans ce document, qui désigne autre chose, voir §p) :
+corrigée par Lot 29.**
 
 Non traité (section 12) : frais bancaire, doublon de charge (au-delà de la
 détection déjà existante au moment de l'import, `ImportStatement.tsx`), et
@@ -343,6 +337,39 @@ montant annuel affiché sous chaque échéance, total en tête de section.
 Pas de fonction pure dédiée (multiplication directe, déjà le précédent
 établi pour ce type de calcul trivial ailleurs dans le code) mais vérifié
 bout en bout par API avec l'exemple exact de la spec.
+
+### p. Fiabilisation du détecteur d'abonnements (section 12) — comblé par Lot 29
+
+Corrige la limite documentée en §l : le détecteur (`subscriptions.ts`,
+`refreshSubscriptions`) confondait un abonnement (Netflix, salle de sport)
+avec un poste de budget variable qui revient chaque mois par nature
+(Courses, Restaurant) dès que son montant restait stable sur 2 mois par
+coïncidence. Logique d'exclusion extraite dans
+`utils/subscriptionDetection.ts` (`isExcludedFromSubscriptionDetection`,
+testée) et étendue au-delà de `loyer`/`virement épargne` : courses,
+supermarché, marché, épicerie, boulangerie, restaurant, boucherie,
+primeur. Choix assumé : un faux négatif (un vrai abonnement nommé « Box
+Courses Bio » serait aussi exclu) est préférable à une liste
+d'abonnements polluée par du bruit connu — même arbitrage que celui déjà
+fait pour loyer/virement épargne.
+
+Bug découvert et corrigé pendant l'écriture des tests : `\b` en
+JavaScript ne traite pas les lettres accentuées comme des caractères de
+mot, donc une frontière juste après un « é » (ex. « marché ») ne
+matchait jamais — le poste est désormais normalisé (accents retirés via
+NFD) avant le test, plutôt que de dupliquer chaque mot-clé en version
+accentuée.
+
+Cette correction profite aussi bien à la page Abonnements qu'aux Fuites
+potentielles du Lot 24, sans toucher à la structure de la détection ni au
+modèle de données — exactement le lot qui avait été volontairement
+différé. Effet de bord assumé et testé manuellement : un `Subscription`
+déjà en base (créé avant ce lot) dont le libellé correspond désormais aux
+mots-clés d'exclusion est automatiquement marqué `dismissed` au prochain
+rafraîchissement — comme si l'utilisateur avait lui-même confirmé « ce
+n'est pas un abonnement », puisque c'est désormais un fait établi plutôt
+qu'une hypothèse (jamais de suppression physique, conforme au garde-fou
+« préférer l'archivage »).
 
 ## 3. Vérification du garde-fou « jamais compter un transfert deux fois »
 

@@ -4,6 +4,7 @@ import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
 import { listAccessibleAccounts } from "../utils/accountAccess.js";
 import { normalizePosteKey } from "../constants/feelingRules.js";
+import { isExcludedFromSubscriptionDetection } from "../utils/subscriptionDetection.js";
 import type { Subscription } from "@prisma/client";
 
 export const subscriptionsRouter = Router();
@@ -21,13 +22,6 @@ const STATUS_LABELS: Record<(typeof STATUS_VALUES)[number], string> = {
 
 const AMOUNT_TOLERANCE_RATIO = 0.05; // +/- 5%
 const AMOUNT_TOLERANCE_MIN = 1; // au moins 1 euro de marge
-
-// Ces dépenses sont, par nature, tout aussi stables et récurrentes qu'un
-// abonnement (un virement d'épargne programmé, un loyer) mais n'en sont pas
-// un : personne ne "résilie" son épargne ou son loyer. On les écarte de la
-// détection pour ne pas noyer les vrais abonnements (Netflix, salle de
-// sport...) au milieu de charges fixes non concernées.
-const NON_SUBSCRIPTION_KEYWORDS = /\b(loyer|virement\s*epargne|virement\s*épargne)\b/i;
 
 function monthKey(year: number, month: number) {
   return year * 12 + month;
@@ -56,7 +50,7 @@ async function refreshSubscriptions(userId: string) {
     (e) =>
       monthKey(e.year, e.month) >= windowStart &&
       e.category !== "EPARGNE" &&
-      !NON_SUBSCRIPTION_KEYWORDS.test(e.poste),
+      !isExcludedFromSubscriptionDetection(e.poste),
   );
 
   const groups = new Map<
@@ -80,6 +74,18 @@ async function refreshSubscriptions(userId: string) {
 
   const existingRules = await prisma.subscription.findMany({ where: { userId } });
   const existingByKey = new Map(existingRules.map((s) => [s.posteKey, s]));
+
+  // Des abonnements crees avant l'introduction de cette exclusion (ex.
+  // "Courses" detecte a tort comme abonnement) restent en base tant qu'on
+  // ne les corrige pas explicitement : on les marque desormais dismissed,
+  // exactement comme si l'utilisateur avait lui-meme indique "ce n'est pas
+  // un abonnement", puisque c'est desormais un fait etabli plutot qu'une
+  // hypothese.
+  for (const existing of existingRules) {
+    if (!existing.dismissed && isExcludedFromSubscriptionDetection(existing.merchantLabel)) {
+      await prisma.subscription.update({ where: { id: existing.id }, data: { dismissed: true } });
+    }
+  }
 
   for (const [key, group] of groups) {
     if (group.months.size < 2) continue;
