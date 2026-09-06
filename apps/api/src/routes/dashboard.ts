@@ -5,6 +5,7 @@ import { requireAuth } from "../middleware/auth.js";
 import { listAccessibleAccounts } from "../utils/accountAccess.js";
 import { BUDGET_METHODS, computeBudgetBreakdown, type BudgetMethodKey } from "../constants/budgetMethods.js";
 import { computeAnnualTotals, computeMonthlyAverages } from "../utils/annualSummary.js";
+import { sumByCategory } from "../utils/expenseCategoryTotals.js";
 
 export const dashboardRouter = Router();
 
@@ -79,7 +80,7 @@ dashboardRouter.get("/", async (req, res) => {
     }),
     prisma.expense.findMany({
       where: { year: currentYear, month: currentMonth, bankAccountId: { in: accountIds } },
-      select: { category: true, amount: true },
+      select: { category: true, amount: true, splits: { select: { category: true, amount: true } } },
     }),
   ]);
 
@@ -91,12 +92,19 @@ dashboardRouter.get("/", async (req, res) => {
   let besoinsRemaining = 0;
   let epargneRemaining = 0;
   if (template && BUDGET_METHODS[template.method as BudgetMethodKey].splitMode !== "ZERO_BASED") {
-    const besoinsSpent = currentMonthExpenses
-      .filter((e) => e.category === "BESOINS")
-      .reduce((sum, e) => sum + Number(e.amount), 0);
-    const epargneSpent = currentMonthExpenses
-      .filter((e) => e.category === "EPARGNE")
-      .reduce((sum, e) => sum + Number(e.amount), 0);
+    // Une dépense divisée (ExpenseSplit, Lot 3) compte pour chacune de ses
+    // parts plutôt que pour sa catégorie/montant d'origine — même règle que
+    // le résumé "Ce mois : prévu vs réel" côté Budget du mois.
+    const currentMonthTotals = sumByCategory(
+      currentMonthExpenses.map((e) => ({
+        amount: Number(e.amount),
+        category: e.category,
+        splits: e.splits.map((s) => ({ category: s.category, amount: Number(s.amount) })),
+      })),
+      ["BESOINS", "EPARGNE"],
+    );
+    const besoinsSpent = currentMonthTotals.BESOINS;
+    const epargneSpent = currentMonthTotals.EPARGNE;
     const breakdown = computeBudgetBreakdown(template.method as BudgetMethodKey, Number(template.monthlyIncome), {
       besoins: besoinsSpent,
       envies: 0,

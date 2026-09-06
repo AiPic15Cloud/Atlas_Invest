@@ -7,7 +7,8 @@ import { shiftMonth } from "../utils/dateMath.js";
 import { buildItemTree, flattenLeafItems } from "../utils/budgetItemTree.js";
 import { computeBudgetBreakdown, type BudgetMethodKey } from "../constants/budgetMethods.js";
 import { normalizePosteKey, computeAutoFeeling } from "../constants/feelingRules.js";
-import type { Expense, ExpenseFeeling, BudgetCategory } from "@prisma/client";
+import { sumByCategory, splitsSumMatchesExpense } from "../utils/expenseCategoryTotals.js";
+import type { Expense, ExpenseFeeling, BudgetCategory, ExpenseSplit } from "@prisma/client";
 
 export const expensesRouter = Router();
 
@@ -15,7 +16,10 @@ expensesRouter.use(requireAuth);
 
 const CATEGORY_VALUES = ["BESOINS", "ENVIES", "EPARGNE", "INVESTISSEMENT", "REMBOURSEMENT_DETTE"] as const;
 
-function serializeExpense(expense: Expense & { bankAccount: { name: string } }, unusual: boolean) {
+function serializeExpense(
+  expense: Expense & { bankAccount: { name: string }; splits?: ExpenseSplit[] },
+  unusual: boolean,
+) {
   return {
     id: expense.id,
     year: expense.year,
@@ -30,6 +34,12 @@ function serializeExpense(expense: Expense & { bankAccount: { name: string } }, 
     feeling: expense.feeling,
     feelingReviewed: expense.feelingReviewed,
     createdAt: expense.createdAt,
+    splits: (expense.splits ?? []).map((s) => ({
+      id: s.id,
+      category: s.category,
+      amount: s.amount.toString(),
+      note: s.note,
+    })),
   };
 }
 
@@ -106,7 +116,7 @@ expensesRouter.get("/", async (req, res) => {
   const [expenses, incomes, template, overrides] = await Promise.all([
     prisma.expense.findMany({
       where: { year, month, bankAccountId: { in: accountIds } },
-      include: { bankAccount: { select: { name: true } } },
+      include: { bankAccount: { select: { name: true } }, splits: true },
       orderBy: { createdAt: "asc" },
     }),
     prisma.income.findMany({ where: { year, month, bankAccountId: { in: accountIds } }, select: { amount: true } }),
@@ -119,15 +129,20 @@ expensesRouter.get("/", async (req, res) => {
   const totalSpent = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
   const totalIncome = incomes.reduce((sum, i) => sum + Number(i.amount), 0);
   const regretTotal = expenses.filter((e) => e.feeling === "REGRET").reduce((sum, e) => sum + Number(e.amount), 0);
-  // INVESTISSEMENT et REMBOURSEMENT_DETTE ne rentrent pas dans ce barème
-  // (Lot 3) : elles comptent dans totalSpent mais pas dans byCategory, pour
-  // ne pas fausser la comparaison au budget type 50/30/20.
-  const byCategory = { besoins: 0, envies: 0, epargne: 0 };
-  for (const e of expenses) {
-    if (e.category === "BESOINS") byCategory.besoins += Number(e.amount);
-    else if (e.category === "ENVIES") byCategory.envies += Number(e.amount);
-    else if (e.category === "EPARGNE") byCategory.epargne += Number(e.amount);
-  }
+  // INVESTISSEMENT et REMBOURSEMENT_DETTE ne rentrent pas dans ce barème :
+  // elles comptent dans totalSpent mais pas dans byCategory, pour ne pas
+  // fausser la comparaison au budget type 50/30/20. Une dépense divisée en
+  // plusieurs categories (ExpenseSplit, Lot 3) compte pour chacune de ses
+  // parts plutot que pour sa categorie/montant d'origine.
+  const categoryTotals = sumByCategory(
+    expenses.map((e) => ({
+      amount: Number(e.amount),
+      category: e.category,
+      splits: e.splits.map((s) => ({ category: s.category, amount: Number(s.amount) })),
+    })),
+    ["BESOINS", "ENVIES", "EPARGNE"],
+  );
+  const byCategory = { besoins: categoryTotals.BESOINS, envies: categoryTotals.ENVIES, epargne: categoryTotals.EPARGNE };
 
   // Projection fin de mois (spec 4.2) : extrapolation lineaire au rythme
   // actuel, seulement pertinente pour le mois en cours — un mois passe est
@@ -279,7 +294,7 @@ expensesRouter.post("/bulk", async (req, res) => {
 });
 
 async function loadOwnExpense(userId: string, expenseId: string) {
-  const expense = await prisma.expense.findUnique({ where: { id: expenseId } });
+  const expense = await prisma.expense.findUnique({ where: { id: expenseId }, include: { splits: true } });
   if (!expense) return { error: 404 as const };
   const accountResult = await loadAccessibleAccount(userId, expense.bankAccountId);
   if ("error" in accountResult) return accountResult;
@@ -306,12 +321,95 @@ expensesRouter.patch("/:id", async (req, res) => {
     return;
   }
 
+  // Une dépense divisée (Lot 3) a des ExpenseSplit dont la somme doit rester
+  // égale à son montant : changer amount sans toucher aux splits romprait
+  // cet invariant silencieusement. On demande d'abord de retirer le
+  // découpage plutôt que de le recalculer à sa place.
+  if (parsed.data.amount !== undefined && result.expense.splits.length > 0) {
+    res.status(409).json({ error: "Retire d'abord le découpage de cette dépense avant de changer son montant." });
+    return;
+  }
+
   const expense = await prisma.expense.update({
     where: { id: result.expense.id },
     data: parsed.data,
-    include: { bankAccount: { select: { name: true } } },
+    include: { bankAccount: { select: { name: true } }, splits: true },
   });
 
+  res.json({ expense: serializeExpense(expense, false) });
+});
+
+const setSplitsSchema = z.object({
+  splits: z
+    .array(
+      z.object({
+        category: z.enum(CATEGORY_VALUES),
+        amount: z.number().finite().positive("Le montant de chaque part doit être positif."),
+        note: z.string().trim().max(200).optional(),
+      }),
+    )
+    .min(2, "Un découpage a besoin d'au moins 2 parts — sinon retire-le simplement."),
+});
+
+// Decoupe une depense en plusieurs categories (spec section 10). Remplace
+// entierement les splits existants. La somme des parts doit egaler le
+// montant de la depense (tolerance d'arrondi au centime, voir
+// utils/expenseCategoryTotals.ts) — sinon l'argent "disparaitrait" ou
+// serait compte en trop dans les totaux par categorie.
+expensesRouter.put("/:id/splits", async (req, res) => {
+  const result = await loadOwnExpense(req.userId!, req.params.id);
+  if ("error" in result) {
+    res.status(result.error).json({ error: result.error === 404 ? "Dépense introuvable." : "Accès refusé." });
+    return;
+  }
+
+  const parsed = setSplitsSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Données invalides." });
+    return;
+  }
+
+  if (!splitsSumMatchesExpense(Number(result.expense.amount), parsed.data.splits)) {
+    res.status(400).json({
+      error: `La somme des parts doit être égale au montant de la dépense (${result.expense.amount.toString()} €).`,
+    });
+    return;
+  }
+
+  await prisma.$transaction([
+    prisma.expenseSplit.deleteMany({ where: { expenseId: result.expense.id } }),
+    prisma.expenseSplit.createMany({
+      data: parsed.data.splits.map((s) => ({
+        expenseId: result.expense.id,
+        category: s.category,
+        amount: s.amount,
+        note: s.note || null,
+      })),
+    }),
+  ]);
+
+  const expense = await prisma.expense.findUniqueOrThrow({
+    where: { id: result.expense.id },
+    include: { bankAccount: { select: { name: true } }, splits: true },
+  });
+  res.json({ expense: serializeExpense(expense, false) });
+});
+
+// Retire le decoupage : la depense recompte pour sa totalite dans sa propre
+// category/amount (comportement par defaut).
+expensesRouter.delete("/:id/splits", async (req, res) => {
+  const result = await loadOwnExpense(req.userId!, req.params.id);
+  if ("error" in result) {
+    res.status(result.error).json({ error: result.error === 404 ? "Dépense introuvable." : "Accès refusé." });
+    return;
+  }
+
+  await prisma.expenseSplit.deleteMany({ where: { expenseId: result.expense.id } });
+
+  const expense = await prisma.expense.findUniqueOrThrow({
+    where: { id: result.expense.id },
+    include: { bankAccount: { select: { name: true } }, splits: true },
+  });
   res.json({ expense: serializeExpense(expense, false) });
 });
 
@@ -518,7 +616,7 @@ expensesRouter.patch("/:id/feeling", async (req, res) => {
 
   const expense = await prisma.expense.findUniqueOrThrow({
     where: { id: result.expense.id },
-    include: { bankAccount: { select: { name: true } } },
+    include: { bankAccount: { select: { name: true } }, splits: true },
   });
   res.json({ expense: serializeExpense(expense, false) });
 });

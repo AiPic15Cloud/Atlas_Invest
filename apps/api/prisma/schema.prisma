@@ -259,8 +259,28 @@ model Expense {
   bankAccountId String
 
   assignment ExpenseAssignment?
+  splits     ExpenseSplit[]
 
   @@index([bankAccountId, year, month])
+}
+
+// Decoupage d'une depense en plusieurs categories (spec section 10, ex.
+// 80 € besoin / 20 € envie sur un meme achat). Absence de lignes = la
+// depense compte pour sa totalite dans sa propre category/amount (cas
+// actuel, inchange). Quand des lignes existent, la somme de leurs amount
+// doit toujours egaler Expense.amount (verifie cote application, voir
+// utils/expenseCategoryTotals.ts).
+model ExpenseSplit {
+  id        String         @id @default(cuid())
+  category  BudgetCategory
+  amount    Decimal        @db.Decimal(12, 2)
+  note      String?
+  createdAt DateTime       @default(now())
+
+  expense   Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  expenseId String
+
+  @@index([expenseId])
 }
 
 // Repartition "a la carte" des charges communes : chaque depense sur un
