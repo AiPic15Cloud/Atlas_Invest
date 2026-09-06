@@ -8,23 +8,23 @@ type Color = "violet" | "emerald" | "rose" | "sky" | "amber";
 // solde...) — indépendante du ton, qui juge la performance (bon/mauvais).
 // Sans ça, toutes les tuiles ressortaient violettes malgré des sens différents.
 const CHIP_CLASS: Record<Color, string> = {
-  violet: "bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400",
-  emerald: "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400",
-  rose: "bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400",
-  sky: "bg-sky-100 text-sky-600 dark:bg-sky-500/15 dark:text-sky-400",
-  amber: "bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400",
+  violet: "bg-copper-100 text-copper-700 dark:bg-copper-500/15 dark:text-copper-300",
+  emerald: "bg-olive-100 text-olive-700 dark:bg-olive-500/15 dark:text-olive-300",
+  rose: "bg-terracotta-100 text-terracotta-700 dark:bg-terracotta-500/15 dark:text-terracotta-300",
+  sky: "bg-copper-100 text-copper-700 dark:bg-copper-500/15 dark:text-copper-300",
+  amber: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400",
 };
 
 const VALUE_CLASS: Record<Tone, string> = {
-  default: "text-slate-900 dark:text-slate-100",
-  good: "text-emerald-600 dark:text-emerald-400",
-  warn: "text-red-600 dark:text-red-400",
+  default: "text-[#2b1d14] dark:text-[#f3e9dc]",
+  good: "text-olive-600 dark:text-olive-400",
+  warn: "text-terracotta-600 dark:text-terracotta-400",
 };
 
 const HINT_CLASS: Record<Tone, string> = {
-  default: "text-slate-500 dark:text-slate-400",
-  good: "text-emerald-600 dark:text-emerald-400",
-  warn: "text-red-600 dark:text-red-400",
+  default: "text-[#8a7358] dark:text-[#a8927a]",
+  good: "text-olive-600 dark:text-olive-400",
+  warn: "text-terracotta-600 dark:text-terracotta-400",
 };
 
 interface StatTileProps {
@@ -41,7 +41,7 @@ interface StatTileProps {
 // donnent un repère visuel avant même de lire le chiffre.
 export function StatTile({ icon: Icon, label, value, color = "violet", tone = "default", hint }: StatTileProps) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div className="rounded-[20px] border border-[#e8dcc9] bg-white p-4 shadow-sm dark:border-[#3a2a1c] dark:bg-[#241a12]">
       <div className={`flex h-10 w-10 items-center justify-center rounded-full ${CHIP_CLASS[color]}`}>
         <Icon className="h-5 w-5" />
       </div>

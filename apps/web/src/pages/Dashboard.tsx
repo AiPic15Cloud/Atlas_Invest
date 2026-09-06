@@ -28,9 +28,9 @@ import type {
 } from "../api/types";
 
 const CATEGORY_BAR_COLOR: Record<BudgetCategory, string> = {
-  BESOINS: "bg-amber-500",
-  ENVIES: "bg-pink-500",
-  EPARGNE: "bg-violet-500",
+  BESOINS: "bg-copper-500",
+  ENVIES: "bg-terracotta-500",
+  EPARGNE: "bg-olive-500",
 };
 
 const HERO_QUICK_ACTIONS: { label: string; icon: ComponentType<IconProps>; to: string }[] = [
@@ -89,7 +89,7 @@ export function Dashboard() {
   }, [year]);
 
   if (error) return <p className="text-sm text-red-600">{error}</p>;
-  if (!data) return <p className="text-sm text-slate-500">Chargement...</p>;
+  if (!data) return <p className="text-sm text-[#8a7358]">Chargement...</p>;
 
   const selected = data.monthly[selectedMonthIndex];
   const moneyFlowMax = Math.max(selected.income, selected.expense);
@@ -104,23 +104,23 @@ export function Dashboard() {
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="page-title flex items-center gap-2">
-            <IconHome className="h-6 w-6 text-violet-600" />
+            <IconHome className="h-6 w-6 text-copper-600" />
             Accueil
           </h1>
-          <p className="mt-0.5 text-sm text-slate-500">Une vue claire de mon mois (ou de mon année).</p>
+          <p className="mt-0.5 text-sm text-[#8a7358]">Une vue claire de mon mois (ou de mon année).</p>
         </div>
-        <div className="flex items-center gap-1 rounded-lg bg-white dark:bg-slate-900 p-1 shadow-sm ring-1 ring-slate-200/80 dark:ring-slate-700/80">
+        <div className="flex items-center gap-1 rounded-lg bg-white dark:bg-[#241a12] p-1 shadow-sm ring-1 ring-[#e8dcc9]/80 dark:ring-[#3a2a1c]/80">
           <button
             onClick={() => setYear((y) => y - 1)}
-            className="rounded-md px-2.5 py-1 text-sm text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="rounded-md px-2.5 py-1 text-sm text-[#8a7358] hover:bg-[#ece0cb] dark:hover:bg-[#332417]"
             aria-label="Année précédente"
           >
             ←
           </button>
-          <span className="min-w-[3.5rem] text-center text-sm font-semibold text-slate-900 dark:text-slate-100">{year}</span>
+          <span className="min-w-[3.5rem] text-center text-sm font-semibold text-[#2b1d14] dark:text-[#f3e9dc]">{year}</span>
           <button
             onClick={() => setYear((y) => y + 1)}
-            className="rounded-md px-2.5 py-1 text-sm text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="rounded-md px-2.5 py-1 text-sm text-[#8a7358] hover:bg-[#ece0cb] dark:hover:bg-[#332417]"
             aria-label="Année suivante"
           >
             →
@@ -128,39 +128,41 @@ export function Dashboard() {
         </div>
       </div>
 
-      <p className="text-sm text-slate-600 dark:text-slate-400">{greeting}</p>
+      <p className="font-display text-sm text-[#5a4530] dark:text-[#cbb89e]">{greeting}</p>
 
       <section
-        className={`rounded-2xl p-5 text-white shadow-sm sm:p-6 ${
+        className={`rounded-[28px] p-5 shadow-[0_1px_2px_rgba(43,29,20,0.06),0_12px_32px_-16px_rgba(43,29,20,0.22)] ring-1 sm:p-6 ${
           data.availableMoney.amount < 0
-            ? "bg-gradient-to-br from-red-600 to-orange-500"
-            : "bg-gradient-to-br from-violet-600 to-pink-500"
+            ? "bg-terracotta-50 text-terracotta-900 ring-terracotta-200 dark:bg-terracotta-900/25 dark:text-terracotta-100 dark:ring-terracotta-800"
+            : "bg-copper-50 text-[#2b1d14] ring-copper-200 dark:bg-copper-900/25 dark:text-[#f3e9dc] dark:ring-copper-800"
         }`}
       >
-        <p className="text-xs font-medium uppercase tracking-wide text-white/75">Argent réellement disponible</p>
-        <p className="mt-1 text-3xl font-bold tracking-tight">{currency.format(data.availableMoney.amount)}</p>
-        <p className="mt-1 text-sm text-white/80">
+        <p className="text-xs font-medium uppercase tracking-wide text-copper-700 dark:text-copper-300">
+          Argent réellement disponible
+        </p>
+        <p className="font-display mt-1 text-3xl font-bold tracking-tight">{currency.format(data.availableMoney.amount)}</p>
+        <p className="mt-1 text-sm opacity-75">
           Ton solde bancaire, moins les prélèvements à venir et les dépenses essentielles restantes ce mois-ci —
           plus fiable que le solde affiché par ta banque pour savoir ce que tu peux vraiment dépenser.
         </p>
-        <dl className="mt-4 space-y-1.5 border-t border-white/20 pt-3 text-xs text-white/80">
+        <dl className="mt-4 space-y-1.5 border-t border-copper-200/70 pt-3 text-xs opacity-80 dark:border-copper-800/60">
           <div className="flex justify-between">
             <dt>Solde actuel des comptes</dt>
-            <dd className="font-medium text-white">{currency.format(data.availableMoney.currentBalance)}</dd>
+            <dd className="font-medium">{currency.format(data.availableMoney.currentBalance)}</dd>
           </div>
           <div className="flex justify-between">
             <dt>− Prélèvements à venir ce mois</dt>
-            <dd className="font-medium text-white">{currency.format(data.availableMoney.upcomingCharges)}</dd>
+            <dd className="font-medium">{currency.format(data.availableMoney.upcomingCharges)}</dd>
           </div>
           {data.availableMoney.hasEstimate ? (
             <>
               <div className="flex justify-between">
                 <dt>− Essentiels restants estimés</dt>
-                <dd className="font-medium text-white">{currency.format(data.availableMoney.besoinsRemaining)}</dd>
+                <dd className="font-medium">{currency.format(data.availableMoney.besoinsRemaining)}</dd>
               </div>
               <div className="flex justify-between">
                 <dt>− Épargne prévue restante</dt>
-                <dd className="font-medium text-white">{currency.format(data.availableMoney.epargneRemaining)}</dd>
+                <dd className="font-medium">{currency.format(data.availableMoney.epargneRemaining)}</dd>
               </div>
             </>
           ) : (
@@ -170,14 +172,14 @@ export function Dashboard() {
             </p>
           )}
         </dl>
-        <div className="mt-4 flex items-center justify-between gap-2 border-t border-white/20 pt-4">
+        <div className="mt-4 flex items-center justify-between gap-2 border-t border-copper-200/70 pt-4 dark:border-copper-800/60">
           {HERO_QUICK_ACTIONS.map((action) => (
             <button
               key={action.label}
               onClick={() => navigate(action.to)}
-              className="flex flex-1 flex-col items-center gap-1.5 text-white/90 transition-colors hover:text-white"
+              className="flex flex-1 flex-col items-center gap-1.5 opacity-80 transition-colors hover:opacity-100"
             >
-              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30">
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/70 shadow-sm ring-1 ring-copper-200 dark:bg-white/10 dark:ring-copper-800">
                 <action.icon className="h-5 w-5" />
               </span>
               <span className="text-[11px] font-medium">{action.label}</span>
@@ -203,13 +205,13 @@ export function Dashboard() {
               const over = actual > target;
               return (
                 <div key={cat}>
-                  <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400">
+                  <div className="flex justify-between text-xs text-[#5a4530] dark:text-[#a8927a]">
                     <span>{cat === "BESOINS" ? "Besoins" : cat === "ENVIES" ? "Envies" : "Épargne"}</span>
                     <span className={over ? "font-medium text-red-600" : ""}>
                       {currency.format(actual)} / prévu {currency.format(target)}
                     </span>
                   </div>
-                  <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                  <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-[#ece0cb] dark:bg-[#332417]">
                     <div
                       style={{ width: `${pct}%` }}
                       className={`h-full ${over ? "bg-red-500" : CATEGORY_BAR_COLOR[cat]}`}
@@ -252,23 +254,23 @@ export function Dashboard() {
         <h2 className="mb-2 font-semibold">Revenu, dépenses et reste — {year}</h2>
         <AnnualLineChart monthly={data.monthly} selectedIndex={selectedMonthIndex} onSelectMonth={setSelectedMonthIndex} />
 
-        <div className="mt-3 space-y-3 rounded-md bg-slate-50 dark:bg-slate-800/60 p-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <div className="mt-3 space-y-3 rounded-md bg-[#fdf6ee] dark:bg-[#332417]/40 p-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-[#8a7358] dark:text-[#a8927a]">
             {MONTH_NAMES[selected.month - 1]} {selected.year}
           </p>
           <MoneyBar
             label="Argent qui rentre"
             formatted={currency.format(selected.income)}
             pct={moneyFlowMax > 0 ? Math.min((selected.income / moneyFlowMax) * 100, 100) : 0}
-            colorClass="bg-emerald-500"
+            colorClass="bg-olive-500"
           />
           <MoneyBar
             label="Argent qui sort"
             formatted={currency.format(selected.expense)}
             pct={moneyFlowMax > 0 ? Math.min((selected.expense / moneyFlowMax) * 100, 100) : 0}
-            colorClass="bg-rose-500"
+            colorClass="bg-terracotta-500"
           />
-          <p className="text-sm text-slate-700 dark:text-slate-300">
+          <p className="text-sm text-[#4a3826] dark:text-[#cbb89e]">
             Reste de {currency.format(selected.reste)}
             {selected.income > 0 && ` (dépenses = ${Math.round((selected.expense / selected.income) * 100)} % du revenu)`}.
           </p>
@@ -284,19 +286,19 @@ export function Dashboard() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <section className="card">
           <h2 className="font-semibold flex items-center gap-2">
-            <IconSliders className="h-5 w-5 text-violet-600" />
+            <IconSliders className="h-5 w-5 text-copper-600" />
             Mon plan
           </h2>
           {data.budgetTemplate ? (
             <>
-              <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">{data.budgetTemplate.label}</p>
+              <p className="mt-2 text-sm text-[#4a3826] dark:text-[#cbb89e]">{data.budgetTemplate.label}</p>
               <Link to="/budget-type" className="btn btn-outline btn-sm mt-3">
                 Voir mon plan →
               </Link>
             </>
           ) : (
             <>
-              <p className="mt-2 text-sm text-slate-500">Tu n'as pas encore construit ton plan.</p>
+              <p className="mt-2 text-sm text-[#8a7358]">Tu n'as pas encore construit ton plan.</p>
               <Link to="/budget-type" className="btn btn-outline btn-sm mt-3">
                 Construire mon plan →
               </Link>
@@ -306,21 +308,21 @@ export function Dashboard() {
 
         <section className="card">
           <h2 className="font-semibold flex items-center gap-2">
-            <IconShield className="h-5 w-5 text-violet-600" />
+            <IconShield className="h-5 w-5 text-copper-600" />
             Épargne de précaution
           </h2>
           {emergencyFund === undefined ? (
-            <p className="mt-2 text-sm text-slate-500">Chargement...</p>
+            <p className="mt-2 text-sm text-[#8a7358]">Chargement...</p>
           ) : emergencyFund ? (
             <>
-              <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
+              <p className="mt-2 text-sm text-[#4a3826] dark:text-[#cbb89e]">
                 {currency.format(emergencyFund.currentSavedAmount)} sur {currency.format(emergencyFund.targetAmount)}{" "}
                 ({Math.round(emergencyFund.progressRatio * 100)} %)
               </p>
-              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#ece0cb] dark:bg-[#332417]">
                 <div
                   style={{ width: `${Math.min(emergencyFund.progressRatio * 100, 100)}%` }}
-                  className="h-full bg-emerald-500"
+                  className="h-full bg-olive-500"
                 />
               </div>
               <Link to="/epargne" className="btn btn-outline btn-sm mt-3">
@@ -329,7 +331,7 @@ export function Dashboard() {
             </>
           ) : (
             <>
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="mt-2 text-sm text-[#8a7358]">
                 Réponds au questionnaire de vulnérabilité pour estimer ton objectif d'épargne de précaution.
               </p>
               <Link to="/epargne" className="btn btn-outline btn-sm mt-3">
@@ -358,11 +360,11 @@ function MoneyBar({
 }) {
   return (
     <div>
-      <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
+      <div className="flex items-center justify-between text-xs text-[#5a4530] dark:text-[#a8927a]">
         <span>{label}</span>
-        <span className="font-semibold text-slate-900 dark:text-slate-100">{formatted}</span>
+        <span className="font-semibold text-[#2b1d14] dark:text-[#f3e9dc]">{formatted}</span>
       </div>
-      <div className="mt-1 h-2.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+      <div className="mt-1 h-2.5 w-full overflow-hidden rounded-full bg-[#ece0cb] dark:bg-[#4f3a26]">
         <div style={{ width: `${pct}%` }} className={`h-full rounded-full ${colorClass}`} />
       </div>
     </div>
@@ -432,12 +434,12 @@ function MonthlyGoalsSection({ year, month }: { year: number; month: number }) {
     <section className="card">
       <div className="flex items-center justify-between">
         <h2 className="font-semibold flex items-center gap-2">
-          <IconFlag className="h-5 w-5 text-violet-600" />
+          <IconFlag className="h-5 w-5 text-copper-600" />
           Nos victoires
         </h2>
-        {goals && <span className="text-sm text-slate-400">{doneCount}/{goals.length}</span>}
+        {goals && <span className="text-sm text-[#a8927a]">{doneCount}/{goals.length}</span>}
       </div>
-      <p className="mt-1 text-sm text-slate-500">
+      <p className="mt-1 text-sm text-[#8a7358]">
         Notez ce que vous voulez accomplir ce mois, puis cochez chaque réussite, même les plus petites.
       </p>
       {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
@@ -463,21 +465,21 @@ function MonthlyGoalsSection({ year, month }: { year: number; month: number }) {
       </div>
 
       {!goals ? (
-        <p className="mt-3 text-sm text-slate-500">Chargement...</p>
+        <p className="mt-3 text-sm text-[#8a7358]">Chargement...</p>
       ) : goals.length === 0 ? (
-        <p className="mt-3 text-sm text-slate-500">Aucun objectif pour ce mois. Choisissez un emoji et ajoutez-en un.</p>
+        <p className="mt-3 text-sm text-[#8a7358]">Aucun objectif pour ce mois. Choisissez un emoji et ajoutez-en un.</p>
       ) : (
         <ul className="mt-3 space-y-1">
           {goals.map((goal) => (
-            <li key={goal.id} className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 py-1.5 last:border-0">
+            <li key={goal.id} className="flex items-center justify-between gap-2 border-b border-[#ece0cb] dark:border-[#3a2a1c] py-1.5 last:border-0">
               <label className="flex flex-1 items-center gap-2 text-sm">
                 <input type="checkbox" checked={goal.done} onChange={() => handleToggle(goal)} />
-                <span className={goal.done ? "text-slate-400 line-through" : ""}>
+                <span className={goal.done ? "text-[#a8927a] line-through" : ""}>
                   {goal.emoji ? `${goal.emoji} ` : ""}
                   {goal.label}
                 </span>
               </label>
-              <button onClick={() => handleDelete(goal.id)} className="text-xs text-slate-400 hover:text-red-600">
+              <button onClick={() => handleDelete(goal.id)} className="text-xs text-[#a8927a] hover:text-terracotta-600">
                 Supprimer
               </button>
             </li>

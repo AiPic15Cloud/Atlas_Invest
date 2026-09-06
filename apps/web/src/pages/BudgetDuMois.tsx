@@ -37,11 +37,11 @@ const CATEGORY_LABELS: Record<ExpenseCategory, string> = {
 };
 
 const CATEGORY_TEXT_CLASS: Record<ExpenseCategory, string> = {
-  BESOINS: "text-amber-600",
-  ENVIES: "text-pink-600",
-  EPARGNE: "text-violet-600",
-  INVESTISSEMENT: "text-sky-600",
-  REMBOURSEMENT_DETTE: "text-slate-600 dark:text-slate-400",
+  BESOINS: "text-copper-600",
+  ENVIES: "text-terracotta-600",
+  EPARGNE: "text-olive-600",
+  INVESTISSEMENT: "text-copper-700",
+  REMBOURSEMENT_DETTE: "text-[#5a4530] dark:text-[#a8927a]",
 };
 
 const CATEGORY_ORDER: ExpenseCategory[] = ["BESOINS", "ENVIES", "EPARGNE", "INVESTISSEMENT", "REMBOURSEMENT_DETTE"];
@@ -50,11 +50,11 @@ const CATEGORY_ORDER: ExpenseCategory[] = ["BESOINS", "ENVIES", "EPARGNE", "INVE
 // ligne, dans l'esprit des listes de transactions des références) —
 // mêmes couleurs que CATEGORY_TEXT_CLASS, juste en fond teinté.
 const CATEGORY_AVATAR_CLASS: Record<ExpenseCategory, string> = {
-  BESOINS: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400",
-  ENVIES: "bg-pink-100 text-pink-700 dark:bg-pink-500/15 dark:text-pink-400",
-  EPARGNE: "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-400",
-  INVESTISSEMENT: "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-400",
-  REMBOURSEMENT_DETTE: "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300",
+  BESOINS: "bg-copper-100 text-copper-700 dark:bg-copper-500/15 dark:text-copper-300",
+  ENVIES: "bg-terracotta-100 text-terracotta-700 dark:bg-terracotta-500/15 dark:text-terracotta-300",
+  EPARGNE: "bg-olive-100 text-olive-700 dark:bg-olive-500/15 dark:text-olive-300",
+  INVESTISSEMENT: "bg-copper-100 text-copper-800 dark:bg-copper-500/20 dark:text-copper-200",
+  REMBOURSEMENT_DETTE: "bg-[#ece0cb] text-[#4a3826] dark:bg-[#3a2a1c] dark:text-[#cbb89e]",
 };
 
 function shiftMonth(year: number, month: number, delta: number) {
@@ -216,7 +216,7 @@ export function BudgetDuMois() {
   }
 
   if (error) return <p className="text-sm text-red-600">{error}</p>;
-  if (!data) return <p className="text-sm text-slate-500">Chargement...</p>;
+  if (!data) return <p className="text-sm text-[#8a7358]">Chargement...</p>;
 
   const { summary } = data;
   const ecart = summary.budgetComparison
@@ -227,16 +227,16 @@ export function BudgetDuMois() {
   return (
     <div className="space-y-4 sm:space-y-6">
       <h1 className="text-xl font-semibold flex items-center gap-2">
-        <IconCalendar className="h-6 w-6 text-violet-600" />
+        <IconCalendar className="h-6 w-6 text-copper-600" />
         Mon mois
       </h1>
 
       <div className="flex items-center justify-between card p-3">
-        <button onClick={() => goToMonth(-1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100 dark:hover:bg-slate-800">
+        <button onClick={() => goToMonth(-1)} className="rounded-md px-2 py-1 text-sm hover:bg-copper-50 dark:hover:bg-[#332417]">
           ← Précédent
         </button>
         <span className="font-medium">{MONTH_NAMES[month - 1]} {year}</span>
-        <button onClick={() => goToMonth(1)} className="rounded-md px-2 py-1 text-sm hover:bg-slate-100 dark:hover:bg-slate-800">
+        <button onClick={() => goToMonth(1)} className="rounded-md px-2 py-1 text-sm hover:bg-copper-50 dark:hover:bg-[#332417]">
           Suivant →
         </button>
       </div>
@@ -261,9 +261,9 @@ export function BudgetDuMois() {
           </button>
         </div>
         {copyOtherOpen && (
-          <div className="mt-3 flex items-end gap-2 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-2">
+          <div className="mt-3 flex items-end gap-2 rounded-md border border-[#e8dcc9] dark:border-[#3a2a1c] bg-[#fdf6ee] dark:bg-[#332417]/40 p-2">
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">Mois source</label>
+              <label className="mb-1 block text-xs font-medium text-[#4a3826] dark:text-[#cbb89e]">Mois source</label>
               <select
                 value={copyFromMonth}
                 onChange={(e) => setCopyFromMonth(Number(e.target.value))}
@@ -281,7 +281,7 @@ export function BudgetDuMois() {
               className="w-24 input px-2 py-1.5 text-sm"
               aria-label="Année source"
             />
-            <button onClick={handleCopyOtherMonth} className="rounded-md bg-violet-600 hover:bg-violet-700 px-3 py-1.5 text-xs font-medium text-white">
+            <button onClick={handleCopyOtherMonth} className="rounded-md bg-copper-600 hover:bg-copper-700 px-3 py-1.5 text-xs font-medium text-white">
               Copier
             </button>
           </div>
@@ -339,7 +339,7 @@ export function BudgetDuMois() {
           />
         </div>
         {!summary.budgetComparison && (
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-[#8a7358]">
             Crée ton budget type (avec une méthode à cibles fixes) pour voir l'écart ici.
           </p>
         )}
@@ -415,7 +415,7 @@ export function BudgetDuMois() {
           </div>
         </div>
         {filteredExpenses.length === 0 ? (
-          <p className="mt-2 text-sm text-slate-500">Aucune dépense.</p>
+          <p className="mt-2 text-sm text-[#8a7358]">Aucune dépense.</p>
         ) : (
           <div className="mt-3 space-y-5">
             {CATEGORY_ORDER.map((cat) => {
@@ -426,7 +426,7 @@ export function BudgetDuMois() {
                 <div key={cat}>
                   <div className="mb-1 flex items-center justify-between">
                     <h3 className={`text-sm font-bold ${CATEGORY_TEXT_CLASS[cat]}`}>{CATEGORY_LABELS[cat]}</h3>
-                    <span className="text-xs font-medium text-slate-400">{currency.format(total)}</span>
+                    <span className="text-xs font-medium text-[#a8927a]">{currency.format(total)}</span>
                   </div>
                   <ul>
                     {items.map((expense) => (
@@ -454,7 +454,7 @@ function ExpenseRow({
 }) {
   const currency = useCurrencyFormatter();
   return (
-    <li className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 py-2 last:border-0">
+    <li className="flex items-center justify-between border-b border-[#ece0cb] dark:border-[#3a2a1c] py-2 last:border-0">
       <div className="flex items-center gap-3">
         <div
           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${CATEGORY_AVATAR_CLASS[expense.category]}`}
@@ -476,7 +476,7 @@ function ExpenseRow({
               </span>
             )}
           </p>
-          <p className="text-xs text-slate-500">{expense.bankAccountName}</p>
+          <p className="text-xs text-[#8a7358]">{expense.bankAccountName}</p>
         </div>
       </div>
       <div className="flex items-center gap-3">
@@ -489,14 +489,14 @@ function ExpenseRow({
               title={FEELING_LABELS[feeling]}
               aria-pressed={expense.feeling === feeling}
               className={`rounded-full px-1 py-0.5 text-sm leading-none transition ${
-                expense.feeling === feeling ? "bg-slate-200 dark:bg-slate-700" : "opacity-40 hover:opacity-100"
+                expense.feeling === feeling ? "bg-copper-100 dark:bg-copper-500/20" : "opacity-40 hover:opacity-100"
               }`}
             >
               {FEELING_EMOJI[feeling]}
             </button>
           ))}
         </div>
-        <button onClick={() => onDelete(expense.id)} className="text-xs text-slate-400 hover:text-red-600">
+        <button onClick={() => onDelete(expense.id)} className="text-xs text-[#a8927a] hover:text-terracotta-600">
           Supprimer
         </button>
       </div>
@@ -505,9 +505,9 @@ function ExpenseRow({
 }
 
 const CATEGORY_ROW_DOT: Record<BudgetCategory, string> = {
-  BESOINS: "bg-amber-500",
-  ENVIES: "bg-pink-500",
-  EPARGNE: "bg-violet-500",
+  BESOINS: "bg-copper-500",
+  ENVIES: "bg-terracotta-500",
+  EPARGNE: "bg-olive-500",
 };
 
 // Tableau à 4 colonnes (spec 4.2) plutôt qu'une liste de chiffres isolés :
@@ -571,7 +571,7 @@ function MonthlyComparisonTable({
     <div className="mt-4 overflow-x-auto scroll-fade-x">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-slate-200 dark:border-slate-700 text-left text-xs uppercase tracking-wide text-slate-400">
+          <tr className="border-b border-[#e8dcc9] dark:border-[#3a2a1c] text-left text-xs uppercase tracking-wide text-[#a8927a]">
             <th className="py-2 font-medium">Poste</th>
             <th className="py-2 text-right font-medium">Référence</th>
             <th className="py-2 text-right font-medium">Ce mois</th>
@@ -585,14 +585,14 @@ function MonthlyComparisonTable({
             // problème ; pour Épargne c'est l'inverse : projeter en dessous.
             const projectionOver = category === "EPARGNE" ? projection < thisMonth : projection > thisMonth;
             return (
-              <tr key={category} className="border-b border-slate-100 dark:border-slate-800 last:border-0">
+              <tr key={category} className="border-b border-[#ece0cb] dark:border-[#3a2a1c] last:border-0">
                 <td className="py-2">
                   <span className="flex items-center gap-1.5">
                     <span className={`inline-block h-2 w-2 rounded-full ${CATEGORY_ROW_DOT[category]}`} />
                     {CATEGORY_LABELS[category]}
                   </span>
                 </td>
-                <td className="py-2 text-right text-slate-500">{currency.format(reference)}</td>
+                <td className="py-2 text-right text-[#8a7358]">{currency.format(reference)}</td>
                 <td className="py-2 text-right">
                   {editing === category ? (
                     <input
@@ -608,7 +608,7 @@ function MonthlyComparisonTable({
                     <span className="inline-flex items-center gap-1.5">
                       <button
                         onClick={() => startEdit(category, thisMonth)}
-                        className={`font-medium hover:underline ${hasOverride ? "text-pink-600" : ""}`}
+                        className={`font-medium hover:underline ${hasOverride ? "text-terracotta-600" : ""}`}
                         title="Modifier la cible de ce mois"
                       >
                         {currency.format(thisMonth)}
@@ -616,7 +616,7 @@ function MonthlyComparisonTable({
                       {hasOverride && (
                         <button
                           onClick={() => resetToReference(category)}
-                          className="text-xs text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                          className="text-xs text-[#a8927a] hover:text-[#4a3826] dark:hover:text-slate-300"
                           title="Revenir à la référence"
                         >
                           ↺

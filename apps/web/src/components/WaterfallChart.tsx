@@ -45,13 +45,13 @@ export function WaterfallChart({ income, besoins, envies, epargne, autres }: Wat
   const steps = useMemo<WaterfallStep[]>(() => {
     const reste = income - besoins - envies - epargne - autres;
     const list: WaterfallStep[] = [
-      { label: "Revenu", amount: income, color: "#10b981", isTotal: true },
-      { label: "Besoins", amount: -besoins, color: "#f59e0b" },
-      { label: "Envies", amount: -envies, color: "#ec4899" },
-      { label: "Épargne", amount: -epargne, color: "#8b5cf6" },
+      { label: "Revenu", amount: income, color: "#445a26", isTotal: true },
+      { label: "Besoins", amount: -besoins, color: "#b5652d" },
+      { label: "Envies", amount: -envies, color: "#a8442b" },
+      { label: "Épargne", amount: -epargne, color: "#6b8a45" },
     ];
-    if (autres > 0) list.push({ label: "Autres", amount: -autres, color: "#94a3b8" });
-    list.push({ label: "Reste", amount: reste, color: reste >= 0 ? "#10b981" : "#dc2626", isTotal: true });
+    if (autres > 0) list.push({ label: "Autres", amount: -autres, color: "#a8927a" });
+    list.push({ label: "Reste", amount: reste, color: reste >= 0 ? "#445a26" : "#a8442b", isTotal: true });
     return list;
   }, [income, besoins, envies, epargne, autres]);
 
@@ -86,26 +86,26 @@ export function WaterfallChart({ income, besoins, envies, epargne, autres }: Wat
 
   return (
     <div>
-      <div className="mb-2 flex flex-wrap gap-4 text-xs text-slate-600 dark:text-slate-400">
+      <div className="mb-2 flex flex-wrap gap-4 text-xs text-[#5a4530] dark:text-[#a8927a]">
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "#10b981" }} />
+          <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "#445a26" }} />
           Revenu / Reste
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-500" />
+          <span className="inline-block h-2.5 w-2.5 rounded-full bg-copper-600" />
           Besoins
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-2.5 rounded-full bg-pink-500" />
+          <span className="inline-block h-2.5 w-2.5 rounded-full bg-terracotta-600" />
           Envies
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-2.5 rounded-full bg-violet-500" />
+          <span className="inline-block h-2.5 w-2.5 rounded-full bg-olive-500" />
           Épargne
         </span>
         {autres > 0 && (
           <span className="flex items-center gap-1.5">
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-slate-400" />
+            <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#a8927a]" />
             Autres
           </span>
         )}
@@ -178,7 +178,7 @@ export function WaterfallChart({ income, besoins, envies, epargne, autres }: Wat
 
         {hovered && hoverIndex !== null && (
           <div
-            className="pointer-events-none absolute top-2 rounded-md bg-violet-600 px-3 py-2 text-xs text-white shadow-lg"
+            className="pointer-events-none absolute top-2 rounded-md bg-copper-700 px-3 py-2 text-xs text-white shadow-lg"
             style={{ left: `min(${(x(hoverIndex) / WIDTH) * 100}%, 75%)` }}
           >
             <p className="font-medium">{hovered.label}</p>

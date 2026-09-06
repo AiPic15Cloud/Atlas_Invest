@@ -12,9 +12,9 @@ const MONTH_NAMES_FULL = [
 ];
 
 const SERIES = [
-  { key: "income" as const, label: "Revenu", color: "#10b981" },
-  { key: "expense" as const, label: "Dépenses", color: "#ec4899" },
-  { key: "reste" as const, label: "Reste", color: "#8b5cf6" },
+  { key: "income" as const, label: "Revenu", color: "#55702f" },
+  { key: "expense" as const, label: "Dépenses", color: "#a8442b" },
+  { key: "reste" as const, label: "Reste", color: "#b5652d" },
 ];
 
 const WIDTH = 720;
