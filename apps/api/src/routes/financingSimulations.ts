@@ -1,7 +1,11 @@
 import { Router } from "express";
 import { z } from "zod";
+import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
+import { listAccessibleAccounts } from "../utils/accountAccess.js";
 import { simulateFinancing } from "../utils/financingSimulator.js";
+import { computeEffortRate } from "../utils/effortRate.js";
+import { loansFor } from "./loans.js";
 
 export const financingSimulationsRouter = Router();
 
@@ -37,4 +41,60 @@ financingSimulationsRouter.post("/simulate", async (req, res) => {
   });
 
   res.json({ type: parsed.data.type, ...result });
+});
+
+const effortRateSchema = simulateSchema.extend({
+  referenceRatePercent: z.number().finite().positive().max(100).optional(),
+});
+
+// Taux d'effort avant/apres projet (section 44) : combine le simulateur de
+// financement (bac a sable) avec les donnees reelles du foyer -- revenu
+// recurrent du mois courant et mensualites des prets actifs. Jamais
+// presente comme un seuil automatique d'acceptation bancaire : la reference
+// reste un repere configurable, pas une regle de decision (section 78).
+financingSimulationsRouter.post("/effort-rate", async (req, res) => {
+  const parsed = effortRateSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Données invalides." });
+    return;
+  }
+
+  const simulation = simulateFinancing({
+    amount: parsed.data.amount,
+    downPayment: parsed.data.downPayment,
+    durationMonths: parsed.data.durationMonths,
+    interestRatePercent: parsed.data.interestRatePercent,
+    insuranceMonthly: parsed.data.insuranceMonthly,
+    fees: parsed.data.fees,
+  });
+
+  const now = new Date();
+  const accounts = await listAccessibleAccounts(req.userId!);
+  const accountIds = accounts.map((a) => a.id);
+
+  const [loans, incomes] = await Promise.all([
+    loansFor(req.userId!),
+    prisma.income.findMany({
+      where: {
+        bankAccountId: { in: accountIds },
+        year: now.getFullYear(),
+        month: now.getMonth() + 1,
+        nature: "RECURRENT",
+      },
+    }),
+  ]);
+
+  const monthlyIncome = incomes.reduce((sum, i) => sum + Number(i.amount), 0);
+  const existingMonthlyDebt = loans
+    .filter((l) => !l.paidOff && Number(l.remainingBalance) > 0)
+    .reduce((sum, l) => sum + Number(l.monthlyPayment), 0);
+
+  const effortRate = computeEffortRate({
+    monthlyIncome,
+    existingMonthlyDebt,
+    newMonthlyPayment: simulation.monthlyPaymentWithInsurance,
+    referenceRatePercent: parsed.data.referenceRatePercent,
+  });
+
+  res.json({ type: parsed.data.type, ...simulation, monthlyIncome, existingMonthlyDebt, effortRate });
 });

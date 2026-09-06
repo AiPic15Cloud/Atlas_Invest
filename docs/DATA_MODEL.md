@@ -394,14 +394,37 @@ type de nuance que le garde-fou anti-fausse-précision (section 78) demande :
   systématiquement qualifié d'« estimé », jamais présenté comme le TAEG
   légal exact que seul un établissement bancaire peut certifier.
 
-Volontairement hors périmètre de ce lot (sections 40-49 : score de
-financement Atlas, verdict Confortable/Tendu, taux d'effort, reste à vivre
-réel, capacité immobilière, comparaison de scénarios/banques) — ces
-fonctionnalités nécessitent de croiser la simulation avec la situation
-réelle du foyer (revenus, épargne, autres charges) et méritent chacune leur
-propre lot scopé plutôt qu'un unique gros morceau. Fonction pure testée
+Volontairement hors périmètre de ce lot (sections 40-43, 45-49 : score de
+financement Atlas, verdict Confortable/Tendu, reste à vivre réel, capacité
+immobilière, comparaison de scénarios/banques ; le taux d'effort, section
+44, est traité séparément par le Lot 31 ci-dessous) — ces fonctionnalités
+nécessitent de croiser la simulation avec la situation réelle du foyer
+(revenus, épargne, autres charges) et méritent chacune leur propre lot
+scopé plutôt qu'un unique gros morceau. Fonction pure testée
 (`simulateFinancing`, 8 cas dont la cohérence de l'amortissement et la
 distinction `undefined`/`0`).
+
+### r. Taux d'effort avant/après projet (section 44) — comblé par Lot 31
+
+`POST /api/financing-simulations/effort-rate` combine le simulateur de
+financement (Lot 30, toujours un calcul pur) avec les données réelles du
+foyer : revenu récurrent du mois courant (même source que le Cockpit dette,
+Lot 22) et somme des mensualités des prêts actifs non soldés
+(`loansFor`, réutilisé tel quel — jamais une deuxième requête qui pourrait
+diverger de la liste affichée sur la page Patrimoine). Calcule le taux
+d'effort actuel (dette existante / revenu) et après projet (dette existante
++ nouvelle mensualité / revenu), avec une référence configurable
+(`referenceRatePercent`, 35 % par défaut — la valeur de l'exemple de la
+spec, jamais un seuil « dur »). Si aucun revenu récurrent n'est renseigné
+pour le mois, retourne explicitement « non disponible » plutôt que de
+diviser par zéro ou d'inventer un taux.
+
+Conforme à la section 43 : jamais de verdict binaire (« Banque : OUI/NON »)
+— seuls des pourcentages et une référence indicative sont montrés, la
+zone qualitative (Confortable/Tendu...) étant un futur lot séparé qui
+nécessite de définir plusieurs seuils, pas seulement un taux d'effort.
+Fonction pure testée (`computeEffortRate`), vérifiée avec l'exemple exact
+de la spec (24,7 % → 34,3 %).
 
 ## 3. Vérification du garde-fou « jamais compter un transfert deux fois »
 

@@ -815,6 +815,19 @@ export interface FinancingSimulationResponse {
   taegUnavailableReason: string | null;
 }
 
+export interface EffortRateResult {
+  currentRatePercent: number | null;
+  afterRatePercent: number | null;
+  referenceRatePercent: number;
+  unavailableReason: string | null;
+}
+
+export interface FinancingSimulationWithEffortResponse extends FinancingSimulationResponse {
+  monthlyIncome: number;
+  existingMonthlyDebt: number;
+  effortRate: EffortRateResult;
+}
+
 export interface DashboardResponse {
   year: number;
   fiscalYearStartMonth: number;

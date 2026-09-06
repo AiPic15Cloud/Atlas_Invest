@@ -6,7 +6,7 @@ import type {
   DashboardResponse,
   DecisionCost,
   DecisionCostsResponse,
-  FinancingSimulationResponse,
+  FinancingSimulationWithEffortResponse,
   FinancingType,
   StressTestResponse,
   StressTestScenario,
@@ -127,7 +127,7 @@ export function Projection() {
   const [financingRate, setFinancingRate] = useState("");
   const [financingInsurance, setFinancingInsurance] = useState("");
   const [financingFees, setFinancingFees] = useState("");
-  const [financingResult, setFinancingResult] = useState<FinancingSimulationResponse | null>(null);
+  const [financingResult, setFinancingResult] = useState<FinancingSimulationWithEffortResponse | null>(null);
   const [financingError, setFinancingError] = useState<string | null>(null);
   const [financingLoading, setFinancingLoading] = useState(false);
 
@@ -141,7 +141,7 @@ export function Projection() {
     setFinancingLoading(true);
     setFinancingError(null);
     try {
-      const result = await apiFetch<FinancingSimulationResponse>("/api/financing-simulations/simulate", {
+      const result = await apiFetch<FinancingSimulationWithEffortResponse>("/api/financing-simulations/effort-rate", {
         method: "POST",
         body: JSON.stringify({
           type: financingType,
@@ -585,6 +585,26 @@ export function Projection() {
                 ? `TAEG estimé : ${financingResult.taeg.toFixed(2).replace(".", ",")} %`
                 : financingResult.taegUnavailableReason}
             </p>
+            <div className="sm:col-span-2 mt-2 border-t border-slate-100 pt-3 dark:border-slate-800">
+              {financingResult.effortRate.unavailableReason ? (
+                <p>{financingResult.effortRate.unavailableReason}</p>
+              ) : (
+                <p>
+                  Taux d'effort actuel :{" "}
+                  <span className="font-medium">
+                    {financingResult.effortRate.currentRatePercent!.toFixed(1).replace(".", ",")} %
+                  </span>{" "}
+                  — Après projet :{" "}
+                  <span className="font-medium">
+                    {financingResult.effortRate.afterRatePercent!.toFixed(1).replace(".", ",")} %
+                  </span>{" "}
+                  — Référence : {financingResult.effortRate.referenceRatePercent} %
+                </p>
+              )}
+              <p className="mt-1 text-xs text-slate-400">
+                Repère indicatif, jamais un seuil automatique d'acceptation bancaire.
+              </p>
+            </div>
           </div>
         )}
       </section>
