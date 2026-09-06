@@ -146,11 +146,19 @@ explicitement en base l'usage de ce champ décrit en section 4 ci-dessous.
 `FinancingScore` n'ont aucun équivalent actuel. Attendu — c'est la Phase 8,
 loin dans l'ordre recommandé (section 76).
 
-### i. Gamification (Phase 5) : rien n'existe encore
+### i. Gamification (Phase 5) : défi mensuel comblé par Lot 18, reste à faire
 
-`Challenge`, `SavedEuroEvent`, streaks, records — aucun équivalent. `
-MonthlyGoal` (« Nos victoires ») est une checklist libre, pas un moteur de
-défi avec avancement calculé sur l'épargne réelle. Attendu — Phase 5.
+`SavedEuroEvent`, streaks, records n'ont toujours aucun équivalent —
+attendu, Phase 5 à peine entamée. Le Lot 18 ajoute `MonthlyChallenge`
+(section 51) : une cible d'épargne par foyer et par mois, avec un stretch
+goal optionnel obligatoirement supérieur à la cible. Contrairement à
+`MonthlyGoal` (« Nos victoires », checklist libre cochée manuellement),
+l'avancement n'est jamais saisi ni stocké : il est recalculé à chaque
+lecture à partir de l'épargne réellement enregistrée (même somme
+catégorie `EPARGNE` que « argent construit » au Tableau de bord), pour ne
+jamais diverger de ce chiffre affiché ailleurs. Un seul défi actif par
+mois — reposer une cible remplace l'ancienne plutôt que d'en empiler une
+concurrente.
 
 ### j. Nature des flux — revenus comblés par Lot 15, sorties/transferts déjà couverts (section 9)
 

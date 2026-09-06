@@ -31,9 +31,10 @@ model Household {
   currency            String @default("EUR")
   fiscalYearStartMonth Int   @default(1)
 
-  members      User[]
-  bankAccounts BankAccount[]
-  monthlyGoals MonthlyGoal[]
+  members          User[]
+  bankAccounts     BankAccount[]
+  monthlyGoals     MonthlyGoal[]
+  monthlyChallenges MonthlyChallenge[]
 }
 
 // Petits objectifs que le foyer se fixe pour le mois ("Nos victoires"),
@@ -51,6 +52,26 @@ model MonthlyGoal {
   householdId String
 
   @@index([householdId, year, month])
+}
+
+// Defi d'epargne mensuel du foyer (section 51, Phase 5 Gamification) : le
+// foyer joue contre son propre historique, jamais un membre contre l'autre.
+// L'avancement (calcule a la lecture, jamais stocke) se base uniquement sur
+// l'epargne reellement enregistree (categorie EPARGNE des depenses), jamais
+// sur une intention.
+model MonthlyChallenge {
+  id                 String   @id @default(cuid())
+  year               Int
+  month              Int
+  targetAmount       Decimal  @db.Decimal(12, 2)
+  stretchGoalAmount  Decimal? @db.Decimal(12, 2)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  householdId String
+
+  @@unique([householdId, year, month])
 }
 
 model User {

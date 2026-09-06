@@ -25,6 +25,7 @@ import { monthlyGoalsRouter } from "./routes/monthlyGoals.js";
 import { importMemoryRouter } from "./routes/importMemory.js";
 import { transfersRouter } from "./routes/transfers.js";
 import { riskyMonthsRouter } from "./routes/riskyMonths.js";
+import { monthlyChallengeRouter } from "./routes/monthlyChallenge.js";
 
 const app = express();
 
@@ -58,6 +59,7 @@ app.use("/api/monthly-goals", monthlyGoalsRouter);
 app.use("/api/import-memory", importMemoryRouter);
 app.use("/api/transfers", transfersRouter);
 app.use("/api/risky-months", riskyMonthsRouter);
+app.use("/api/monthly-challenge", monthlyChallengeRouter);
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);

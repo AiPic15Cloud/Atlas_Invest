@@ -609,6 +609,23 @@ export interface MonthlyGoalsResponse {
   goals: MonthlyGoal[];
 }
 
+export interface MonthlyChallenge {
+  id: string;
+  year: number;
+  month: number;
+  targetAmount: number;
+  stretchGoalAmount: number | null;
+  createdAt: string;
+}
+
+export interface MonthlyChallengeResponse {
+  challenge: MonthlyChallenge | null;
+  saved: number;
+  remaining: number;
+  achieved: boolean;
+  stretchReached: boolean;
+}
+
 export interface EmergencyFundCriterionBreakdown {
   key: string;
   question: string;

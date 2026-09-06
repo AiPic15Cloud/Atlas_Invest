@@ -23,6 +23,7 @@ import type {
   DashboardResponse,
   EmergencyFundProfile,
   ExpensesResponse,
+  MonthlyChallengeResponse,
   MonthlyGoal,
   MonthlyGoalsResponse,
 } from "../api/types";
@@ -348,8 +349,145 @@ export function Dashboard() {
         </section>
       </div>
 
+      <MonthlyChallengeSection year={selected.year} month={selected.month} />
       <MonthlyGoalsSection year={selected.year} month={selected.month} />
     </div>
+  );
+}
+
+const MONTH_NAME = new Intl.DateTimeFormat("fr-FR", { month: "long" });
+
+function MonthlyChallengeSection({ year, month }: { year: number; month: number }) {
+  const currency = useCurrencyFormatter();
+  const [data, setData] = useState<MonthlyChallengeResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [targetAmount, setTargetAmount] = useState("");
+  const [stretchGoalAmount, setStretchGoalAmount] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function load() {
+    try {
+      const res = await apiFetch<MonthlyChallengeResponse>(`/api/monthly-challenge?year=${year}&month=${month}`);
+      setData(res);
+      setEditing(!res.challenge);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Impossible de charger le défi du mois.");
+    }
+  }
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [year, month]);
+
+  async function handleSave() {
+    const parsedTarget = Number(targetAmount.replace(",", "."));
+    if (!Number.isFinite(parsedTarget) || parsedTarget <= 0) return;
+    const parsedStretch = stretchGoalAmount ? Number(stretchGoalAmount.replace(",", ".")) : null;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await apiFetch("/api/monthly-challenge", {
+        method: "POST",
+        body: JSON.stringify({
+          year,
+          month,
+          targetAmount: parsedTarget,
+          stretchGoalAmount: parsedStretch && parsedStretch > 0 ? parsedStretch : null,
+        }),
+      });
+      setTargetAmount("");
+      setStretchGoalAmount("");
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (!data) return null;
+
+  const pct = data.challenge ? Math.min((data.saved / data.challenge.targetAmount) * 100, 100) : 0;
+
+  return (
+    <section className="card">
+      <h2 className="font-semibold flex items-center gap-2">
+        <IconTarget className="h-5 w-5 text-copper-600" />
+        Défi {MONTH_NAME.format(new Date(year, month - 1, 1))}
+      </h2>
+      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+
+      {data.challenge && !editing && (
+        <>
+          <p className="mt-2 text-sm text-[#8a7358]">
+            Épargner {currency.format(data.challenge.targetAmount)} —{" "}
+            <span className="font-semibold text-[#2b1d14] dark:text-[#f3e9dc]">
+              {currency.format(data.saved)} / {currency.format(data.challenge.targetAmount)}
+            </span>{" "}
+            — {currency.format(data.remaining)} restants
+          </p>
+          <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-[#ece0cb] dark:bg-[#4f3a26]">
+            <div
+              style={{ width: `${pct}%` }}
+              className={`h-full rounded-full ${data.achieved ? "bg-olive-500" : "bg-copper-500"}`}
+            />
+          </div>
+          {data.challenge.stretchGoalAmount !== null && (
+            <p className="mt-2 text-xs text-[#a8927a]">
+              {data.stretchReached ? "🔥 " : ""}Bonus : {currency.format(data.challenge.stretchGoalAmount)}
+              {data.stretchReached ? " — atteint !" : ""}
+            </p>
+          )}
+          <button
+            onClick={() => {
+              setTargetAmount(String(data.challenge!.targetAmount));
+              setStretchGoalAmount(data.challenge!.stretchGoalAmount !== null ? String(data.challenge!.stretchGoalAmount) : "");
+              setEditing(true);
+            }}
+            className="mt-3 text-xs text-[#a8927a] underline"
+          >
+            Modifier la cible
+          </button>
+        </>
+      )}
+
+      {editing && (
+        <div className="mt-3">
+          <p className="text-sm text-[#8a7358]">
+            Fixez un montant d'épargne à atteindre ce mois-ci. L'avancement se base sur l'épargne réellement
+            enregistrée dans Mon mois, pas sur une intention.
+          </p>
+          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <input
+              className="input"
+              placeholder="Cible (ex. 600)"
+              inputMode="decimal"
+              value={targetAmount}
+              onChange={(e) => setTargetAmount(e.target.value)}
+            />
+            <input
+              className="input"
+              placeholder="Bonus stretch goal (optionnel)"
+              inputMode="decimal"
+              value={stretchGoalAmount}
+              onChange={(e) => setStretchGoalAmount(e.target.value)}
+            />
+          </div>
+          <div className="mt-2 flex gap-2">
+            <button onClick={handleSave} disabled={submitting} className="btn btn-primary btn-sm">
+              {submitting ? "..." : "Valider"}
+            </button>
+            {data.challenge && (
+              <button onClick={() => setEditing(false)} className="btn btn-outline btn-sm">
+                Annuler
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 
