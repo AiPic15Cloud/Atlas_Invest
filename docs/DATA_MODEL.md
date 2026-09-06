@@ -371,6 +371,38 @@ n'est pas un abonnement », puisque c'est désormais un fait établi plutôt
 qu'une hypothèse (jamais de suppression physique, conforme au garde-fou
 « préférer l'archivage »).
 
+### q. Simulateur de financement (section 37) — comblé par Lot 30
+
+`POST /api/financing-simulations/simulate` (aucune nouvelle table — bac à
+sable pur, comme les stress tests du Lot 25 : ne lit ni ne modifie aucune
+donnée réelle du foyer). À partir de montant/apport/durée/taux/assurance/
+frais, calcule le montant financé, la mensualité (amortissement classique),
+les intérêts totaux, le coût total, et un TAEG estimé.
+
+Distinction volontaire entre une donnée *inconnue* (`undefined`, le champ
+n'a pas été renseigné) et une donnée *connue et nulle* (`0`, l'utilisateur a
+explicitement indiqué qu'il n'y a pas d'assurance/de frais) — exactement le
+type de nuance que le garde-fou anti-fausse-précision (section 78) demande :
+- taux d'intérêt non renseigné → `taeg: null`, « TAEG non disponible : taux
+  d'intérêt non renseigné » (conforme à la section 39).
+- taux connu mais assurance et/ou frais non renseignés (`undefined`) →
+  `taeg: null`, « TAEG non disponible : assurance et/ou frais non
+  renseignés » — même si tout le reste est calculable, annoncer un TAEG
+  sans ces composantes obligatoires serait une fausse précision.
+- assurance et frais explicitement fournis, y compris à 0 → TAEG calculé
+  par méthode actuarielle (Newton-Raphson sur les flux mensuels réels) et
+  systématiquement qualifié d'« estimé », jamais présenté comme le TAEG
+  légal exact que seul un établissement bancaire peut certifier.
+
+Volontairement hors périmètre de ce lot (sections 40-49 : score de
+financement Atlas, verdict Confortable/Tendu, taux d'effort, reste à vivre
+réel, capacité immobilière, comparaison de scénarios/banques) — ces
+fonctionnalités nécessitent de croiser la simulation avec la situation
+réelle du foyer (revenus, épargne, autres charges) et méritent chacune leur
+propre lot scopé plutôt qu'un unique gros morceau. Fonction pure testée
+(`simulateFinancing`, 8 cas dont la cohérence de l'amortissement et la
+distinction `undefined`/`0`).
+
 ## 3. Vérification du garde-fou « jamais compter un transfert deux fois »
 
 Vérifié dans `apps/api/src/routes/transfers.ts` et le schéma : un virement

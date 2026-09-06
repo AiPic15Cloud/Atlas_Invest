@@ -802,6 +802,19 @@ export interface DecisionCostsResponse {
   decisions: DecisionCost[];
 }
 
+export type FinancingType = "IMMOBILIER" | "CONSOMMATION" | "VOITURE" | "TRAVAUX" | "AUTRE";
+
+export interface FinancingSimulationResponse {
+  type: FinancingType;
+  financedAmount: number;
+  monthlyPayment: number;
+  monthlyPaymentWithInsurance: number;
+  totalInterest: number;
+  totalCost: number;
+  taeg: number | null;
+  taegUnavailableReason: string | null;
+}
+
 export interface DashboardResponse {
   year: number;
   fiscalYearStartMonth: number;

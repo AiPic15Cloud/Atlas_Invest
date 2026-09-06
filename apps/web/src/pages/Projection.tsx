@@ -2,9 +2,25 @@ import { useEffect, useMemo, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import { IconChartLine } from "../components/icons";
-import type { DashboardResponse, DecisionCost, DecisionCostsResponse, StressTestResponse, StressTestScenario } from "../api/types";
+import type {
+  DashboardResponse,
+  DecisionCost,
+  DecisionCostsResponse,
+  FinancingSimulationResponse,
+  FinancingType,
+  StressTestResponse,
+  StressTestScenario,
+} from "../api/types";
 
 const MONTH_OPTIONS = [6, 12, 24, 36];
+
+const FINANCING_TYPE_LABELS: Record<FinancingType, string> = {
+  IMMOBILIER: "Immobilier",
+  CONSOMMATION: "Consommation",
+  VOITURE: "Voiture",
+  TRAVAUX: "Travaux",
+  AUTRE: "Autre",
+};
 
 const STRESS_PRESETS: { key: string; label: string; build: (amount: number) => StressTestScenario }[] = [
   { key: "INCOME_LOSS", label: "Perte d'un revenu", build: (amount) => ({ type: "INCOME_LOSS", monthlyAmount: amount }) },
@@ -101,6 +117,47 @@ export function Projection() {
       await loadDecisions();
     } catch (err) {
       setDecisionError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    }
+  }
+
+  const [financingType, setFinancingType] = useState<FinancingType>("IMMOBILIER");
+  const [financingAmount, setFinancingAmount] = useState("");
+  const [financingDownPayment, setFinancingDownPayment] = useState("0");
+  const [financingDuration, setFinancingDuration] = useState("240");
+  const [financingRate, setFinancingRate] = useState("");
+  const [financingInsurance, setFinancingInsurance] = useState("");
+  const [financingFees, setFinancingFees] = useState("");
+  const [financingResult, setFinancingResult] = useState<FinancingSimulationResponse | null>(null);
+  const [financingError, setFinancingError] = useState<string | null>(null);
+  const [financingLoading, setFinancingLoading] = useState(false);
+
+  async function handleSimulateFinancing() {
+    const amount = Number(financingAmount.replace(",", "."));
+    const durationMonths = Number(financingDuration);
+    if (!Number.isFinite(amount) || amount <= 0 || !Number.isFinite(durationMonths) || durationMonths <= 0) {
+      setFinancingError("Montant et durée doivent être renseignés.");
+      return;
+    }
+    setFinancingLoading(true);
+    setFinancingError(null);
+    try {
+      const result = await apiFetch<FinancingSimulationResponse>("/api/financing-simulations/simulate", {
+        method: "POST",
+        body: JSON.stringify({
+          type: financingType,
+          amount,
+          downPayment: Number(financingDownPayment.replace(",", ".")) || 0,
+          durationMonths,
+          interestRatePercent: financingRate.trim() === "" ? null : Number(financingRate.replace(",", ".")),
+          insuranceMonthly: financingInsurance.trim() === "" ? undefined : Number(financingInsurance.replace(",", ".")),
+          fees: financingFees.trim() === "" ? undefined : Number(financingFees.replace(",", ".")),
+        }),
+      });
+      setFinancingResult(result);
+    } catch (err) {
+      setFinancingError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    } finally {
+      setFinancingLoading(false);
     }
   }
 
@@ -439,6 +496,96 @@ export function Projection() {
               </li>
             ))}
           </ul>
+        )}
+      </section>
+
+      <section className="card">
+        <h2 className="font-semibold">Simulateur de financement</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Estime la mensualité, le coût total et un TAEG indicatif d'un projet à financer. Bac à sable : rien n'est
+          jamais présenté comme le taux ou l'accord réel d'une banque.
+        </p>
+        {financingError && <p className="mt-2 text-sm text-red-600">{financingError}</p>}
+
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <select className="input" value={financingType} onChange={(e) => setFinancingType(e.target.value as FinancingType)}>
+            {(Object.keys(FINANCING_TYPE_LABELS) as FinancingType[]).map((t) => (
+              <option key={t} value={t}>
+                {FINANCING_TYPE_LABELS[t]}
+              </option>
+            ))}
+          </select>
+          <input
+            className="input"
+            placeholder="Montant (€)"
+            inputMode="decimal"
+            value={financingAmount}
+            onChange={(e) => setFinancingAmount(e.target.value)}
+          />
+          <input
+            className="input"
+            placeholder="Apport (€)"
+            inputMode="decimal"
+            value={financingDownPayment}
+            onChange={(e) => setFinancingDownPayment(e.target.value)}
+          />
+          <input
+            className="input"
+            type="number"
+            min={1}
+            placeholder="Durée (mois)"
+            value={financingDuration}
+            onChange={(e) => setFinancingDuration(e.target.value)}
+          />
+          <input
+            className="input"
+            placeholder="Taux d'intérêt (%)"
+            inputMode="decimal"
+            value={financingRate}
+            onChange={(e) => setFinancingRate(e.target.value)}
+          />
+          <input
+            className="input"
+            placeholder="Assurance / mois (€, optionnel)"
+            inputMode="decimal"
+            value={financingInsurance}
+            onChange={(e) => setFinancingInsurance(e.target.value)}
+          />
+          <input
+            className="input"
+            placeholder="Frais de dossier (€, optionnel)"
+            inputMode="decimal"
+            value={financingFees}
+            onChange={(e) => setFinancingFees(e.target.value)}
+          />
+        </div>
+        <button onClick={handleSimulateFinancing} disabled={financingLoading} className="mt-3 btn btn-primary">
+          {financingLoading ? "..." : "Simuler"}
+        </button>
+
+        {financingResult && (
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 text-sm text-slate-600 dark:text-slate-400">
+            <p>
+              Montant financé : <span className="font-medium">{currency.format(financingResult.financedAmount)}</span>
+            </p>
+            <p>
+              Mensualité : <span className="font-medium">{currency.format(financingResult.monthlyPayment)}</span>
+              {financingResult.monthlyPaymentWithInsurance !== financingResult.monthlyPayment && (
+                <span className="text-slate-400"> ({currency.format(financingResult.monthlyPaymentWithInsurance)} avec assurance)</span>
+              )}
+            </p>
+            <p>
+              Intérêts totaux : <span className="font-medium">{currency.format(financingResult.totalInterest)}</span>
+            </p>
+            <p>
+              Coût total du financement : <span className="font-medium">{currency.format(financingResult.totalCost)}</span>
+            </p>
+            <p className="sm:col-span-2 font-medium text-[#2b1d14] dark:text-[#f3e9dc]">
+              {financingResult.taeg !== null
+                ? `TAEG estimé : ${financingResult.taeg.toFixed(2).replace(".", ",")} %`
+                : financingResult.taegUnavailableReason}
+            </p>
+          </div>
         )}
       </section>
     </div>

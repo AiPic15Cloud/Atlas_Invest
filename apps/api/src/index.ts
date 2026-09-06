@@ -30,6 +30,7 @@ import { recordsRouter } from "./routes/records.js";
 import { savedEurosRouter } from "./routes/savedEuros.js";
 import { stressTestsRouter } from "./routes/stressTests.js";
 import { decisionCostsRouter } from "./routes/decisionCosts.js";
+import { financingSimulationsRouter } from "./routes/financingSimulations.js";
 
 const app = express();
 
@@ -68,6 +69,7 @@ app.use("/api/records", recordsRouter);
 app.use("/api/saved-euros", savedEurosRouter);
 app.use("/api/stress-tests", stressTestsRouter);
 app.use("/api/decision-costs", decisionCostsRouter);
+app.use("/api/financing-simulations", financingSimulationsRouter);
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);
