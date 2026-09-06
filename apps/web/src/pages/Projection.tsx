@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import { IconChartLine } from "../components/icons";
-import type { DashboardResponse, StressTestResponse, StressTestScenario } from "../api/types";
+import type { DashboardResponse, DecisionCost, DecisionCostsResponse, StressTestResponse, StressTestScenario } from "../api/types";
 
 const MONTH_OPTIONS = [6, 12, 24, 36];
 
@@ -42,6 +42,67 @@ export function Projection() {
   const [stressResult, setStressResult] = useState<StressTestResponse | null>(null);
   const [stressError, setStressError] = useState<string | null>(null);
   const [stressLoading, setStressLoading] = useState(false);
+
+  const [decisions, setDecisions] = useState<DecisionCost[] | null>(null);
+  const [decisionLabel, setDecisionLabel] = useState("");
+  const [decisionItems, setDecisionItems] = useState<{ label: string; amount: string }[]>([
+    { label: "", amount: "" },
+  ]);
+  const [decisionError, setDecisionError] = useState<string | null>(null);
+  const [decisionSubmitting, setDecisionSubmitting] = useState(false);
+
+  async function loadDecisions() {
+    try {
+      const res = await apiFetch<DecisionCostsResponse>("/api/decision-costs");
+      setDecisions(res.decisions);
+    } catch (err) {
+      setDecisionError(err instanceof ApiError ? err.message : "Impossible de charger les décisions.");
+    }
+  }
+
+  useEffect(() => {
+    loadDecisions();
+  }, []);
+
+  function handleDecisionItemChange(index: number, field: "label" | "amount", value: string) {
+    setDecisionItems((prev) => prev.map((it, i) => (i === index ? { ...it, [field]: value } : it)));
+  }
+
+  function handleAddDecisionItemRow() {
+    setDecisionItems((prev) => [...prev, { label: "", amount: "" }]);
+  }
+
+  async function handleCreateDecision() {
+    const items = decisionItems
+      .map((it) => ({ label: it.label.trim(), monthlyAmount: Number(it.amount.replace(",", ".")) }))
+      .filter((it) => it.label && Number.isFinite(it.monthlyAmount));
+    if (!decisionLabel.trim() || items.length === 0) return;
+    setDecisionSubmitting(true);
+    setDecisionError(null);
+    try {
+      await apiFetch("/api/decision-costs", {
+        method: "POST",
+        body: JSON.stringify({ label: decisionLabel.trim(), items }),
+      });
+      setDecisionLabel("");
+      setDecisionItems([{ label: "", amount: "" }]);
+      await loadDecisions();
+    } catch (err) {
+      setDecisionError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    } finally {
+      setDecisionSubmitting(false);
+    }
+  }
+
+  async function handleDeleteDecision(id: string) {
+    if (!confirm("Supprimer cette décision ?")) return;
+    try {
+      await apiFetch(`/api/decision-costs/${id}`, { method: "DELETE" });
+      await loadDecisions();
+    } catch (err) {
+      setDecisionError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    }
+  }
 
   useEffect(() => {
     apiFetch<DashboardResponse>(`/api/dashboard?year=${now.getFullYear()}`)
@@ -314,6 +375,70 @@ export function Projection() {
                 : `Le foyer pourrait absorber ce choc pendant environ ${stressResult.monthsSustainable} mois.`}
             </p>
           </div>
+        )}
+      </section>
+
+      <section className="card">
+        <h2 className="font-semibold">Coût complet d'une décision</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Un achat ne se résume pas à sa mensualité de crédit. Additionne tous ses composants (assurance, carburant,
+          entretien provisionné, copropriété...) pour voir le coût réel mensuel.
+        </p>
+        {decisionError && <p className="mt-2 text-sm text-red-600">{decisionError}</p>}
+
+        <input
+          className="input mt-3"
+          placeholder="Ex. Voiture d'occasion"
+          value={decisionLabel}
+          onChange={(e) => setDecisionLabel(e.target.value)}
+        />
+        <div className="mt-2 space-y-2">
+          {decisionItems.map((item, i) => (
+            <div key={i} className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <input
+                className="input"
+                placeholder="Ex. Crédit, Assurance, Carburant..."
+                value={item.label}
+                onChange={(e) => handleDecisionItemChange(i, "label", e.target.value)}
+              />
+              <input
+                className="input"
+                placeholder="Montant / mois (€)"
+                inputMode="decimal"
+                value={item.amount}
+                onChange={(e) => handleDecisionItemChange(i, "amount", e.target.value)}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="mt-2 flex gap-2">
+          <button onClick={handleAddDecisionItemRow} className="btn btn-secondary">
+            Ajouter un composant
+          </button>
+          <button onClick={handleCreateDecision} disabled={decisionSubmitting} className="btn btn-primary">
+            {decisionSubmitting ? "..." : "Calculer le coût réel"}
+          </button>
+        </div>
+
+        {decisions && decisions.length > 0 && (
+          <ul className="mt-4">
+            {decisions.map((d) => (
+              <li key={d.id} className="border-b border-slate-100 py-3 last:border-0 dark:border-slate-800">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium">{d.label}</h3>
+                  <button onClick={() => handleDeleteDecision(d.id)} className="text-xs text-red-500 underline">
+                    Supprimer
+                  </button>
+                </div>
+                <p className="mt-1 text-sm text-slate-500">
+                  {d.items.map((it) => `${it.label} ${currency.format(it.monthlyAmount)}`).join(" + ")}
+                </p>
+                <p className="mt-1 font-medium text-[#2b1d14] dark:text-[#f3e9dc]">
+                  Coût réel : {currency.format(d.realMonthlyCost)} / mois
+                </p>
+              </li>
+            ))}
+          </ul>
         )}
       </section>
     </div>

@@ -781,6 +781,24 @@ export interface StressTestResponse {
   sustainableIndefinitely: boolean;
 }
 
+export interface DecisionCostItem {
+  id: string;
+  label: string;
+  monthlyAmount: number;
+}
+
+export interface DecisionCost {
+  id: string;
+  label: string;
+  items: DecisionCostItem[];
+  realMonthlyCost: number;
+  createdAt: string;
+}
+
+export interface DecisionCostsResponse {
+  decisions: DecisionCost[];
+}
+
 export interface DashboardResponse {
   year: number;
   fiscalYearStartMonth: number;

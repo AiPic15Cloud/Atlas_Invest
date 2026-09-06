@@ -113,6 +113,35 @@ model User {
   anticipatedExpenses    AnticipatedExpense[]
   savedEuroEvents        SavedEuroEvent[]
   wealthSnapshots        WealthSnapshot[]
+  decisionCosts          DecisionCost[]
+}
+
+// Cout complet d'une decision (section 61) : additionne tous les composants
+// d'un achat/engagement (credit, assurance, carburant, entretien
+// provisionne...) en un seul "cout reel" mensuel, pour ne jamais raisonner
+// sur la seule mensualite de credit qui sous-estime le cout veritable.
+model DecisionCost {
+  id        String   @id @default(cuid())
+  label     String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  items DecisionCostItem[]
+
+  @@index([userId])
+}
+
+model DecisionCostItem {
+  id            String  @id @default(cuid())
+  label         String
+  monthlyAmount Decimal @db.Decimal(12, 2)
+
+  decisionCost   DecisionCost @relation(fields: [decisionCostId], references: [id], onDelete: Cascade)
+  decisionCostId String
+
+  @@index([decisionCostId])
 }
 
 model BankAccount {

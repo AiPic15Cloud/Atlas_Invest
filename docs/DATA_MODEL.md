@@ -312,6 +312,21 @@ rythme mensuel qui resterait positif ensuite (`sustainableIndefinitely`) —
 les deux sont montrés séparément côté frontend. Fonction pure testée
 (`simulateStressTest`).
 
+### n. Coût complet d'une décision (section 61) — comblé par Lot 26
+
+Nouveau modèle `DecisionCost` (label, userId) + `DecisionCostItem`
+(label, monthlyAmount, decisionCostId) via `/api/decision-costs`
+(GET/POST/DELETE). Reprend l'exemple même de la section 61 : une décision
+d'achat ne se résume pas à sa mensualité de crédit — l'utilisateur liste
+tous les composants mensuels réels (crédit, assurance, carburant,
+entretien provisionné...) et l'app additionne pour donner un unique
+`realMonthlyCost`, sans aucune tentative d'estimer automatiquement des
+composants que l'utilisateur n'a pas saisis (pas de fabrication de
+carburant/entretien par défaut — ce serait présenter une estimation comme
+certaine, contraire au garde-fou 78). Fonction pure testée
+(`computeDecisionRealCost`), vérifiée avec l'exemple exact de la spec
+(280 + 70 + 140 + 50 = 540 €/mois).
+
 ## 3. Vérification du garde-fou « jamais compter un transfert deux fois »
 
 Vérifié dans `apps/api/src/routes/transfers.ts` et le schéma : un virement
