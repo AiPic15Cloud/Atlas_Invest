@@ -154,6 +154,12 @@ export function Dashboard() {
             <dt>− Prélèvements à venir ce mois</dt>
             <dd className="font-medium">{currency.format(data.availableMoney.upcomingCharges)}</dd>
           </div>
+          {data.availableMoney.provisionsTotal > 0 && (
+            <div className="flex justify-between">
+              <dt>− Provisions (dépenses annuelles lissées)</dt>
+              <dd className="font-medium">{currency.format(data.availableMoney.provisionsTotal)}</dd>
+            </div>
+          )}
           {data.availableMoney.hasEstimate ? (
             <>
               <div className="flex justify-between">

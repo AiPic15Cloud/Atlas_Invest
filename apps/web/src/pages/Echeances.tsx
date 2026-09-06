@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { apiFetch, ApiError } from "../api/client";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import { IconClock } from "../components/icons";
-import type { BankAccountsResponse, RecurringChargesResponse } from "../api/types";
+import type { BankAccountsResponse, ProvisionsResponse, RecurringChargesResponse } from "../api/types";
 
 export function Echeances() {
   const currency = useCurrencyFormatter();
@@ -16,6 +16,11 @@ export function Echeances() {
   const [bankAccountId, setBankAccountId] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const [provisions, setProvisions] = useState<ProvisionsResponse | null>(null);
+  const [provisionLabel, setProvisionLabel] = useState("");
+  const [provisionAnnualAmount, setProvisionAnnualAmount] = useState("");
+  const [provisionSubmitting, setProvisionSubmitting] = useState(false);
+
   const availableAccounts = useMemo(
     () => [...(accounts?.mine ?? []), ...(accounts?.joint ?? [])],
     [accounts],
@@ -23,14 +28,55 @@ export function Echeances() {
 
   async function load() {
     try {
-      const [chargesRes, accountsRes] = await Promise.all([
+      const [chargesRes, accountsRes, provisionsRes] = await Promise.all([
         apiFetch<RecurringChargesResponse>("/api/recurring-charges"),
         apiFetch<BankAccountsResponse>("/api/bank-accounts"),
+        apiFetch<ProvisionsResponse>("/api/provisions"),
       ]);
       setData(chargesRes);
       setAccounts(accountsRes);
+      setProvisions(provisionsRes);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Impossible de charger le calendrier des échéances.");
+    }
+  }
+
+  async function handleAddProvision() {
+    const parsedAnnual = Number(provisionAnnualAmount.replace(",", "."));
+    if (!provisionLabel.trim() || !Number.isFinite(parsedAnnual) || parsedAnnual <= 0) return;
+    setProvisionSubmitting(true);
+    setError(null);
+    try {
+      await apiFetch("/api/provisions", {
+        method: "POST",
+        body: JSON.stringify({ label: provisionLabel.trim(), annualAmount: parsedAnnual }),
+      });
+      setProvisionLabel("");
+      setProvisionAnnualAmount("");
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    } finally {
+      setProvisionSubmitting(false);
+    }
+  }
+
+  async function handleToggleProvisionActive(id: string, active: boolean) {
+    try {
+      await apiFetch(`/api/provisions/${id}`, { method: "PATCH", body: JSON.stringify({ active }) });
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    }
+  }
+
+  async function handleDeleteProvision(id: string) {
+    if (!confirm("Supprimer cette provision ?")) return;
+    try {
+      await apiFetch(`/api/provisions/${id}`, { method: "DELETE" });
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
     }
   }
 
@@ -206,6 +252,70 @@ export function Echeances() {
             ))}
           </ul>
         )}
+      </section>
+
+      <section className="card">
+        <h2 className="font-semibold">Provisions pour dépenses annuelles</h2>
+        <p className="mt-1 text-sm text-[#8a7358]">
+          Assurance, taxe foncière, vacances, entretien voiture... déclare le montant annuel : Atlas le
+          mensualise et le compte comme de l'argent déjà affecté, déduit de ton "argent réellement disponible".
+        </p>
+
+        {provisions && provisions.provisions.length > 0 && (
+          <ul className="mt-3">
+            {provisions.provisions.map((p) => (
+              <li
+                key={p.id}
+                className={`flex items-center justify-between gap-3 border-b border-[#ece0cb] dark:border-[#3a2a1c] py-2 last:border-0 ${
+                  p.active ? "" : "opacity-50"
+                }`}
+              >
+                <span className="flex-1 text-sm">{p.label}</span>
+                <span className="text-sm font-medium">
+                  {currency.format(p.monthlyAmount)}/mois
+                  <span className="ml-1 text-xs text-[#a8927a]">({currency.format(p.annualAmount)}/an)</span>
+                </span>
+                <button
+                  onClick={() => handleToggleProvisionActive(p.id, !p.active)}
+                  className="text-xs text-[#a8927a] hover:text-copper-600"
+                >
+                  {p.active ? "Suspendre" : "Réactiver"}
+                </button>
+                <button onClick={() => handleDeleteProvision(p.id)} className="text-xs text-[#a8927a] hover:text-terracotta-600">
+                  Supprimer
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {provisions && provisions.activeMonthlyTotal > 0 && (
+          <p className="mt-2 text-sm font-medium text-copper-700 dark:text-copper-300">
+            Total provisionné : {currency.format(provisions.activeMonthlyTotal)}/mois
+          </p>
+        )}
+
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <input
+            className="input sm:col-span-2"
+            placeholder="Libellé (ex. Assurance habitation)"
+            value={provisionLabel}
+            onChange={(e) => setProvisionLabel(e.target.value)}
+          />
+          <input
+            className="input"
+            placeholder="Montant annuel (€)"
+            inputMode="decimal"
+            value={provisionAnnualAmount}
+            onChange={(e) => setProvisionAnnualAmount(e.target.value)}
+          />
+        </div>
+        <button
+          onClick={handleAddProvision}
+          disabled={provisionSubmitting}
+          className="mt-3 btn btn-primary"
+        >
+          {provisionSubmitting ? "..." : "Ajouter la provision"}
+        </button>
       </section>
 
       {data.subscriptionsWithoutDate.length > 0 && (

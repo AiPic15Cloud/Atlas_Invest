@@ -521,8 +521,23 @@ export interface AvailableMoney {
   upcomingCharges: number;
   besoinsRemaining: number;
   epargneRemaining: number;
+  provisionsTotal: number;
   amount: number;
   hasEstimate: boolean;
+}
+
+export interface Provision {
+  id: string;
+  label: string;
+  annualAmount: number;
+  monthlyAmount: number;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface ProvisionsResponse {
+  provisions: Provision[];
+  activeMonthlyTotal: number;
 }
 
 export interface DashboardResponse {

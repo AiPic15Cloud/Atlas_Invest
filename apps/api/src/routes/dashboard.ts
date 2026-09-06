@@ -6,6 +6,7 @@ import { listAccessibleAccounts } from "../utils/accountAccess.js";
 import { BUDGET_METHODS, computeBudgetBreakdown, type BudgetMethodKey } from "../constants/budgetMethods.js";
 import { computeAnnualTotals, computeMonthlyAverages } from "../utils/annualSummary.js";
 import { sumByCategory } from "../utils/expenseCategoryTotals.js";
+import { computeMonthlyProvision } from "../utils/provisions.js";
 
 export const dashboardRouter = Router();
 
@@ -73,7 +74,7 @@ dashboardRouter.get("/", async (req, res) => {
   const currentMonth = now.getMonth() + 1;
   const currentDay = now.getDate();
 
-  const [recurringCharges, currentMonthExpenses] = await Promise.all([
+  const [recurringCharges, currentMonthExpenses, activeProvisions] = await Promise.all([
     prisma.recurringCharge.findMany({
       where: { bankAccountId: { in: accountIds }, active: true },
       select: { amount: true, dayOfMonth: true },
@@ -82,12 +83,16 @@ dashboardRouter.get("/", async (req, res) => {
       where: { year: currentYear, month: currentMonth, bankAccountId: { in: accountIds } },
       select: { category: true, amount: true, splits: { select: { category: true, amount: true } } },
     }),
+    prisma.provision.findMany({ where: { userId: req.userId!, active: true }, select: { annualAmount: true } }),
   ]);
 
   const currentBalance = accounts.reduce((sum, a) => sum + Number(a.initialBalance), 0);
   const upcomingCharges = recurringCharges
     .filter((c) => c.dayOfMonth >= currentDay)
     .reduce((sum, c) => sum + Number(c.amount), 0);
+  // Provisions (spec section 17) : dépenses annuelles mensualisées, comptées
+  // dans "l'argent affecté" — déjà réservées, donc déduites du disponible.
+  const provisionsTotal = activeProvisions.reduce((sum, p) => sum + computeMonthlyProvision(Number(p.annualAmount)), 0);
 
   let besoinsRemaining = 0;
   let epargneRemaining = 0;
@@ -119,7 +124,8 @@ dashboardRouter.get("/", async (req, res) => {
     upcomingCharges,
     besoinsRemaining,
     epargneRemaining,
-    amount: currentBalance - upcomingCharges - besoinsRemaining - epargneRemaining,
+    provisionsTotal,
+    amount: currentBalance - upcomingCharges - besoinsRemaining - epargneRemaining - provisionsTotal,
     hasEstimate: Boolean(template && BUDGET_METHODS[template.method as BudgetMethodKey].splitMode !== "ZERO_BASED"),
   };
 
