@@ -4,7 +4,8 @@ import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
 import { loadAccessibleAccount } from "../utils/accountAccess.js";
 import { computeDiscrepancy, computeExpectedBalance, isSignificantDiscrepancy, monthsInRange } from "../utils/reconciliation.js";
-import type { BankAccount, BalanceCheckpoint } from "@prisma/client";
+import { computeEnvelopeSummary } from "../utils/accountEnvelopes.js";
+import type { AccountEnvelope, BankAccount, BalanceCheckpoint } from "@prisma/client";
 
 export const bankAccountsRouter = Router();
 
@@ -270,4 +271,97 @@ bankAccountsRouter.post("/:id/checkpoints", async (req, res) => {
     checkpoint: serializeCheckpoint(checkpoint),
     isSignificantDiscrepancy: isSignificantDiscrepancy(discrepancy),
   });
+});
+
+function serializeEnvelope(envelope: AccountEnvelope) {
+  return {
+    id: envelope.id,
+    name: envelope.name,
+    amount: envelope.amount.toString(),
+    createdAt: envelope.createdAt,
+  };
+}
+
+// Enveloppes virtuelles (spec section 18) : le total est toujours recalcule
+// a la lecture, jamais stocke en dur, pour ne jamais desynchroniser
+// l'alerte de depassement d'un solde qui a pu bouger depuis.
+bankAccountsRouter.get("/:id/envelopes", async (req, res) => {
+  const result = await loadAccessibleAccount(req.userId!, req.params.id);
+  if ("error" in result) {
+    res.status(result.error).json({ error: result.error === 404 ? "Compte introuvable." : "Accès refusé." });
+    return;
+  }
+
+  const envelopes = await prisma.accountEnvelope.findMany({
+    where: { bankAccountId: result.account.id },
+    orderBy: { createdAt: "asc" },
+  });
+  const summary = computeEnvelopeSummary(
+    Number(result.account.initialBalance),
+    envelopes.map((e) => Number(e.amount)),
+  );
+
+  res.json({ envelopes: envelopes.map(serializeEnvelope), ...summary });
+});
+
+const createEnvelopeSchema = z.object({
+  name: z.string().trim().min(1).max(60),
+  amount: z.number().finite().positive(),
+});
+
+bankAccountsRouter.post("/:id/envelopes", async (req, res) => {
+  const result = await loadAccessibleAccount(req.userId!, req.params.id);
+  if ("error" in result) {
+    res.status(result.error).json({ error: result.error === 404 ? "Compte introuvable." : "Accès refusé." });
+    return;
+  }
+  const parsed = createEnvelopeSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Données invalides." });
+    return;
+  }
+
+  const envelope = await prisma.accountEnvelope.create({
+    data: { name: parsed.data.name, amount: parsed.data.amount, bankAccountId: result.account.id },
+  });
+  res.status(201).json({ envelope: serializeEnvelope(envelope) });
+});
+
+async function loadOwnEnvelope(userId: string, envelopeId: string) {
+  const envelope = await prisma.accountEnvelope.findUnique({ where: { id: envelopeId } });
+  if (!envelope) return { error: 404 as const };
+  const account = await loadAccessibleAccount(userId, envelope.bankAccountId);
+  if ("error" in account) return account;
+  return { envelope };
+}
+
+const updateEnvelopeSchema = z.object({
+  name: z.string().trim().min(1).max(60).optional(),
+  amount: z.number().finite().positive().optional(),
+});
+
+bankAccountsRouter.patch("/envelopes/:envelopeId", async (req, res) => {
+  const result = await loadOwnEnvelope(req.userId!, req.params.envelopeId);
+  if ("error" in result) {
+    res.status(result.error).json({ error: result.error === 404 ? "Enveloppe introuvable." : "Accès refusé." });
+    return;
+  }
+  const parsed = updateEnvelopeSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Données invalides." });
+    return;
+  }
+
+  const envelope = await prisma.accountEnvelope.update({ where: { id: result.envelope.id }, data: parsed.data });
+  res.json({ envelope: serializeEnvelope(envelope) });
+});
+
+bankAccountsRouter.delete("/envelopes/:envelopeId", async (req, res) => {
+  const result = await loadOwnEnvelope(req.userId!, req.params.envelopeId);
+  if ("error" in result) {
+    res.status(result.error).json({ error: result.error === 404 ? "Enveloppe introuvable." : "Accès refusé." });
+    return;
+  }
+  await prisma.accountEnvelope.delete({ where: { id: result.envelope.id } });
+  res.status(204).send();
 });

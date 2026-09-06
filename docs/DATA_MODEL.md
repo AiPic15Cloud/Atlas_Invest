@@ -77,12 +77,16 @@ depuis cet historique et comparé à `monthlyContribution` (rythme prévu).
 objectifs (section 20), avec réorganisation depuis le frontend. Reste
 manquant : la distinction `individuel`/`commun` par objectif.
 
-### e. Enveloppes virtuelles limitées à l'épargne de précaution (section 18)
+### e. Enveloppes virtuelles génériques — comblé par Lot 11 (section 18)
 
-`SavingsEnvelope` est rattachée à `EmergencyFundProfile`, pas à un compte
-quelconque. Le cas d'usage cible (« Solde Livret A : 8000 € dont sécurité
-4000, voyage 1500, voiture 1000, libre 1500 ») demande des enveloppes sur
-n'importe quel compte, pas seulement sur l'épargne de précaution.
+`AccountEnvelope` (ajouté au Lot 11) se rattache à n'importe quel
+`BankAccount`, distinct de `SavingsEnvelope` (laissé inchangé, propre à
+l'épargne de précaution). Le cas d'usage cible de la spec (« Solde Livret
+A : 8000 € dont sécurité 4000, voyage 1500, voiture 1000, libre 1500 »)
+est reproduit exactement — `allocated`/`free`/`overAllocated` recalculés à
+chaque lecture depuis `BankAccount.initialBalance`, jamais stockés en dur,
+et le dépassement est signalé plutôt que masqué ou bloqué (le solde réel
+peut évoluer après coup).
 
 ### f. Aucune notion de provenance de la donnée (sections 2, 67-68)
 

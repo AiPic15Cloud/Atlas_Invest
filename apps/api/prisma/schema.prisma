@@ -112,6 +112,23 @@ model BankAccount {
   transfersOut     Transfer[]          @relation("TransferFrom")
   transfersIn      Transfer[]          @relation("TransferTo")
   balanceCheckpoints BalanceCheckpoint[]
+  envelopes          AccountEnvelope[]
+}
+
+// Enveloppe virtuelle (spec section 18) : reserve mentalement une partie
+// du solde d'un compte, sans deplacement bancaire reel. Le total des
+// enveloppes d'un compte est compare au solde par l'API a chaque lecture
+// (jamais stocke en dur), pour ne jamais cacher un depassement.
+model AccountEnvelope {
+  id        String   @id @default(cuid())
+  name      String
+  amount    Decimal  @db.Decimal(12, 2)
+  createdAt DateTime @default(now())
+
+  bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+  bankAccountId String
+
+  @@index([bankAccountId])
 }
 
 // Point de rapprochement bancaire (spec section 68) : l'utilisateur declare

@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import { IconWallet } from "../components/icons";
 import type {
+  AccountEnvelopesResponse,
   BankAccount,
   BankAccountsResponse,
   BankAccountType,
@@ -172,6 +173,120 @@ function ReconciliationPanel({ accountId }: { accountId: string }) {
   );
 }
 
+function EnvelopesPanel({ accountId }: { accountId: string }) {
+  const currency = useCurrencyFormatter();
+  const [data, setData] = useState<AccountEnvelopesResponse | null>(null);
+  const [name, setName] = useState("");
+  const [amount, setAmount] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function load() {
+    try {
+      const res = await apiFetch<AccountEnvelopesResponse>(`/api/bank-accounts/${accountId}/envelopes`);
+      setData(res);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Impossible de charger les enveloppes.");
+    }
+  }
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountId]);
+
+  async function handleAdd(e: React.FormEvent) {
+    e.preventDefault();
+    const parsed = Number(amount.replace(",", "."));
+    if (!name.trim() || !Number.isFinite(parsed) || parsed <= 0) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await apiFetch(`/api/bank-accounts/${accountId}/envelopes`, {
+        method: "POST",
+        body: JSON.stringify({ name: name.trim(), amount: parsed }),
+      });
+      setName("");
+      setAmount("");
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    try {
+      await apiFetch(`/api/bank-accounts/envelopes/${id}`, { method: "DELETE" });
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    }
+  }
+
+  return (
+    <div className="mt-3 rounded-xl border border-slate-200 dark:border-slate-700 p-3 text-sm">
+      <p className="font-semibold">Enveloppes virtuelles</p>
+      <p className="mt-1 text-xs text-slate-500">
+        Réservez mentalement une partie du solde (sécurité, voyage, voiture...) sans déplacer d'argent. Le total ne
+        doit jamais dépasser le solde du compte.
+      </p>
+
+      {data && data.envelopes.length > 0 && (
+        <ul className="mt-2 space-y-1">
+          {data.envelopes.map((env) => (
+            <li key={env.id} className="flex items-center justify-between text-xs">
+              <span>{env.name}</span>
+              <span className="flex items-center gap-2">
+                {currency.format(Number(env.amount))}
+                <button onClick={() => handleDelete(env.id)} className="text-slate-400 hover:text-red-600">
+                  ✕
+                </button>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {data && (
+        <p
+          className={`mt-2 text-xs font-semibold ${data.overAllocated ? "text-amber-700 dark:text-amber-400" : "text-slate-500"}`}
+        >
+          {data.overAllocated
+            ? `⚠️ Enveloppes (${currency.format(data.allocated)}) supérieures au solde — dépassement de ${currency.format(Math.abs(data.free))}.`
+            : `Libre (hors enveloppes) : ${currency.format(data.free)}`}
+        </p>
+      )}
+
+      <form onSubmit={handleAdd} className="mt-2 flex flex-wrap items-end gap-2">
+        <div>
+          <label className="block text-xs text-slate-500">Nom</label>
+          <input
+            className="input w-28 px-2 py-1 text-sm"
+            placeholder="Ex. Voyage"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-slate-500">Montant (€)</label>
+          <input
+            className="input w-24 px-2 py-1 text-sm"
+            inputMode="decimal"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+          />
+        </div>
+        <button type="submit" disabled={submitting} className="btn btn-primary px-2 py-1 text-xs">
+          {submitting ? "..." : "Ajouter"}
+        </button>
+      </form>
+      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+    </div>
+  );
+}
+
 const TYPE_LABELS: Record<BankAccountType, string> = {
   COURANT: "Compte courant",
   LIVRET: "Livret",
@@ -194,6 +309,7 @@ const TYPE_GRADIENT: Record<BankAccountType, string> = {
 function AccountCard({ account, onDelete }: { account: BankAccount; onDelete: (id: string) => void }) {
   const currency = useCurrencyFormatter();
   const [reconciling, setReconciling] = useState(false);
+  const [envelopesOpen, setEnvelopesOpen] = useState(false);
   return (
     <div>
       <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-br p-4 text-white shadow-sm ${TYPE_GRADIENT[account.type]}`}>
@@ -211,14 +327,23 @@ function AccountCard({ account, onDelete }: { account: BankAccount; onDelete: (i
           </button>
         </div>
         <p className="mt-5 text-2xl font-bold tracking-tight">{currency.format(Number(account.initialBalance))}</p>
-        <button
-          onClick={() => setReconciling((v) => !v)}
-          className="mt-2 text-xs font-medium text-white/80 underline decoration-white/40 underline-offset-2 hover:text-white"
-        >
-          {reconciling ? "Masquer le rapprochement" : "Faire le point"}
-        </button>
+        <div className="mt-2 flex items-center gap-3">
+          <button
+            onClick={() => setReconciling((v) => !v)}
+            className="text-xs font-medium text-white/80 underline decoration-white/40 underline-offset-2 hover:text-white"
+          >
+            {reconciling ? "Masquer le rapprochement" : "Faire le point"}
+          </button>
+          <button
+            onClick={() => setEnvelopesOpen((v) => !v)}
+            className="text-xs font-medium text-white/80 underline decoration-white/40 underline-offset-2 hover:text-white"
+          >
+            {envelopesOpen ? "Masquer les enveloppes" : "Enveloppes"}
+          </button>
+        </div>
       </div>
       {reconciling && <ReconciliationPanel accountId={account.id} />}
+      {envelopesOpen && <EnvelopesPanel accountId={account.id} />}
     </div>
   );
 }

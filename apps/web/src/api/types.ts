@@ -82,6 +82,20 @@ export interface CreateCheckpointResponse {
   isSignificantDiscrepancy: boolean;
 }
 
+export interface AccountEnvelope {
+  id: string;
+  name: string;
+  amount: string;
+  createdAt: string;
+}
+
+export interface AccountEnvelopesResponse {
+  envelopes: AccountEnvelope[];
+  allocated: number;
+  free: number;
+  overAllocated: boolean;
+}
+
 export interface Income {
   id: string;
   year: number;
