@@ -403,6 +403,8 @@ export interface WealthCategoryDefinition {
   kind: WealthKind;
 }
 
+export type ValuationSource = "MANUELLE" | "MARCHE" | "ESTIMATION" | "HISTORIQUE";
+
 export interface WealthItem {
   id: string;
   label: string;
@@ -410,7 +412,22 @@ export interface WealthItem {
   kind: WealthKind;
   amount: string;
   signedAmount: number;
+  lastValuationSource: ValuationSource | null;
+  lastValuationDate: string | null;
   createdAt: string;
+}
+
+export interface AssetValuation {
+  id: string;
+  value: string;
+  valuationDate: string;
+  source: ValuationSource;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface AssetValuationsResponse {
+  valuations: AssetValuation[];
 }
 
 export interface WealthHouseholdMember {

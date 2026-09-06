@@ -528,7 +528,35 @@ model WealthItem {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
 
+  valuations AssetValuation[]
+
   @@index([userId])
+}
+
+enum ValuationSource {
+  MANUELLE
+  MARCHE
+  ESTIMATION
+  HISTORIQUE
+}
+
+// Historique de valorisation d'un actif (spec section 32) : chaque valeur
+// porte sa date et sa nature (saisie manuelle / prix de marche / estimation
+// / prix historique), pour ne jamais presenter une estimation comme un
+// fait certain (garde-fou section 78) et pour pouvoir, plus tard, separer
+// la performance des placements des flux apportes (section 31).
+model AssetValuation {
+  id            String          @id @default(cuid())
+  value         Decimal         @db.Decimal(12, 2)
+  valuationDate DateTime
+  source        ValuationSource
+  note          String?
+  createdAt     DateTime        @default(now())
+
+  wealthItem   WealthItem @relation(fields: [wealthItemId], references: [id], onDelete: Cascade)
+  wealthItemId String
+
+  @@index([wealthItemId, valuationDate])
 }
 
 enum CorrectionType {

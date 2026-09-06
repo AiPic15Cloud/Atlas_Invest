@@ -3,9 +3,156 @@ import { apiFetch, ApiError } from "../api/client";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import { IconBuilding, IconWallet, IconUsers, IconArrowsExchange, IconChartLine } from "../components/icons";
 import { StatTile } from "../components/StatTile";
-import type { Loan, LoansResponse, WealthCategory, WealthResponse } from "../api/types";
+import type {
+  AssetValuationsResponse,
+  Loan,
+  LoansResponse,
+  ValuationSource,
+  WealthCategory,
+  WealthItem,
+  WealthResponse,
+} from "../api/types";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" });
+const dayFormat = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+
+const VALUATION_SOURCE_LABELS: Record<ValuationSource, string> = {
+  MANUELLE: "saisie manuelle",
+  MARCHE: "prix de marché",
+  ESTIMATION: "estimation",
+  HISTORIQUE: "prix historique",
+};
+
+function ValuationRow({
+  item,
+  categoryLabel,
+  currency,
+  onDelete,
+  onUpdated,
+}: {
+  item: WealthItem;
+  categoryLabel: string;
+  currency: Intl.NumberFormat;
+  onDelete: (id: string) => void;
+  onUpdated: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState("");
+  const [source, setSource] = useState<ValuationSource>("MANUELLE");
+  const [history, setHistory] = useState<AssetValuationsResponse["valuations"] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function loadHistory() {
+    try {
+      const res = await apiFetch<AssetValuationsResponse>(`/api/wealth/${item.id}/valuations`);
+      setHistory(res.valuations);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Impossible de charger l'historique.");
+    }
+  }
+
+  async function toggle() {
+    const next = !open;
+    setOpen(next);
+    if (next && !history) {
+      await loadHistory();
+    }
+  }
+
+  async function handleSubmit() {
+    const parsed = Number(value.replace(",", "."));
+    if (!Number.isFinite(parsed) || parsed <= 0) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await apiFetch(`/api/wealth/${item.id}/valuations`, {
+        method: "POST",
+        body: JSON.stringify({ value: parsed, source }),
+      });
+      setValue("");
+      onUpdated();
+      await loadHistory();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <li className="border-b border-slate-100 dark:border-slate-800 py-2 last:border-0">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-sm">
+          {item.label} <span className="text-slate-400">({categoryLabel})</span>
+          {item.lastValuationSource && (
+            <span className="ml-1 text-xs text-slate-400">
+              — {VALUATION_SOURCE_LABELS[item.lastValuationSource]}
+              {item.lastValuationDate ? `, ${dayFormat.format(new Date(item.lastValuationDate))}` : ""}
+            </span>
+          )}
+        </span>
+        <div className="flex items-center gap-3">
+          <span className={`text-sm font-medium ${item.kind === "LIABILITY" ? "text-red-600" : ""}`}>
+            {item.kind === "LIABILITY" ? "− " : ""}
+            {currency.format(Number(item.amount))}
+          </span>
+          <button onClick={toggle} className="text-xs link">
+            {open ? "Fermer" : "Mettre à jour"}
+          </button>
+          <button onClick={() => onDelete(item.id)} className="text-xs text-red-500 underline">
+            Supprimer
+          </button>
+        </div>
+      </div>
+
+      {open && (
+        <div className="mt-2 rounded-lg border border-slate-100 dark:border-slate-800 p-2">
+          <div className="flex flex-wrap items-end gap-2">
+            <div>
+              <label className="block text-xs text-slate-500">Nouvelle valeur (€)</label>
+              <input
+                className="input w-28 px-2 py-1 text-sm"
+                inputMode="decimal"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500">Source</label>
+              <select
+                className="input px-2 py-1 text-sm"
+                value={source}
+                onChange={(e) => setSource(e.target.value as ValuationSource)}
+              >
+                {(Object.keys(VALUATION_SOURCE_LABELS) as ValuationSource[]).map((s) => (
+                  <option key={s} value={s}>
+                    {VALUATION_SOURCE_LABELS[s]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button onClick={handleSubmit} disabled={submitting} className="btn btn-primary px-2 py-1 text-xs">
+              {submitting ? "..." : "Enregistrer"}
+            </button>
+          </div>
+          {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+
+          {history && history.length > 0 && (
+            <ul className="mt-2 space-y-1">
+              {history.map((v) => (
+                <li key={v.id} className="text-xs text-slate-500">
+                  {dayFormat.format(new Date(v.valuationDate))} — {currency.format(Number(v.value))} (
+                  {VALUATION_SOURCE_LABELS[v.source]})
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </li>
+  );
+}
 
 export function Patrimoine() {
   const currency = useCurrencyFormatter();
@@ -249,19 +396,14 @@ export function Patrimoine() {
         ) : (
           <ul className="mt-2">
             {data.mine.wealthItems.map((item) => (
-              <li key={item.id} className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 py-2 last:border-0">
-                <span className="text-sm">
-                  {item.label}{" "}
-                  <span className="text-slate-400">({data.categories[item.category].label})</span>
-                </span>
-                <span className={`text-sm font-medium ${item.kind === "LIABILITY" ? "text-red-600" : ""}`}>
-                  {item.kind === "LIABILITY" ? "− " : ""}
-                  {currency.format(Number(item.amount))}
-                </span>
-                <button onClick={() => handleDelete(item.id)} className="text-xs text-red-500 underline">
-                  Supprimer
-                </button>
-              </li>
+              <ValuationRow
+                key={item.id}
+                item={item}
+                categoryLabel={data.categories[item.category].label}
+                currency={currency}
+                onDelete={handleDelete}
+                onUpdated={load}
+              />
             ))}
           </ul>
         )}

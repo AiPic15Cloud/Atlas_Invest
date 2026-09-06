@@ -54,13 +54,18 @@ assurance — nécessaire pour que le patrimoine distingue correctement
 « consommé » (intérêts, assurance) de « dette remboursée » (capital),
 comme l'exige la section 34.
 
-### c. Patrimoine : pas d'historique de valorisation (section 32)
+### c. Patrimoine : historique de valorisation — comblé par Lot 10 (section 32)
 
-`WealthItem` porte `amount` + `updatedAt`, sans distinguer la nature de la
-valeur (saisie manuelle / marché / estimation / historique) ni conserver
-un historique (`AssetValuation`). Toute mise à jour écrase la valeur
-précédente — impossible de reconstituer « performance des placements »
-séparément des flux apportés (section 31) sans cet historique.
+`AssetValuation` (ajouté au Lot 10) historise chaque valorisation d'un
+`WealthItem` : valeur, date, source (`MANUELLE`/`MARCHE`/`ESTIMATION`/
+`HISTORIQUE`), note optionnelle. `WealthItem.amount` reste un cache de la
+dernière valorisation (utilisé par tous les calculs de patrimoine net
+existants) mais ne change plus jamais sans qu'un point de valorisation daté
+et sourcé ne l'explique — y compris via l'ancien PATCH générique.
+`GET /:id/valuations` expose l'historique complet. Reste manquant : le
+calcul de « performance des placements séparée des flux apportés »
+(section 31), qui demanderait de distinguer les valorisations des apports
+(virements/versements) — non traité dans ce lot.
 
 ### d. Objectifs : contributions et priorité — comblé partiellement par Lot 8 (section 19-20)
 
