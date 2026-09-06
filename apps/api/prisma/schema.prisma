@@ -108,8 +108,31 @@ model BankAccount {
   incomes          Income[]
   expenses         Expense[]
   recurringCharges RecurringCharge[]
-  transfersOut     Transfer[]        @relation("TransferFrom")
-  transfersIn      Transfer[]        @relation("TransferTo")
+  transfersOut     Transfer[]          @relation("TransferFrom")
+  transfersIn      Transfer[]          @relation("TransferTo")
+  balanceCheckpoints BalanceCheckpoint[]
+}
+
+// Point de rapprochement bancaire (spec section 68) : l'utilisateur declare
+// le solde constate sur son releve pour un mois donne ; Atlas compare ce
+// solde a celui attendu (dernier point + revenus - depenses +/- transferts
+// du mois) et signale l'ecart au lieu de le cacher. expectedBalance/
+// discrepancy restent null pour le tout premier point d'un compte (rien a
+// comparer, ce point devient l'ancre de depart).
+model BalanceCheckpoint {
+  id              String   @id @default(cuid())
+  year            Int
+  month           Int
+  statedBalance   Decimal  @db.Decimal(12, 2)
+  expectedBalance Decimal? @db.Decimal(12, 2)
+  discrepancy     Decimal? @db.Decimal(12, 2)
+  createdAt       DateTime @default(now())
+
+  bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+  bankAccountId String
+
+  @@unique([bankAccountId, year, month])
+  @@index([bankAccountId, year, month])
 }
 
 model Income {

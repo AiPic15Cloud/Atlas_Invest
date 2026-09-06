@@ -63,6 +63,25 @@ export interface BankAccountsResponse {
   household: HouseholdMemberAccounts[];
 }
 
+export interface BalanceCheckpoint {
+  id: string;
+  year: number;
+  month: number;
+  statedBalance: string;
+  expectedBalance: string | null;
+  discrepancy: string | null;
+  createdAt: string;
+}
+
+export interface CheckpointsResponse {
+  checkpoints: BalanceCheckpoint[];
+}
+
+export interface CreateCheckpointResponse {
+  checkpoint: BalanceCheckpoint;
+  isSignificantDiscrepancy: boolean;
+}
+
 export interface Income {
   id: string;
   year: number;

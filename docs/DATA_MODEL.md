@@ -92,6 +92,16 @@ propriété structurée des données.
 — budget modifié, objectif modifié, transaction recatégorisée, prêt modifié
 — ne sont pas journalisés.
 
+### g'. Rapprochement bancaire (section 68) — comblé par Lot 7
+
+`BalanceCheckpoint` (ajouté au Lot 7) porte un point de rapprochement par
+compte et par mois : solde constaté déclaré par l'utilisateur, solde
+attendu recalculé automatiquement (dernier point + revenus - dépenses ±
+transferts sur les mois écoulés), écart stocké et jamais masqué (formule et
+exemple de la section 68 vérifiés par test). Chaque nouveau point synchronise
+`BankAccount.initialBalance` sur le solde constaté, ce qui documente
+explicitement en base l'usage de ce champ décrit en section 4 ci-dessous.
+
 ### h. Financement (Phase 8) : rien n'existe encore
 
 `FinancingProject`, `FinancingScenario`, `FinancingOffer`, `MarketRate`,

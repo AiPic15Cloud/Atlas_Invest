@@ -3,7 +3,8 @@ import { z } from "zod";
 import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
 import { loadAccessibleAccount } from "../utils/accountAccess.js";
-import type { BankAccount } from "@prisma/client";
+import { computeDiscrepancy, computeExpectedBalance, isSignificantDiscrepancy, monthsInRange } from "../utils/reconciliation.js";
+import type { BankAccount, BalanceCheckpoint } from "@prisma/client";
 
 export const bankAccountsRouter = Router();
 
@@ -136,4 +137,137 @@ bankAccountsRouter.delete("/:id", async (req, res) => {
 
   await prisma.bankAccount.delete({ where: { id: result.account.id } });
   res.status(204).send();
+});
+
+function serializeCheckpoint(checkpoint: BalanceCheckpoint) {
+  return {
+    id: checkpoint.id,
+    year: checkpoint.year,
+    month: checkpoint.month,
+    statedBalance: checkpoint.statedBalance.toString(),
+    expectedBalance: checkpoint.expectedBalance?.toString() ?? null,
+    discrepancy: checkpoint.discrepancy?.toString() ?? null,
+    createdAt: checkpoint.createdAt,
+  };
+}
+
+bankAccountsRouter.get("/:id/checkpoints", async (req, res) => {
+  const result = await loadAccessibleAccount(req.userId!, req.params.id);
+  if ("error" in result) {
+    res.status(result.error).json({ error: result.error === 404 ? "Compte introuvable." : "Accès refusé." });
+    return;
+  }
+
+  const checkpoints = await prisma.balanceCheckpoint.findMany({
+    where: { bankAccountId: result.account.id },
+    orderBy: [{ year: "desc" }, { month: "desc" }],
+  });
+
+  res.json({ checkpoints: checkpoints.map(serializeCheckpoint) });
+});
+
+const createCheckpointSchema = z.object({
+  year: z.number().int().min(2000).max(2100),
+  month: z.number().int().min(1).max(12),
+  statedBalance: z.number().finite(),
+});
+
+// Rapprochement bancaire (spec section 68) : l'utilisateur déclare le solde
+// constaté sur son relevé pour un mois donné. Atlas recalcule le solde
+// attendu depuis le dernier point de contrôle (ou depuis la création du
+// compte s'il n'y en a pas encore) et affiche l'écart sans jamais le
+// masquer, même s'il est nul.
+bankAccountsRouter.post("/:id/checkpoints", async (req, res) => {
+  const result = await loadAccessibleAccount(req.userId!, req.params.id);
+  if ("error" in result) {
+    res.status(result.error).json({ error: result.error === 404 ? "Compte introuvable." : "Accès refusé." });
+    return;
+  }
+  const account = result.account;
+
+  const parsed = createCheckpointSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Données invalides." });
+    return;
+  }
+  const { year, month, statedBalance } = parsed.data;
+
+  const lastCheckpoint = await prisma.balanceCheckpoint.findFirst({
+    where: { bankAccountId: account.id },
+    orderBy: [{ year: "desc" }, { month: "desc" }],
+  });
+
+  const baselineYear = lastCheckpoint ? lastCheckpoint.year : account.createdAt.getFullYear();
+  const baselineMonth = lastCheckpoint ? lastCheckpoint.month : account.createdAt.getMonth() + 1;
+  const previousStatedBalance = Number(lastCheckpoint ? lastCheckpoint.statedBalance : account.initialBalance);
+
+  // Le premier point inclut le mois de création du compte (aucune donnée ne
+  // peut exister avant) ; les suivants ne comptent que les mois écoulés
+  // depuis le dernier point, pour ne jamais additionner deux fois la même
+  // période.
+  const rangeStartYear = lastCheckpoint ? (baselineMonth === 12 ? baselineYear + 1 : baselineYear) : baselineYear;
+  const rangeStartMonth = lastCheckpoint ? (baselineMonth === 12 ? 1 : baselineMonth + 1) : baselineMonth;
+
+  if (year * 12 + month < rangeStartYear * 12 + rangeStartMonth) {
+    res.status(409).json({
+      error: lastCheckpoint
+        ? `La date doit être postérieure au dernier point de contrôle (${String(lastCheckpoint.month).padStart(2, "0")}/${lastCheckpoint.year}).`
+        : "La date ne peut pas précéder la création du compte.",
+    });
+    return;
+  }
+
+  const months = monthsInRange(rangeStartYear, rangeStartMonth, year, month);
+  const rangeStart = new Date(Date.UTC(rangeStartYear, rangeStartMonth - 1, 1));
+  const rangeEndExclusive = new Date(Date.UTC(year, month, 1));
+
+  const [incomesSum, expensesSum, transfersInSum, transfersOutSum] = await Promise.all([
+    prisma.income.aggregate({
+      _sum: { amount: true },
+      where: { bankAccountId: account.id, OR: months },
+    }),
+    prisma.expense.aggregate({
+      _sum: { amount: true },
+      where: { bankAccountId: account.id, OR: months },
+    }),
+    prisma.transfer.aggregate({
+      _sum: { amount: true },
+      where: { toAccountId: account.id, date: { gte: rangeStart, lt: rangeEndExclusive } },
+    }),
+    prisma.transfer.aggregate({
+      _sum: { amount: true },
+      where: { fromAccountId: account.id, date: { gte: rangeStart, lt: rangeEndExclusive } },
+    }),
+  ]);
+
+  const expectedBalance = computeExpectedBalance({
+    previousStatedBalance,
+    incomesTotal: Number(incomesSum._sum.amount ?? 0),
+    expensesTotal: Number(expensesSum._sum.amount ?? 0),
+    transfersInTotal: Number(transfersInSum._sum.amount ?? 0),
+    transfersOutTotal: Number(transfersOutSum._sum.amount ?? 0),
+  });
+  const discrepancy = computeDiscrepancy(statedBalance, expectedBalance);
+
+  const [checkpoint] = await prisma.$transaction([
+    prisma.balanceCheckpoint.create({
+      data: {
+        bankAccountId: account.id,
+        year,
+        month,
+        statedBalance,
+        expectedBalance,
+        discrepancy,
+      },
+    }),
+    prisma.bankAccount.update({
+      where: { id: account.id },
+      data: { initialBalance: statedBalance },
+    }),
+  ]);
+
+  res.status(201).json({
+    checkpoint: serializeCheckpoint(checkpoint),
+    isSignificantDiscrepancy: isSignificantDiscrepancy(discrepancy),
+  });
 });
