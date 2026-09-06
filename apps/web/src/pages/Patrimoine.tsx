@@ -5,6 +5,7 @@ import { IconBuilding, IconWallet, IconUsers, IconArrowsExchange, IconChartLine 
 import { StatTile } from "../components/StatTile";
 import type {
   AssetValuationsResponse,
+  DebtCockpitResponse,
   Loan,
   LoansResponse,
   ValuationSource,
@@ -434,6 +435,8 @@ export function Patrimoine() {
         )}
       </section>
 
+      <DebtCockpitSection />
+
       <section className="card">
         <h2 className="font-semibold">Prêts en cours</h2>
         <p className="mt-1 text-sm text-slate-500">
@@ -638,6 +641,83 @@ export function Patrimoine() {
         </section>
       )}
     </div>
+  );
+}
+
+function DebtCockpitSection() {
+  const currency = useCurrencyFormatter();
+  const [data, setData] = useState<DebtCockpitResponse | null>(null);
+
+  useEffect(() => {
+    apiFetch<DebtCockpitResponse>("/api/loans/cockpit")
+      .then(setData)
+      .catch(() => setData(null));
+  }, []);
+
+  if (!data || data.loans.length === 0) return null;
+
+  return (
+    <section className="card">
+      <h2 className="font-semibold flex items-center gap-2">
+        <IconArrowsExchange className="h-5 w-5 text-rose-600" />
+        Cockpit dette
+      </h2>
+
+      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <StatTile icon={IconArrowsExchange} label="Dette totale (empruntée)" value={currency.format(data.totalDebt)} color="rose" />
+        <StatTile
+          icon={IconArrowsExchange}
+          label="Capital restant dû"
+          value={currency.format(data.totalRemainingBalance)}
+          color="rose"
+        />
+        <StatTile
+          icon={IconWallet}
+          label="Mensualités cumulées"
+          value={currency.format(data.totalMonthlyPayments)}
+          color="sky"
+        />
+      </div>
+
+      <ul className="mt-3 text-sm text-slate-600 dark:text-slate-400">
+        <li className="flex justify-between border-b border-slate-100 py-1 dark:border-slate-800">
+          <span>Intérêts restants estimés</span>
+          <span>
+            {data.totalEstimatedRemainingInterest !== null
+              ? currency.format(data.totalEstimatedRemainingInterest)
+              : "non disponible (taux manquant sur au moins un prêt)"}
+          </span>
+        </li>
+        {data.incomeShare !== null && (
+          <li className="flex justify-between border-b border-slate-100 py-1 dark:border-slate-800">
+            <span>Part des revenus consacrée aux crédits</span>
+            <span>{Math.round(data.incomeShare * 100)} %</span>
+          </li>
+        )}
+      </ul>
+
+      {data.nextFreedPayment && (
+        <p className="mt-2 text-sm text-emerald-700 dark:text-emerald-400">
+          À partir de {dateFormat.format(new Date(data.nextFreedPayment.endDate))},{" "}
+          {currency.format(data.nextFreedPayment.amount)} seront libérés ({data.nextFreedPayment.label}).
+        </p>
+      )}
+
+      <ul className="mt-3">
+        {data.loans.map((l) => (
+          <li key={l.id} className="border-b border-slate-100 py-2 last:border-0 dark:border-slate-800">
+            <p className="text-sm">
+              {l.label} : {currency.format(l.monthlyPayment)}/mois
+              {l.neverPaysOff ? (
+                <span className="text-red-600"> — ne sera jamais remboursé à ce rythme</span>
+              ) : (
+                l.monthsRemaining !== null && <>, fin prévue dans {l.monthsRemaining} mois</>
+              )}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

@@ -45,14 +45,27 @@ par ligne, soit de migrer vers le modèle `Transaction`/`TransactionSplit`
 cible. À traiter comme un lot dédié — c'est un changement de schéma qui
 touche `Expense`, `ExpenseAssignment`, et tous les endpoints qui les lisent.
 
-### b. Prêts : pas de ventilation capital/intérêts/assurance (section 34-35)
+### b. Prêts : ventilation et cockpit dette — comblés par Lots 5 et 22 (section 34-35)
 
-`Loan` a `remainingBalance` et `monthlyPayment` comme champs plats, mis à
-jour manuellement. Il n'y a pas de `LoanPayment`/`LoanSchedule` qui
-enregistre, mensualité par mensualité, la répartition capital / intérêts /
-assurance — nécessaire pour que le patrimoine distingue correctement
-« consommé » (intérêts, assurance) de « dette remboursée » (capital),
-comme l'exige la section 34.
+`LoanPayment` (ajouté au Lot 5, avant ce document) enregistre, mensualité
+par mensualité, la répartition capital / intérêts / assurance ; seule la
+part capital réduit `Loan.remainingBalance` et compte comme dette
+remboursée, distincte de ce qui est consommé (section 34).
+
+Le Lot 22 ajoute le cockpit dette (section 35) sans nouvelle table : `GET
+/api/loans/cockpit` agrège les prêts actifs (dette totale empruntée,
+capital restant dû, mensualités cumulées, part des revenus qui y est
+consacrée, prochaine mensualité libérée) et projette, prêt par prêt, la
+durée restante et les intérêts qui restent à payer via un amortissement
+standard quand le taux est connu — jamais une fausse précision : si le
+taux manque, l'estimation des intérêts reste explicitement « non
+disponible » plutôt qu'un chiffre inventé (doctrine section 39, même
+principe que le TAEG), et un prêt dont la mensualité ne couvre même pas les
+intérêts est signalé comme ne pouvant jamais être remboursé à ce rythme
+plutôt que de produire une date de fin absurde. La liste des prêts
+(`GET /api/loans`) réutilise la même fonction de projection, pour que la
+durée restante affichée soit toujours identique entre la fiche d'un prêt et
+le cockpit global.
 
 ### c. Patrimoine : historique de valorisation — comblé par Lot 10 (section 32)
 

@@ -3,6 +3,8 @@ import { z } from "zod";
 import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
 import { applyLoanPayment, loanPaymentSplitIsValid } from "../utils/loanPayment.js";
+import { computeDebtCockpit, projectLoan } from "../utils/debtCockpit.js";
+import { listAccessibleAccounts } from "../utils/accountAccess.js";
 import type { Loan, LoanPayment } from "@prisma/client";
 
 export const loansRouter = Router();
@@ -17,16 +19,25 @@ function serializeLoan(loan: Loan) {
 
   const paidOff = loan.paidOff || remaining <= 0;
 
-  let monthsRemaining: number | null = null;
-  if (!paidOff && monthlyPayment > 0) {
-    monthsRemaining = Math.ceil(remaining / monthlyPayment);
-  }
-
-  let projectedPayoffDate: Date | null = null;
-  if (!paidOff && monthsRemaining !== null) {
-    const now = new Date();
-    projectedPayoffDate = new Date(now.getFullYear(), now.getMonth() + monthsRemaining, 1);
-  }
+  // Projection coherente avec le cockpit dette (section 35) : quand le taux
+  // est connu, la duree restante et les interets restants en tiennent compte
+  // plutot qu'une simple division qui ignorerait les interets a venir.
+  const projection = paidOff
+    ? null
+    : projectLoan(
+        {
+          id: loan.id,
+          label: loan.label,
+          principalAmount: principal,
+          remainingBalance: remaining,
+          monthlyPayment,
+          interestRate,
+          endDate: loan.endDate,
+        },
+        new Date(),
+      );
+  const monthsRemaining = projection?.monthsRemaining ?? null;
+  const projectedPayoffDate = projection?.endDate ?? null;
 
   return {
     id: loan.id,
@@ -60,6 +71,45 @@ export function loansRemainingTotal(loans: Loan[]) {
 loansRouter.get("/", async (req, res) => {
   const loans = await loansFor(req.userId!);
   res.json({ loans: loans.map(serializeLoan) });
+});
+
+// Cockpit dette (section 35) : synthese sur tous les prets actifs, jamais une
+// fausse precision sur les interets restants quand un taux manque.
+loansRouter.get("/cockpit", async (req, res) => {
+  const now = new Date();
+  const accounts = await listAccessibleAccounts(req.userId!);
+  const accountIds = accounts.map((a) => a.id);
+
+  const [loans, incomes] = await Promise.all([
+    loansFor(req.userId!),
+    prisma.income.findMany({
+      where: {
+        bankAccountId: { in: accountIds },
+        year: now.getFullYear(),
+        month: now.getMonth() + 1,
+        nature: "RECURRENT",
+      },
+    }),
+  ]);
+
+  const activeLoans = loans.filter((l) => !l.paidOff && Number(l.remainingBalance) > 0);
+  const monthlyRecurringIncome = incomes.reduce((sum, i) => sum + Number(i.amount), 0);
+
+  const cockpit = computeDebtCockpit(
+    activeLoans.map((l) => ({
+      id: l.id,
+      label: l.label,
+      principalAmount: Number(l.principalAmount),
+      remainingBalance: Number(l.remainingBalance),
+      monthlyPayment: Number(l.monthlyPayment),
+      interestRate: l.interestRate !== null ? Number(l.interestRate) : null,
+      endDate: l.endDate,
+    })),
+    now,
+    monthlyRecurringIncome,
+  );
+
+  res.json(cockpit);
 });
 
 const createSchema = z.object({

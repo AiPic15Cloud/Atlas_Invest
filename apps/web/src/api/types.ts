@@ -539,6 +539,28 @@ export interface LoansResponse {
   loans: Loan[];
 }
 
+export interface DebtCockpitLoan {
+  id: string;
+  label: string;
+  remainingBalance: number;
+  monthlyPayment: number;
+  monthsRemaining: number | null;
+  endDate: string | null;
+  estimatedRemainingInterest: number | null;
+  neverPaysOff: boolean;
+}
+
+export interface DebtCockpitResponse {
+  totalDebt: number;
+  totalRemainingBalance: number;
+  totalMonthlyPayments: number;
+  totalEstimatedRemainingInterest: number | null;
+  hasUnknownInterest: boolean;
+  incomeShare: number | null;
+  nextFreedPayment: { loanId: string; label: string; endDate: string; amount: number } | null;
+  loans: DebtCockpitLoan[];
+}
+
 export interface SavingsGoal {
   id: string;
   name: string;
