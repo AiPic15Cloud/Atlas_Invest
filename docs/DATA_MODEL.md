@@ -464,6 +464,39 @@ Fonction pure testée (`computeRealDisposableIncome`), vérifiée avec
 l'exemple exact de la spec (reste après crédit 2 600 € − dépenses
 observées 2 250 € = marge réelle 350 €/mois).
 
+### t. Rapport mensuel enrichi (section 72) — comblé par Lot 34
+
+Le rapport CSV (`Export.tsx`, écrit à l'étape #43 du projet, avant la
+plupart des lots suivants) ne couvrait que Revenus/Dépenses/Reste à
+vivre. La spec section 72 exige aussi : Budget vs réel, Épargne, Euros
+sauvés, Fuites détectées, Objectifs, Patrimoine, Crédits, Actions
+proposées. Toutes ces sections existaient déjà comme fonctionnalités
+testées ailleurs (Lots 18, 20, 24, ainsi que Objectifs/Patrimoine/Crédits
+des tout premiers lots) : ce lot se contente de réutiliser ces endpoints
+déjà éprouvés côté frontend, sans nouvelle logique de calcul ni nouvelle
+route API.
+
+Le patrimoine et les objectifs sont explicitement présentés comme un
+« instantané à la date du rapport » plutôt que comme une valeur « du
+mois », car ce sont des soldes actuels, pas un flux mensuel — éviter de
+laisser croire que le patrimoine du 5 du mois et celui du 28 seraient la
+même donnée. Les « euros sauvés » sont filtrés côté client sur
+`createdAt` pour ne garder que les évènements du mois sélectionné, cette
+table n'ayant pas de filtre par année/mois côté API (elle liste tout
+l'historique du foyer, ce qui reste correct pour son propre usage sur la
+page Tableau de bord).
+
+Volontairement hors périmètre : l'export JSON de sauvegarde/reconstitution
+complète (section 71, « le JSON doit permettre une vraie sauvegarde »)
+nécessiterait de traverser un nombre de tables bien plus large (budget
+type, abonnements, prêts, objectifs, patrimoine, provisions,
+enveloppes...) et mérite son propre lot plutôt que d'être ajouté en
+passant à un rapport CSV. Non lié à ce lot mais repéré en vérifiant la
+page : `Export.tsx` a gardé la palette violette d'avant le re-skin
+« Boutique » (cuivre/terracotta/olive) appliqué au reste de l'app —
+purement visuel, sans impact sur les données, laissé pour un lot de
+polish séparé.
+
 ## 3. Vérification du garde-fou « jamais compter un transfert deux fois »
 
 Vérifié dans `apps/api/src/routes/transfers.ts` et le schéma : un virement
