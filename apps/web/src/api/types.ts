@@ -855,6 +855,29 @@ export interface FinancingSimulationWithEffortResponse extends FinancingSimulati
   realDisposableIncome: RealDisposableIncomeResult;
 }
 
+// Jeton d'acces personnel (section 62 / raccourci iOS) : permet de creer
+// une depense sur un compte/poste/categorie fixes a l'avance, sans passer
+// par la session habituelle — pense pour un Raccourci iOS en 1 tap.
+export interface PersonalAccessTokenSummary {
+  id: string;
+  label: string;
+  bankAccountId: string;
+  bankAccountName: string;
+  defaultPoste: string;
+  defaultCategory: ExpenseCategory;
+  createdAt: string;
+  lastUsedAt: string | null;
+  revokedAt: string | null;
+}
+
+export interface PersonalAccessTokensResponse {
+  tokens: PersonalAccessTokenSummary[];
+}
+
+export interface CreatePersonalAccessTokenResponse extends PersonalAccessTokenSummary {
+  token: string;
+}
+
 export interface DashboardResponse {
   year: number;
   fiscalYearStartMonth: number;

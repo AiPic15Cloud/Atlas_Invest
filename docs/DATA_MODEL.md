@@ -533,6 +533,55 @@ Vérifié en saisissant deux revenus `VARIABLE` de test sur la même source
 existe sur la fenêtre (`sources.length > 0`), pour ne jamais montrer un
 chiffre fabriqué en l'absence de données.
 
+### v. Jeton d'accès personnel + saisie rapide de dépense (raccourci iOS) — Lot 36
+
+Hors spec (demande utilisateur directe, suite à une question sur la
+récupération automatique des dépenses Apple Pay) : iOS n'expose aucun
+déclencheur d'automatisation Raccourcis sur un paiement Apple Pay (Apple ne
+partage pas cette donnée), donc pas de solution « zéro interaction »
+possible côté app. Solution retenue : un raccourci en 1 tap qui appelle
+l'API directement.
+
+Nouveau modèle `PersonalAccessToken` : jeton distinct de la session JWT,
+volontairement scopé à une seule action (créer une dépense sur un compte, un
+poste et une catégorie choisis à la création du jeton) plutôt qu'un accès
+API complet — pour limiter les dégâts en cas de fuite du jeton (Raccourci
+partagé par erreur, capture d'écran...). Seul un hash SHA-256 du jeton est
+stocké (déjà 192 bits d'entropie, donc pas besoin du ralentissement
+volontaire de bcrypt réservé aux secrets à faible entropie choisis par un
+humain) ; la valeur en clair n'est renvoyée par l'API qu'une seule fois, à
+la création. Révocation = `revokedAt` (archivage, pas de suppression dure,
+même doctrine que le Lot 14 pour les prêts) : l'historique d'usage
+(`lastUsedAt`) reste consultable même pour un jeton révoqué.
+
+Routes : `POST/GET /api/personal-tokens` (session JWT habituelle,
+`loadAccessibleAccount` vérifie que le compte choisi est bien accessible à
+l'utilisateur) et `DELETE /api/personal-tokens/:id` (révocation). Nouvelle
+route `POST /api/quick-expense`, protégée par un middleware dédié
+(`requirePersonalToken`) distinct de `requireAuth` : un jeton personnel ne
+peut jamais s'authentifier sur les routes JWT normales, et inversement —
+vérifié explicitement (un jeton JWT valide renvoie 401 sur
+`/api/quick-expense`, un jeton personnel valide renvoie 401 sur
+`/api/expenses`). Le montant est la seule donnée obligatoire ;
+poste/catégorie/compte viennent des valeurs par défaut du jeton pour qu'un
+Raccourci iOS reste à une seule question (« Combien ? »). Réutilise
+`resolveFeeling` (règle apprise ou suggestion automatique) et
+`serializeExpense`, déjà testés dans `expenses.ts`, plutôt que de dupliquer
+cette logique.
+
+Frontend (`Settings.tsx`) : section « Raccourci de saisie rapide » —
+création du jeton (compte/poste/catégorie), affichage unique de la valeur
+en clair avec avertissement explicite, liste des jetons actifs avec
+dernier usage, révocation, et instructions repliées (`<details>`) pour
+configurer le Raccourci iOS, incluant la mention explicite que le
+déclenchement reste manuel (pas d'automatisation Apple Pay possible).
+
+Vérifié en local : création d'un jeton, appel `POST /api/quick-expense`
+avec seulement `{"amount": 12.5}` → dépense créée avec le poste/catégorie
+par défaut et la note « Ajouté via raccourci » ; jeton JWT rejeté sur
+`/api/quick-expense` (401) ; jeton personnel rejeté sur `/api/expenses`
+(401) ; après révocation, `/api/quick-expense` renvoie 401 immédiatement.
+
 ## 3. Vérification du garde-fou « jamais compter un transfert deux fois »
 
 Vérifié dans `apps/api/src/routes/transfers.ts` et le schéma : un virement

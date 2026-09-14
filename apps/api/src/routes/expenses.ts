@@ -14,9 +14,9 @@ export const expensesRouter = Router();
 
 expensesRouter.use(requireAuth);
 
-const CATEGORY_VALUES = ["BESOINS", "ENVIES", "EPARGNE", "INVESTISSEMENT", "REMBOURSEMENT_DETTE"] as const;
+export const CATEGORY_VALUES = ["BESOINS", "ENVIES", "EPARGNE", "INVESTISSEMENT", "REMBOURSEMENT_DETTE"] as const;
 
-function serializeExpense(
+export function serializeExpense(
   expense: Expense & { bankAccount: { name: string }; splits?: ExpenseSplit[] },
   unusual: boolean,
 ) {
@@ -44,7 +44,7 @@ function serializeExpense(
 }
 
 /** Regle apprise sur le poste (si l'utilisateur l'a deja corrigee), sinon suggestion automatique V1. */
-async function resolveFeeling(
+export async function resolveFeeling(
   userId: string,
   poste: string,
   amount: number,

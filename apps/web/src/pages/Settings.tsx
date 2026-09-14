@@ -4,7 +4,16 @@ import { apiFetch, ApiError } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { useTheme, type ThemePreference } from "../context/ThemeContext";
 import { IconSettings, IconSun, IconMoon, IconMonitor } from "../components/icons";
-import type { HouseholdCurrency, TwoFactorSetupResponse, TwoFactorStatus } from "../api/types";
+import type {
+  BankAccountsResponse,
+  CreatePersonalAccessTokenResponse,
+  ExpenseCategory,
+  HouseholdCurrency,
+  PersonalAccessTokenSummary,
+  PersonalAccessTokensResponse,
+  TwoFactorSetupResponse,
+  TwoFactorStatus,
+} from "../api/types";
 
 const THEME_OPTIONS: { value: ThemePreference; label: string; Icon: typeof IconSun }[] = [
   { value: "light", label: "Clair", Icon: IconSun },
@@ -24,6 +33,14 @@ const MONTH_NAMES = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
   "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
 ];
+
+const CATEGORY_LABELS: Record<ExpenseCategory, string> = {
+  BESOINS: "Besoins",
+  ENVIES: "Envies",
+  EPARGNE: "Épargne",
+  INVESTISSEMENT: "Investissement",
+  REMBOURSEMENT_DETTE: "Remboursement de dette",
+};
 
 export function Settings() {
   const { user, household, refresh, logout } = useAuth();
@@ -48,6 +65,17 @@ export function Settings() {
   const [resetting, setResetting] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
 
+  const [accounts, setAccounts] = useState<BankAccountsResponse | null>(null);
+  const [tokens, setTokens] = useState<PersonalAccessTokenSummary[] | null>(null);
+  const [showTokenForm, setShowTokenForm] = useState(false);
+  const [tokenLabel, setTokenLabel] = useState("");
+  const [tokenAccountId, setTokenAccountId] = useState("");
+  const [tokenPoste, setTokenPoste] = useState("");
+  const [tokenCategory, setTokenCategory] = useState<ExpenseCategory>("BESOINS");
+  const [tokenBusy, setTokenBusy] = useState(false);
+  const [tokenError, setTokenError] = useState<string | null>(null);
+  const [justCreatedToken, setJustCreatedToken] = useState<string | null>(null);
+
   async function loadTwoFactorStatus() {
     try {
       const res = await apiFetch<TwoFactorStatus>("/api/2fa/status");
@@ -59,7 +87,55 @@ export function Settings() {
 
   useEffect(() => {
     loadTwoFactorStatus();
+    loadAccounts();
+    loadTokens();
   }, []);
+
+  async function loadAccounts() {
+    const res = await apiFetch<BankAccountsResponse>("/api/bank-accounts");
+    setAccounts(res);
+    setTokenAccountId((current) => current || res.mine[0]?.id || res.joint[0]?.id || "");
+  }
+
+  async function loadTokens() {
+    const res = await apiFetch<PersonalAccessTokensResponse>("/api/personal-tokens");
+    setTokens(res.tokens);
+  }
+
+  async function createToken() {
+    setTokenError(null);
+    if (!tokenLabel.trim() || !tokenAccountId || !tokenPoste.trim()) {
+      setTokenError("Remplis le libellé, le compte et le poste par défaut.");
+      return;
+    }
+    setTokenBusy(true);
+    try {
+      const res = await apiFetch<CreatePersonalAccessTokenResponse>("/api/personal-tokens", {
+        method: "POST",
+        body: JSON.stringify({
+          label: tokenLabel.trim(),
+          bankAccountId: tokenAccountId,
+          defaultPoste: tokenPoste.trim(),
+          defaultCategory: tokenCategory,
+        }),
+      });
+      setJustCreatedToken(res.token);
+      setTokenLabel("");
+      setTokenPoste("");
+      setShowTokenForm(false);
+      await loadTokens();
+    } catch (err) {
+      setTokenError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    } finally {
+      setTokenBusy(false);
+    }
+  }
+
+  async function revokeToken(id: string) {
+    if (!confirm("Révoquer ce jeton ? Le Raccourci qui l'utilise cessera de fonctionner immédiatement.")) return;
+    await apiFetch(`/api/personal-tokens/${id}`, { method: "DELETE" });
+    await loadTokens();
+  }
 
   async function handleStartSetup() {
     setTwoFactorBusy(true);
@@ -345,6 +421,137 @@ export function Settings() {
             Activer la double authentification
           </button>
         )}
+      </section>
+
+      <section className="card">
+        <h2 className="font-semibold">Raccourci de saisie rapide</h2>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+          Crée un jeton d'accès pour logger une dépense en 1 tap depuis un Raccourci iOS, sans ouvrir l'app — utile
+          juste après un paiement (Apple Pay ou autre). Le jeton ne peut faire qu'une seule chose : ajouter une
+          dépense sur le compte, le poste et la catégorie choisis ici (jamais un accès complet à ton compte).
+        </p>
+
+        {tokenError && <p className="mt-2 text-sm text-red-600">{tokenError}</p>}
+
+        {justCreatedToken && (
+          <div className="mt-3 rounded-md bg-amber-50 p-3 ring-1 ring-amber-200 dark:bg-amber-950/40 dark:ring-amber-900">
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+              Jeton créé — copie-le maintenant, il ne sera plus jamais affiché :
+            </p>
+            <p className="mt-2 break-all rounded bg-white dark:bg-slate-900 p-2 font-mono text-xs">{justCreatedToken}</p>
+            <button
+              onClick={() => setJustCreatedToken(null)}
+              className="mt-3 rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-white"
+            >
+              J'ai bien copié mon jeton
+            </button>
+          </div>
+        )}
+
+        {tokens && tokens.filter((t) => !t.revokedAt).length > 0 && (
+          <ul className="mt-3 space-y-2">
+            {tokens.filter((t) => !t.revokedAt).map((t) => (
+              <li
+                key={t.id}
+                className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 py-2 last:border-0"
+              >
+                <div>
+                  <p className="text-sm font-medium">{t.label}</p>
+                  <p className="text-xs text-slate-500">
+                    {t.bankAccountName} · {t.defaultPoste} · {CATEGORY_LABELS[t.defaultCategory]}
+                    {t.lastUsedAt ? ` · dernier usage le ${new Date(t.lastUsedAt).toLocaleDateString("fr-FR")}` : " · jamais utilisé"}
+                  </p>
+                </div>
+                <button onClick={() => revokeToken(t.id)} className="text-xs text-slate-400 hover:text-red-600">
+                  Révoquer
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {!showTokenForm ? (
+          <button onClick={() => setShowTokenForm(true)} className="mt-3 btn btn-outline">
+            + Créer un jeton
+          </button>
+        ) : (
+          <div className="mt-3 space-y-3 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-3">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
+                Libellé (ex. "iPhone — Apple Pay")
+              </label>
+              <input value={tokenLabel} onChange={(e) => setTokenLabel(e.target.value)} className="w-full input px-3 py-1.5 text-sm" />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">Compte bancaire</label>
+              <select
+                value={tokenAccountId}
+                onChange={(e) => setTokenAccountId(e.target.value)}
+                className="w-full input px-3 py-1.5 text-sm"
+              >
+                {[...(accounts?.mine ?? []), ...(accounts?.joint ?? [])].map((a) => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">Poste par défaut</label>
+              <input
+                value={tokenPoste}
+                onChange={(e) => setTokenPoste(e.target.value)}
+                placeholder="Ex. Achats Apple Pay"
+                className="w-full input px-3 py-1.5 text-sm"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">Catégorie par défaut</label>
+              <select
+                value={tokenCategory}
+                onChange={(e) => setTokenCategory(e.target.value as ExpenseCategory)}
+                className="w-full input px-3 py-1.5 text-sm"
+              >
+                {(Object.entries(CATEGORY_LABELS) as [ExpenseCategory, string][]).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={createToken} disabled={tokenBusy} className="btn btn-primary px-3 py-1.5 text-xs disabled:opacity-50">
+                {tokenBusy ? "Création..." : "Créer"}
+              </button>
+              <button
+                onClick={() => setShowTokenForm(false)}
+                className="rounded-md px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        )}
+
+        <details className="mt-4 text-sm text-slate-600 dark:text-slate-400">
+          <summary className="cursor-pointer font-medium text-slate-700 dark:text-slate-300">
+            Comment configurer le Raccourci iOS ?
+          </summary>
+          <ol className="mt-2 list-decimal space-y-1 pl-5">
+            <li>Ouvre l'app Raccourcis → crée un nouveau raccourci.</li>
+            <li>Ajoute l'action « Demander du texte » avec l'invite « Combien ? ».</li>
+            <li>
+              Ajoute l'action « Obtenir le contenu de l'URL » : méthode <span className="font-mono">POST</span>, en-tête{" "}
+              <span className="font-mono">Authorization: Bearer &lt;ton jeton&gt;</span>, corps JSON{" "}
+              <span className="font-mono">{"{\"amount\": <texte demandé>}"}</span>, vers l'adresse de l'API de l'app suivie
+              de <span className="font-mono">/api/quick-expense</span>.
+            </li>
+            <li>
+              Épingle ce raccourci à l'écran verrouillé, au bouton Action, ou au tapotement arrière (Réglages →
+              Accessibilité → Tape arrière) pour le lancer en un geste juste après un paiement.
+            </li>
+          </ol>
+          <p className="mt-2">
+            iOS n'expose pas de déclenchement automatique sur un paiement Apple Pay (Apple ne partage pas cette
+            donnée avec les Raccourcis) : ce raccourci se lance manuellement, mais en une seule question.
+          </p>
+        </details>
       </section>
 
       <section className="card">

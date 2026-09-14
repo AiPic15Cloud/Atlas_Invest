@@ -112,6 +112,7 @@ model User {
   provisions           Provision[]
   goalContributions    GoalContribution[]
   importCategoryMemory ImportCategoryMemory[]
+  personalAccessTokens PersonalAccessToken[]
   expenseAssignments   ExpenseAssignment[]
   monthlyBudgetOverrides MonthlyBudgetOverride[]
   anticipatedExpenses    AnticipatedExpense[]
@@ -170,6 +171,7 @@ model BankAccount {
   transfersIn      Transfer[]          @relation("TransferTo")
   balanceCheckpoints BalanceCheckpoint[]
   envelopes          AccountEnvelope[]
+  personalAccessTokens PersonalAccessToken[]
 }
 
 // Enveloppe virtuelle (spec section 18) : reserve mentalement une partie
@@ -751,6 +753,36 @@ model ImportCategoryMemory {
   userId String
 
   @@unique([userId, merchantKey])
+}
+
+// Jeton d'acces personnel pour la saisie rapide d'une depense depuis un
+// Raccourci iOS (ou tout autre client HTTP), sans passer par la session
+// JWT habituelle qui expire. Volontairement scope a une seule action
+// (creer une depense sur un compte, un poste et une categorie par defaut
+// choisis a la creation du jeton) plutot qu'un acces API complet, pour
+// limiter les degats en cas de fuite du jeton (ex. Raccourci partage par
+// erreur). Seul un hash SHA-256 du jeton est stocke (index rapide, jeton
+// deja a haute entropie donc pas besoin du ralentissement de bcrypt) ; la
+// valeur en clair n'est renvoyee par l'API qu'une seule fois, a la
+// creation, jamais plus ensuite. revokedAt : revocation = archivage, pas
+// de suppression dure, pour garder l'historique d'usage (lastUsedAt).
+model PersonalAccessToken {
+  id              String    @id @default(cuid())
+  label           String
+  tokenHash       String    @unique
+  defaultPoste    String
+  defaultCategory BudgetCategory
+  createdAt       DateTime  @default(now())
+  lastUsedAt      DateTime?
+  revokedAt       DateTime?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+  bankAccountId String
+
+  @@index([userId])
 }
 
 // Objectif d'epargne nomme (ex. "Voyage au Japon", "Apport immobilier"),
