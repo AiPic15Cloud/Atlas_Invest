@@ -5,6 +5,7 @@ import { hashPassword, verifyPassword } from "../utils/password.js";
 import { signAuthToken, signTwoFactorPendingToken, verifyTwoFactorPendingToken } from "../utils/jwt.js";
 import { toPublicUser } from "../utils/serialize.js";
 import { verifyTotpCode, compareBackupCode } from "../utils/twoFactor.js";
+import { loginRateLimiter, registerRateLimiter } from "../middleware/rateLimit.js";
 
 export const authRouter = Router();
 
@@ -14,7 +15,7 @@ const registerSchema = z.object({
   firstName: z.string().trim().min(1).max(80),
 });
 
-authRouter.post("/register", async (req, res) => {
+authRouter.post("/register", registerRateLimiter, async (req, res) => {
   const parsed = registerSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Données invalides." });
@@ -42,7 +43,7 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
-authRouter.post("/login", async (req, res) => {
+authRouter.post("/login", loginRateLimiter, async (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Email ou mot de passe invalide." });
@@ -71,7 +72,7 @@ const twoFactorLoginSchema = z.object({
   code: z.string().trim().min(1),
 });
 
-authRouter.post("/2fa-login", async (req, res) => {
+authRouter.post("/2fa-login", loginRateLimiter, async (req, res) => {
   const parsed = twoFactorLoginSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Données invalides." });

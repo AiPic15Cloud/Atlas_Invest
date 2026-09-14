@@ -12,6 +12,7 @@ import {
   compareBackupCode,
 } from "../utils/twoFactor.js";
 import { verifyPassword } from "../utils/password.js";
+import { twoFactorSensitiveRateLimiter } from "../middleware/rateLimit.js";
 
 export const twoFactorRouter = Router();
 
@@ -46,7 +47,7 @@ const enableSchema = z.object({ code: z.string().trim().min(1) });
 
 // Etape 2 : confirme avec un code genere par l'appli, active la 2FA et
 // renvoie les codes de secours en clair (une seule fois).
-twoFactorRouter.post("/enable", async (req, res) => {
+twoFactorRouter.post("/enable", twoFactorSensitiveRateLimiter, async (req, res) => {
   const parsed = enableSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Code invalide." });
@@ -86,7 +87,7 @@ const disableSchema = z.object({ password: z.string().min(1), code: z.string().t
 // Desactivation : exige a la fois le mot de passe et un code valide (TOTP
 // ou code de secours), pour eviter qu'une session volee suffise a couper
 // la protection.
-twoFactorRouter.post("/disable", async (req, res) => {
+twoFactorRouter.post("/disable", twoFactorSensitiveRateLimiter, async (req, res) => {
   const parsed = disableSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Données invalides." });

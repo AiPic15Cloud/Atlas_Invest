@@ -37,6 +37,12 @@ import { financingOffersRouter } from "./routes/financingOffers.js";
 
 const app = express();
 
+// Railway (et la plupart des PaaS) placent l'app derriere un reverse proxy :
+// sans ce reglage, req.ip renverrait l'IP du proxy pour toutes les requetes
+// et le rate limiting (section 70) deviendrait une limite globale partagee
+// par tous les visiteurs au lieu d'etre par visiteur.
+app.set("trust proxy", 1);
+
 app.use(cors({ origin: process.env.WEB_ORIGIN ?? "http://localhost:5173" }));
 app.use(express.json());
 

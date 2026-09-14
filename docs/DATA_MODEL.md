@@ -703,6 +703,65 @@ contraint démarre à 103 000 € — un achat de 220 000 € à ces conditions
 tombe bien dans Très contraint (mensualité totale 1 228,92 €), cohérent
 avec les deux calculs vérifiés indépendamment.
 
+### z. Rate limiting sur les endpoints sensibles (section 70) — comblé par Lot 40
+
+La spec cite explicitement le rate limiting parmi les mesures de sécurité
+attendues (section 70), aux côtés du hachage de mot de passe (déjà en
+place) et de sessions côté serveur (non traité — voir limite connue
+ci-dessous). Aucune protection contre le brute-force n'existait avant ce
+lot : un attaquant pouvait tester des mots de passe ou des codes TOTP sans
+aucune limite.
+
+Nouveau middleware `apps/api/src/middleware/rateLimit.ts` (librairie
+`express-rate-limit`), trois limiteurs distincts par sensibilité :
+- `loginRateLimiter` (10 requêtes / 15 min) sur `POST /api/auth/login` et
+  `POST /api/auth/2fa-login` — assez permissif pour un usage normal (un
+  oubli de mot de passe, un changement de code TOTP) mais bloque un
+  brute-force.
+- `registerRateLimiter` (5 requêtes / heure) sur `POST /api/auth/register`
+  — plus strict, la création de compte n'a pas besoin d'un débit élevé et
+  ça limite la création en masse de comptes.
+- `twoFactorSensitiveRateLimiter` (10 requêtes / 15 min) sur
+  `POST /api/2fa/enable` et `POST /api/2fa/disable` — protège le code TOTP
+  et le mot de passe (exigé pour désactiver) contre le brute-force.
+
+Toutes les réponses portent les en-têtes standard (`RateLimit-Limit`,
+`RateLimit-Remaining`, `RateLimit-Reset`) et un dépassement renvoie
+`429 Too Many Requests` avec `{ error: "Trop de tentatives. Réessaie dans
+quelques minutes." }`.
+
+Prérequis découvert en configurant : Railway (comme la plupart des PaaS)
+place l'app derrière un reverse proxy, donc `req.ip` renverrait l'IP du
+proxy pour toutes les requêtes sans `app.set("trust proxy", 1)` — le
+rate limiting deviendrait alors une limite globale partagée par tous les
+visiteurs au lieu d'être par visiteur. Ajouté dans `apps/api/src/index.ts`
+juste après la création de l'app Express.
+
+**Limite connue, documentée plutôt que masquée** (garde-fou section 78) :
+le store est en mémoire (par défaut d'`express-rate-limit`), donc par
+instance et réinitialisé à chaque redémarrage. Suffisant tant que l'API
+tourne en une seule instance (cas actuel sur Railway) ; si l'app scale un
+jour horizontalement, il faudra migrer vers un store partagé (Redis) pour
+que la limite reste correcte à travers toutes les instances.
+
+Volontairement hors scope de ce lot (pour rester bien borné) :
+réinitialisation de mot de passe par email (nécessite une décision sur
+l'infrastructure d'envoi d'email, pas encore prise) et journal des
+connexions (faisable et autonome, bon candidat pour un lot futur séparé).
+La migration JWT-en-localStorage vers sessions serveur + cookies
+sécurisés, également mentionnée en section 70, n'est pas traitée ici :
+c'est un changement architectural large qui toucherait l'authentification
+de chaque appel API, avec un vrai risque de régression — mérite d'être
+signalé explicitement plutôt que tenté en continu autonome.
+
+Vérifié manuellement en local : 11 tentatives de connexion avec un mauvais
+mot de passe consomment le quota de `loginRateLimiter` puis la 11e requête
+renvoie `429` avec `RateLimit-Remaining: 0` ; même vérification sur
+`POST /api/2fa/enable` avec un token valide et un code TOTP volontairement
+incorrect — 10 réponses `400`/`401` puis `429` sur la 11e tentative,
+confirmant que `twoFactorSensitiveRateLimiter` fonctionne indépendamment
+du limiteur de login.
+
 ## 3. Vérification du garde-fou « jamais compter un transfert deux fois »
 
 Vérifié dans `apps/api/src/routes/transfers.ts` et le schéma : un virement
