@@ -6,6 +6,7 @@ import { listAccessibleAccounts, excludeProfessionalAccounts } from "../utils/ac
 import { simulateFinancing } from "../utils/financingSimulator.js";
 import { computeEffortRate } from "../utils/effortRate.js";
 import { computeRealDisposableIncome } from "../utils/realDisposableIncome.js";
+import { classifySustainableMonthlyPayment, computePurchaseCapacityRanges } from "../utils/sustainablePayment.js";
 import { loansFor } from "./loans.js";
 
 export const financingSimulationsRouter = Router();
@@ -41,7 +42,11 @@ financingSimulationsRouter.post("/simulate", async (req, res) => {
     fees: parsed.data.fees,
   });
 
-  res.json({ type: parsed.data.type, ...result });
+  res.json({
+    type: parsed.data.type,
+    ...result,
+    sustainableZone: classifySustainableMonthlyPayment(result.monthlyPaymentWithInsurance),
+  });
 });
 
 const effortRateSchema = simulateSchema.extend({
@@ -130,9 +135,31 @@ financingSimulationsRouter.post("/effort-rate", async (req, res) => {
   res.json({
     type: parsed.data.type,
     ...simulation,
+    sustainableZone: classifySustainableMonthlyPayment(simulation.monthlyPaymentWithInsurance),
     monthlyIncome,
     existingMonthlyDebt,
     effortRate,
     realDisposableIncome,
   });
+});
+
+const capacitySchema = z.object({
+  downPayment: z.number().finite().nonnegative().default(0),
+  durationMonths: z.number().int().positive().max(600),
+  interestRatePercent: z.number().finite().nonnegative().nullable(),
+  insuranceMonthly: z.number().finite().nonnegative().default(0),
+});
+
+// Capacite immobiliere (section 47) : une fourchette par zone de mensualite
+// soutenable (section 46), jamais un chiffre unique -- eviter la fausse
+// precision d'un montant du type "Capacite = 276 483 €".
+financingSimulationsRouter.post("/capacity", async (req, res) => {
+  const parsed = capacitySchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Données invalides." });
+    return;
+  }
+
+  const ranges = computePurchaseCapacityRanges(parsed.data);
+  res.json({ ranges });
 });

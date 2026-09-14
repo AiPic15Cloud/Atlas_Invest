@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
 import { simulateFinancing } from "../utils/financingSimulator.js";
+import { classifySustainableMonthlyPayment } from "../utils/sustainablePayment.js";
 import type { FinancingOffer } from "@prisma/client";
 
 export const financingOffersRouter = Router();
@@ -36,6 +37,7 @@ function serializeOffer(offer: FinancingOffer) {
     fees: offer.fees === null ? null : Number(offer.fees),
     createdAt: offer.createdAt,
     ...result,
+    sustainableZone: classifySustainableMonthlyPayment(result.monthlyPaymentWithInsurance),
   };
 }
 

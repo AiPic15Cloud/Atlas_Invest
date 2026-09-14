@@ -823,6 +823,10 @@ export interface DecisionCostsResponse {
 
 export type FinancingType = "IMMOBILIER" | "CONSOMMATION" | "VOITURE" | "TRAVAUX" | "AUTRE";
 
+// Mensualite soutenable (section 46) : zone issue de seuils fixes sur la
+// mensualite totale (credit + assurance), jamais du taux d'effort.
+export type SustainablePaymentZone = "CONFORTABLE" | "INTERMEDIAIRE" | "TENDU" | "TRES_CONTRAINT";
+
 export interface FinancingSimulationResponse {
   type: FinancingType;
   financedAmount: number;
@@ -832,6 +836,19 @@ export interface FinancingSimulationResponse {
   totalCost: number;
   taeg: number | null;
   taegUnavailableReason: string | null;
+  sustainableZone: SustainablePaymentZone;
+}
+
+// Capacite immobiliere (section 47) : une fourchette par zone plutot qu'un
+// chiffre unique, pour ne jamais afficher une fausse precision.
+export interface PurchaseCapacityRange {
+  zone: SustainablePaymentZone;
+  minAmount: number;
+  maxAmount: number | null;
+}
+
+export interface PurchaseCapacityResponse {
+  ranges: PurchaseCapacityRange[];
 }
 
 export interface EffortRateResult {

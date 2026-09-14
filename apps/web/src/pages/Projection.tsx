@@ -10,8 +10,10 @@ import type {
   FinancingOffersResponse,
   FinancingSimulationWithEffortResponse,
   FinancingType,
+  PurchaseCapacityResponse,
   StressTestResponse,
   StressTestScenario,
+  SustainablePaymentZone,
 } from "../api/types";
 
 const MONTH_OPTIONS = [6, 12, 24, 36];
@@ -23,6 +25,28 @@ const FINANCING_TYPE_LABELS: Record<FinancingType, string> = {
   TRAVAUX: "Travaux",
   AUTRE: "Autre",
 };
+
+const SUSTAINABLE_ZONE_LABELS: Record<SustainablePaymentZone, string> = {
+  CONFORTABLE: "Confortable",
+  INTERMEDIAIRE: "Intermédiaire",
+  TENDU: "Tendu",
+  TRES_CONTRAINT: "Très contraint",
+};
+
+const SUSTAINABLE_ZONE_CLASSES: Record<SustainablePaymentZone, string> = {
+  CONFORTABLE: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300",
+  INTERMEDIAIRE: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
+  TENDU: "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300",
+  TRES_CONTRAINT: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
+};
+
+function SustainableZoneBadge({ zone }: { zone: SustainablePaymentZone }) {
+  return (
+    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${SUSTAINABLE_ZONE_CLASSES[zone]}`}>
+      {SUSTAINABLE_ZONE_LABELS[zone]}
+    </span>
+  );
+}
 
 const STRESS_PRESETS: { key: string; label: string; build: (amount: number) => StressTestScenario }[] = [
   { key: "INCOME_LOSS", label: "Perte d'un revenu", build: (amount) => ({ type: "INCOME_LOSS", monthlyAmount: amount }) },
@@ -133,6 +157,8 @@ export function Projection() {
   const [financingError, setFinancingError] = useState<string | null>(null);
   const [financingLoading, setFinancingLoading] = useState(false);
 
+  const [capacityRanges, setCapacityRanges] = useState<PurchaseCapacityResponse["ranges"] | null>(null);
+
   const [offers, setOffers] = useState<FinancingOfferSummary[] | null>(null);
   const [offerLabel, setOfferLabel] = useState("");
   const [offerSaving, setOfferSaving] = useState(false);
@@ -203,19 +229,29 @@ export function Projection() {
     setFinancingLoading(true);
     setFinancingError(null);
     try {
-      const result = await apiFetch<FinancingSimulationWithEffortResponse>("/api/financing-simulations/effort-rate", {
-        method: "POST",
-        body: JSON.stringify({
-          type: financingType,
-          amount,
-          downPayment: Number(financingDownPayment.replace(",", ".")) || 0,
-          durationMonths,
-          interestRatePercent: financingRate.trim() === "" ? null : Number(financingRate.replace(",", ".")),
-          insuranceMonthly: financingInsurance.trim() === "" ? undefined : Number(financingInsurance.replace(",", ".")),
-          fees: financingFees.trim() === "" ? undefined : Number(financingFees.replace(",", ".")),
+      const downPayment = Number(financingDownPayment.replace(",", ".")) || 0;
+      const interestRatePercent = financingRate.trim() === "" ? null : Number(financingRate.replace(",", "."));
+      const insuranceMonthly = financingInsurance.trim() === "" ? undefined : Number(financingInsurance.replace(",", "."));
+      const [result, capacity] = await Promise.all([
+        apiFetch<FinancingSimulationWithEffortResponse>("/api/financing-simulations/effort-rate", {
+          method: "POST",
+          body: JSON.stringify({
+            type: financingType,
+            amount,
+            downPayment,
+            durationMonths,
+            interestRatePercent,
+            insuranceMonthly,
+            fees: financingFees.trim() === "" ? undefined : Number(financingFees.replace(",", ".")),
+          }),
         }),
-      });
+        apiFetch<PurchaseCapacityResponse>("/api/financing-simulations/capacity", {
+          method: "POST",
+          body: JSON.stringify({ downPayment, durationMonths, interestRatePercent, insuranceMonthly: insuranceMonthly ?? 0 }),
+        }),
+      ]);
       setFinancingResult(result);
+      setCapacityRanges(capacity.ranges);
     } catch (err) {
       setFinancingError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
     } finally {
@@ -646,7 +682,8 @@ export function Projection() {
               Mensualité : <span className="font-medium">{currency.format(financingResult.monthlyPayment)}</span>
               {financingResult.monthlyPaymentWithInsurance !== financingResult.monthlyPayment && (
                 <span className="text-slate-400"> ({currency.format(financingResult.monthlyPaymentWithInsurance)} avec assurance)</span>
-              )}
+              )}{" "}
+              <SustainableZoneBadge zone={financingResult.sustainableZone} />
             </p>
             <p>
               Intérêts totaux : <span className="font-medium">{currency.format(financingResult.totalInterest)}</span>
@@ -713,6 +750,27 @@ export function Projection() {
         )}
       </section>
 
+      {capacityRanges && (
+        <section className="card">
+          <h2 className="font-semibold">Capacité immobilière</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            À ce taux, cette durée et cette assurance (montant à financer non requis), une fourchette par zone de
+            mensualité soutenable — jamais un chiffre unique, pour ne pas suggérer une précision que le marché ne
+            garantit pas.
+          </p>
+          <ul className="mt-3 space-y-2">
+            {capacityRanges.map((r) => (
+              <li key={r.zone} className="flex items-center justify-between gap-3 border-b border-slate-100 py-2 last:border-0 dark:border-slate-800">
+                <SustainableZoneBadge zone={r.zone} />
+                <span className="text-sm font-medium">
+                  {currency.format(r.minAmount)} {r.maxAmount !== null ? `– ${currency.format(r.maxAmount)}` : "et plus"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {offers && offers.length > 0 && (
         <section className="card">
           <h2 className="font-semibold">Comparaison bancaire</h2>
@@ -728,6 +786,7 @@ export function Projection() {
                   <th className="py-2 pr-3">Taux</th>
                   <th className="py-2 pr-3">Durée</th>
                   <th className="py-2 pr-3">Mensualité</th>
+                  <th className="py-2 pr-3">Zone</th>
                   <th className="py-2 pr-3">TAEG</th>
                   <th className="py-2 pr-3">Coût</th>
                   <th className="py-2"></th>
@@ -742,6 +801,9 @@ export function Projection() {
                     </td>
                     <td className="py-2 pr-3">{o.durationMonths} mois</td>
                     <td className="py-2 pr-3">{currency.format(o.monthlyPaymentWithInsurance)}</td>
+                    <td className="py-2 pr-3">
+                      <SustainableZoneBadge zone={o.sustainableZone} />
+                    </td>
                     <td className="py-2 pr-3">
                       {o.taeg !== null ? `${o.taeg.toFixed(2).replace(".", ",")} %` : "non disponible"}
                     </td>

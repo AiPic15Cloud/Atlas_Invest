@@ -665,6 +665,44 @@ Vérifié en local : une offre avec taux connu (3,5 %) et une offre sans taux
 côte à côte, chacune affichant ses propres résultats indépendamment —
 nettoyage confirmé après coup.
 
+### y. Mensualité soutenable + Capacité immobilière (sections 46-47) — comblé par Lot 39
+
+Section 46 donne des seuils littéraux (Confortable ≤ 300 €, Intermédiaire
+300-450 €, Tendu 450-550 €, Très contraint > 550 €) appliqués tels quels à
+la mensualité totale (crédit + assurance) — jamais dérivés du taux
+d'effort (% du revenu), pour que 300 € signifie la même chose pour tous
+les foyers, conformément à la phrase de la spec « les seuils sont issus du
+profil financier réel, pas uniquement du taux d'effort ». Nouvelle
+fonction pure `classifySustainableMonthlyPayment`, ajoutée aux réponses
+existantes `POST /simulate`, `POST /effort-rate` (Lots 30-32) et aux
+offres du Lot 38 (`sustainableZone`) — sans nouvelle route pour cette
+partie.
+
+Section 47 : plutôt qu'un chiffre unique (« Capacité = 276 483 € »,
+explicitement proscrit par la spec), une fourchette par zone. Nouvelle
+fonction pure `computePurchaseCapacityRanges` qui **inverse** la formule
+d'amortissement de `simulateFinancing` (Lot 30) : à taux/durée/assurance
+fixés, la mensualité de crédit est directement proportionnelle au capital
+financé, donc chaque borne de zone (300 €, 450 €, 550 €) se retraduit en
+un montant total empruntable (financement + apport). Arrondi au millier
+d'euros pour ne jamais afficher une fausse précision du type
+« 230 483,27 € ». Testé par cohérence croisée avec `simulateFinancing` :
+le montant retenu en borne haute d'une zone reproduit bien la mensualité
+cible de cette zone. Nouvelle route `POST /api/financing-simulations/capacity`
+(taux/durée/assurance/apport, sans montant — c'est justement l'inconnue
+qu'on cherche).
+
+Frontend (`Projection.tsx`) : badge de zone coloré (vert/ambre/orange/rouge)
+à côté de la mensualité du simulateur et sur chaque ligne de la comparaison
+bancaire, plus une nouvelle carte « Capacité immobilière » listant les 4
+fourchettes calculées en même temps que la simulation.
+
+Vérifié en local : à 3,5 %, 240 mois, 40 €/mois d'assurance et 15 000 €
+d'apport, la zone Confortable va de 15 000 € à 60 000 € et la zone Très
+contraint démarre à 103 000 € — un achat de 220 000 € à ces conditions
+tombe bien dans Très contraint (mensualité totale 1 228,92 €), cohérent
+avec les deux calculs vérifiés indépendamment.
+
 ## 3. Vérification du garde-fou « jamais compter un transfert deux fois »
 
 Vérifié dans `apps/api/src/routes/transfers.ts` et le schéma : un virement
