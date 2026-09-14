@@ -148,7 +148,26 @@ export function Dashboard() {
           Argent réellement disponible
         </p>
         <p className="font-display mt-1 text-3xl font-bold tracking-tight">{currency.format(data.availableMoney.amount)}</p>
-        <p className="mt-1 text-sm opacity-75">
+
+        {/* Actions juste sous le montant (pas apres le detail) pour qu'elles
+            restent visibles sans scroller sur mobile, ou la barre d'onglets
+            flottante couvre le bas de l'ecran. */}
+        <div className="mt-4 flex items-center justify-between gap-2 border-t border-copper-200/70 pt-4 dark:border-copper-800/60">
+          {HERO_QUICK_ACTIONS.map((action) => (
+            <button
+              key={action.label}
+              onClick={() => navigate(action.to)}
+              className="flex flex-1 flex-col items-center gap-1.5 opacity-80 transition-colors hover:opacity-100"
+            >
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/70 shadow-sm ring-1 ring-copper-200 dark:bg-white/10 dark:ring-copper-800">
+                <action.icon className="h-5 w-5" />
+              </span>
+              <span className="text-[11px] font-medium">{action.label}</span>
+            </button>
+          ))}
+        </div>
+
+        <p className="mt-4 text-sm opacity-75">
           Ton solde bancaire, moins les prélèvements à venir et les dépenses essentielles restantes ce mois-ci —
           plus fiable que le solde affiché par ta banque pour savoir ce que tu peux vraiment dépenser.
         </p>
@@ -185,20 +204,6 @@ export function Dashboard() {
             </p>
           )}
         </dl>
-        <div className="mt-4 flex items-center justify-between gap-2 border-t border-copper-200/70 pt-4 dark:border-copper-800/60">
-          {HERO_QUICK_ACTIONS.map((action) => (
-            <button
-              key={action.label}
-              onClick={() => navigate(action.to)}
-              className="flex flex-1 flex-col items-center gap-1.5 opacity-80 transition-colors hover:opacity-100"
-            >
-              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/70 shadow-sm ring-1 ring-copper-200 dark:bg-white/10 dark:ring-copper-800">
-                <action.icon className="h-5 w-5" />
-              </span>
-              <span className="text-[11px] font-medium">{action.label}</span>
-            </button>
-          ))}
-        </div>
       </section>
 
       {currentMonthExpenses?.summary.budgetComparison && (
