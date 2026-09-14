@@ -120,6 +120,30 @@ model User {
   wealthSnapshots        WealthSnapshot[]
   decisionCosts          DecisionCost[]
   financingOffers        FinancingOffer[]
+  loginLogs              LoginLog[]
+}
+
+// Journal de connexion (section 70) : trace chaque tentative de connexion,
+// reussie ou non. userId est optionnel car un email inconnu (faute de
+// frappe, tentative de brute-force) ne correspond a aucun User -- on
+// journalise quand meme l'email saisi pour que l'utilisateur legitime
+// puisse voir qu'on a tente de se connecter a son adresse, sans jamais
+// creer de compte fantome. Jamais d'IP/user-agent pour un evenement qui
+// n'a pas eu lieu : les deux champs sont optionnels et refletent ce qui a
+// pu etre determine au moment de la requete.
+model LoginLog {
+  id        String   @id @default(cuid())
+  email     String
+  success   Boolean
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String?
+
+  @@index([userId, createdAt])
+  @@index([email, createdAt])
 }
 
 // Cout complet d'une decision (section 61) : additionne tous les composants

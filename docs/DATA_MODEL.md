@@ -762,6 +762,40 @@ incorrect — 10 réponses `400`/`401` puis `429` sur la 11e tentative,
 confirmant que `twoFactorSensitiveRateLimiter` fonctionne indépendamment
 du limiteur de login.
 
+### z'. Journal des connexions (section 70) — comblé par Lot 41
+
+Nouveau modèle `LoginLog` : trace chaque tentative de connexion (réussie ou
+non) avec l'email saisi, le résultat, l'IP (`req.ip`, fiable depuis le
+Lot 40 grâce à `trust proxy`) et le user-agent. `userId` est optionnel —
+un email qui ne correspond à aucun compte est quand même journalisé (utile
+pour repérer une campagne de brute-force), mais reste invisible dans tout
+historique consultable puisque personne ne peut s'authentifier sous ce
+compte pour le lire.
+
+Journalisation dans `apps/api/src/routes/auth.ts`, `POST /login` :
+- Email/mot de passe incorrect → échec (avec `userId` si l'email
+  correspond à un compte existant, pour que l'utilisateur légitime voie la
+  tentative sur son propre historique).
+- Compte sans 2FA, mot de passe correct → succès immédiat.
+- Compte avec 2FA activée → **pas encore journalisé** : le mot de passe
+  seul n'est pas une connexion complète. La tentative finale (succès ou
+  échec du code TOTP/de secours) est journalisée dans `POST /2fa-login`
+  à la place. Limite connue : si l'utilisateur abandonne après le mot de
+  passe sans jamais soumettre de code, aucune trace n'est gardée — accepté
+  car un abandon volontaire n'est pas un événement de sécurité à tracer.
+
+Nouvelle route `GET /api/login-logs` (`apps/api/src/routes/loginLogs.ts`) :
+les 20 tentatives les plus récentes du compte connecté, plus récentes
+d'abord. Frontend : section « Connexions récentes » sur Réglages, sous la
+2FA (regroupement thématique sécurité), avec succès en vert / échec en
+rouge, date/heure et IP.
+
+Vérifié en local avec le compte de seed : une connexion réussie suivie
+d'une tentative avec un mauvais mot de passe apparaissent bien toutes les
+deux dans `GET /api/login-logs`, dans le bon ordre (plus récente en
+premier), avec le bon statut `success`/`ipAddress`. Capture d'écran de la
+section confirmée sur `Settings.tsx`.
+
 ## 3. Vérification du garde-fou « jamais compter un transfert deux fois »
 
 Vérifié dans `apps/api/src/routes/transfers.ts` et le schéma : un virement

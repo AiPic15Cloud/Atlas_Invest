@@ -9,6 +9,8 @@ import type {
   CreatePersonalAccessTokenResponse,
   ExpenseCategory,
   HouseholdCurrency,
+  LoginLogEntry,
+  LoginLogsResponse,
   PersonalAccessTokenSummary,
   PersonalAccessTokensResponse,
   TwoFactorSetupResponse,
@@ -76,6 +78,8 @@ export function Settings() {
   const [tokenError, setTokenError] = useState<string | null>(null);
   const [justCreatedToken, setJustCreatedToken] = useState<string | null>(null);
 
+  const [loginLogs, setLoginLogs] = useState<LoginLogEntry[] | null>(null);
+
   async function loadTwoFactorStatus() {
     try {
       const res = await apiFetch<TwoFactorStatus>("/api/2fa/status");
@@ -85,10 +89,16 @@ export function Settings() {
     }
   }
 
+  async function loadLoginLogs() {
+    const res = await apiFetch<LoginLogsResponse>("/api/login-logs");
+    setLoginLogs(res.logs);
+  }
+
   useEffect(() => {
     loadTwoFactorStatus();
     loadAccounts();
     loadTokens();
+    loadLoginLogs();
   }, []);
 
   async function loadAccounts() {
@@ -420,6 +430,39 @@ export function Settings() {
           >
             Activer la double authentification
           </button>
+        )}
+      </section>
+
+      <section className="card">
+        <h2 className="font-semibold">Connexions récentes</h2>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+          Les 20 dernières tentatives de connexion sur ce compte, réussies ou non — pour repérer une connexion que tu
+          ne reconnais pas.
+        </p>
+
+        {loginLogs === null ? (
+          <p className="mt-3 text-sm text-slate-500">Chargement…</p>
+        ) : loginLogs.length === 0 ? (
+          <p className="mt-3 text-sm text-slate-500">Aucune tentative enregistrée pour l'instant.</p>
+        ) : (
+          <ul className="mt-3 divide-y divide-slate-200 dark:divide-slate-700">
+            {loginLogs.map((log) => (
+              <li key={log.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                <div>
+                  <span className={log.success ? "text-emerald-700 dark:text-emerald-400" : "text-red-600"}>
+                    {log.success ? "✓ Connexion réussie" : "✗ Échec de connexion"}
+                  </span>
+                  <span className="ml-2 text-slate-500">
+                    {new Date(log.createdAt).toLocaleString("fr-FR", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })}
+                  </span>
+                </div>
+                {log.ipAddress && <span className="shrink-0 text-xs text-slate-400">{log.ipAddress}</span>}
+              </li>
+            ))}
+          </ul>
         )}
       </section>
 

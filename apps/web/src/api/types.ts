@@ -915,6 +915,20 @@ export interface CreatePersonalAccessTokenResponse extends PersonalAccessTokenSu
   token: string;
 }
 
+// Journal de connexion (section 70) : les tentatives de connexion (reussies
+// ou non) sur ce compte, les plus recentes d'abord.
+export interface LoginLogEntry {
+  id: string;
+  success: boolean;
+  ipAddress: string | null;
+  userAgent: string | null;
+  createdAt: string;
+}
+
+export interface LoginLogsResponse {
+  logs: LoginLogEntry[];
+}
+
 export interface DashboardResponse {
   year: number;
   fiscalYearStartMonth: number;

@@ -6,6 +6,7 @@ import { signAuthToken, signTwoFactorPendingToken, verifyTwoFactorPendingToken }
 import { toPublicUser } from "../utils/serialize.js";
 import { verifyTotpCode, compareBackupCode } from "../utils/twoFactor.js";
 import { loginRateLimiter, registerRateLimiter } from "../middleware/rateLimit.js";
+import { recordLoginAttempt } from "../utils/loginLog.js";
 
 export const authRouter = Router();
 
@@ -53,16 +54,23 @@ authRouter.post("/login", loginRateLimiter, async (req, res) => {
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
+    await recordLoginAttempt({ email, success: false, userId: user?.id, req });
     res.status(401).json({ error: "Email ou mot de passe incorrect." });
     return;
   }
 
   if (user.twoFactorEnabled) {
+    // Mot de passe correct mais authentification pas encore terminee : la
+    // tentative sera journalisee a l'issue de /2fa-login (succes ou echec
+    // du code), pas ici, pour ne jamais compter un identifiant/mot de passe
+    // valide comme une connexion reussie tant que le 2e facteur n'est pas
+    // verifie.
     const pendingToken = signTwoFactorPendingToken({ userId: user.id });
     res.json({ requiresTwoFactor: true, pendingToken });
     return;
   }
 
+  await recordLoginAttempt({ email, success: true, userId: user.id, req });
   const token = signAuthToken({ userId: user.id });
   res.json({ token, user: toPublicUser(user) });
 });
@@ -107,10 +115,12 @@ authRouter.post("/2fa-login", loginRateLimiter, async (req, res) => {
   }
 
   if (!valid) {
+    await recordLoginAttempt({ email: user.email, success: false, userId: user.id, req });
     res.status(401).json({ error: "Code de vérification incorrect." });
     return;
   }
 
+  await recordLoginAttempt({ email: user.email, success: true, userId: user.id, req });
   const token = signAuthToken({ userId: user.id });
   res.json({ token, user: toPublicUser(user) });
 });
