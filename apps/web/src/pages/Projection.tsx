@@ -6,6 +6,8 @@ import type {
   DashboardResponse,
   DecisionCost,
   DecisionCostsResponse,
+  FinancingOfferSummary,
+  FinancingOffersResponse,
   FinancingSimulationWithEffortResponse,
   FinancingType,
   StressTestResponse,
@@ -130,6 +132,66 @@ export function Projection() {
   const [financingResult, setFinancingResult] = useState<FinancingSimulationWithEffortResponse | null>(null);
   const [financingError, setFinancingError] = useState<string | null>(null);
   const [financingLoading, setFinancingLoading] = useState(false);
+
+  const [offers, setOffers] = useState<FinancingOfferSummary[] | null>(null);
+  const [offerLabel, setOfferLabel] = useState("");
+  const [offerSaving, setOfferSaving] = useState(false);
+  const [offerError, setOfferError] = useState<string | null>(null);
+
+  async function loadOffers() {
+    try {
+      const res = await apiFetch<FinancingOffersResponse>("/api/financing-offers");
+      setOffers(res.offers);
+    } catch {
+      // silencieux : la comparaison bancaire est secondaire, ne bloque pas le simulateur.
+    }
+  }
+
+  async function handleSaveOffer() {
+    const amount = Number(financingAmount.replace(",", "."));
+    const durationMonths = Number(financingDuration);
+    if (!offerLabel.trim()) {
+      setOfferError("Donne un nom à cette offre (ex. « Banque A »).");
+      return;
+    }
+    if (!Number.isFinite(amount) || amount <= 0 || !Number.isFinite(durationMonths) || durationMonths <= 0) {
+      setOfferError("Renseigne d'abord le montant et la durée du simulateur ci-dessus.");
+      return;
+    }
+    setOfferSaving(true);
+    setOfferError(null);
+    try {
+      await apiFetch("/api/financing-offers", {
+        method: "POST",
+        body: JSON.stringify({
+          label: offerLabel.trim(),
+          type: financingType,
+          amount,
+          downPayment: Number(financingDownPayment.replace(",", ".")) || 0,
+          durationMonths,
+          interestRatePercent: financingRate.trim() === "" ? null : Number(financingRate.replace(",", ".")),
+          insuranceMonthly: financingInsurance.trim() === "" ? undefined : Number(financingInsurance.replace(",", ".")),
+          fees: financingFees.trim() === "" ? undefined : Number(financingFees.replace(",", ".")),
+        }),
+      });
+      setOfferLabel("");
+      await loadOffers();
+    } catch (err) {
+      setOfferError(err instanceof ApiError ? err.message : "Une erreur est survenue.");
+    } finally {
+      setOfferSaving(false);
+    }
+  }
+
+  async function handleDeleteOffer(id: string) {
+    if (!confirm("Supprimer cette offre de la comparaison ?")) return;
+    await apiFetch(`/api/financing-offers/${id}`, { method: "DELETE" });
+    await loadOffers();
+  }
+
+  useEffect(() => {
+    loadOffers();
+  }, []);
 
   async function handleSimulateFinancing() {
     const amount = Number(financingAmount.replace(",", "."));
@@ -559,9 +621,21 @@ export function Projection() {
             onChange={(e) => setFinancingFees(e.target.value)}
           />
         </div>
-        <button onClick={handleSimulateFinancing} disabled={financingLoading} className="mt-3 btn btn-primary">
-          {financingLoading ? "..." : "Simuler"}
-        </button>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button onClick={handleSimulateFinancing} disabled={financingLoading} className="btn btn-primary">
+            {financingLoading ? "..." : "Simuler"}
+          </button>
+          <input
+            className="input w-40"
+            placeholder="Nom (ex. Banque A)"
+            value={offerLabel}
+            onChange={(e) => setOfferLabel(e.target.value)}
+          />
+          <button onClick={handleSaveOffer} disabled={offerSaving} className="btn btn-outline">
+            {offerSaving ? "..." : "+ Ajouter à la comparaison"}
+          </button>
+        </div>
+        {offerError && <p className="mt-2 text-sm text-red-600">{offerError}</p>}
 
         {financingResult && (
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 text-sm text-slate-600 dark:text-slate-400">
@@ -638,6 +712,52 @@ export function Projection() {
           </div>
         )}
       </section>
+
+      {offers && offers.length > 0 && (
+        <section className="card">
+          <h2 className="font-semibold">Comparaison bancaire</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Chaque offre garde ses propres hypothèses (taux, durée, frais...). Simule ci-dessus, nomme l'offre, puis
+            ajoute-la à la comparaison.
+          </p>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-700">
+                  <th className="py-2 pr-3">Offre</th>
+                  <th className="py-2 pr-3">Taux</th>
+                  <th className="py-2 pr-3">Durée</th>
+                  <th className="py-2 pr-3">Mensualité</th>
+                  <th className="py-2 pr-3">TAEG</th>
+                  <th className="py-2 pr-3">Coût</th>
+                  <th className="py-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {offers.map((o) => (
+                  <tr key={o.id} className="border-b border-slate-100 last:border-0 dark:border-slate-800">
+                    <td className="py-2 pr-3 font-medium">{o.label}</td>
+                    <td className="py-2 pr-3">
+                      {o.interestRatePercent !== null ? `${o.interestRatePercent.toString().replace(".", ",")} %` : "—"}
+                    </td>
+                    <td className="py-2 pr-3">{o.durationMonths} mois</td>
+                    <td className="py-2 pr-3">{currency.format(o.monthlyPaymentWithInsurance)}</td>
+                    <td className="py-2 pr-3">
+                      {o.taeg !== null ? `${o.taeg.toFixed(2).replace(".", ",")} %` : "non disponible"}
+                    </td>
+                    <td className="py-2 pr-3">{currency.format(o.totalCost)}</td>
+                    <td className="py-2 text-right">
+                      <button onClick={() => handleDeleteOffer(o.id)} className="text-xs text-slate-400 hover:text-red-600">
+                        Retirer
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

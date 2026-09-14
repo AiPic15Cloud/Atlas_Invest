@@ -848,6 +848,26 @@ export interface RealDisposableIncomeResult {
   unavailableReason: string | null;
 }
 
+// Comparaison bancaire (section 49) : une offre nommee ("Banque A") garde
+// ses propres hypotheses ; les resultats sont recalcules cote serveur a
+// chaque lecture (jamais stockes), donc toujours coherents avec la formule
+// courante de simulateFinancing.
+export interface FinancingOfferSummary extends FinancingSimulationResponse {
+  id: string;
+  label: string;
+  amount: number;
+  downPayment: number;
+  durationMonths: number;
+  interestRatePercent: number | null;
+  insuranceMonthly: number | null;
+  fees: number | null;
+  createdAt: string;
+}
+
+export interface FinancingOffersResponse {
+  offers: FinancingOfferSummary[];
+}
+
 export interface FinancingSimulationWithEffortResponse extends FinancingSimulationResponse {
   monthlyIncome: number;
   existingMonthlyDebt: number;

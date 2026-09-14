@@ -630,6 +630,41 @@ et le revenu du mois affiché (3 200 €), tout en restant visible dans la
 liste brute des revenus (pour gestion) et dans le revenu de référence des
 stress tests (533,33 €/mois, inchangé) — nettoyage confirmé après coup.
 
+### x. Comparaison bancaire (section 49) — comblé par Lot 38
+
+Tentative initiale abandonnée : le sweep hebdomadaire (section 55) semblait
+un bon candidat suivant, mais `Expense` n'a qu'une granularité année/mois
+(pas de date précise) — impossible de savoir de façon fiable quelle
+dépense appartient à quelle semaine calendaire sans inventer une fausse
+précision à partir de `createdAt` (date de saisie dans l'app, pas date
+réelle de la dépense). Section 55 nécessite d'abord la section 65
+(« Dates » : date opération/comptable/débit), un chantier séparé plus
+large. Migration et fichiers de ce premier essai entièrement retirés avant
+de choisir la section 49 à la place.
+
+Nouveau modèle `FinancingOffer` : une offre nommée (« Banque A »,
+« Banque B »...) garde ses propres hypothèses (taux, durée, assurance,
+frais), exactement comme l'exige la spec (« Chaque offre conserve ses
+propres hypothèses »). Les résultats (mensualité, TAEG, coût total) ne
+sont jamais stockés : ils sont recalculés à la lecture par
+`simulateFinancing`, la même fonction pure que le simulateur ponctuel du
+Lot 30 — pour ne jamais diverger d'une formule corrigée plus tard (même
+doctrine que les projections de prêts, section 35). `interestRatePercent`/
+`insuranceMonthly`/`fees` sont nullable et distinguent « non renseigné »
+(garde-fou section 78, jamais de fausse précision) de « explicitement
+zéro », exactement comme le simulateur d'origine.
+
+Routes `GET/POST /api/financing-offers` et `DELETE /api/financing-offers/:id`.
+Frontend (`Projection.tsx`) : à côté du simulateur existant, un champ nom +
+bouton « Ajouter à la comparaison » qui sauvegarde la simulation en cours,
+puis un tableau (Offre/Taux/Durée/Mensualité/TAEG/Coût) reprenant le format
+exact de la spec.
+
+Vérifié en local : une offre avec taux connu (3,5 %) et une offre sans taux
+(TAEG explicitement « non disponible », jamais un chiffre inventé) créées
+côte à côte, chacune affichant ses propres résultats indépendamment —
+nettoyage confirmé après coup.
+
 ## 3. Vérification du garde-fou « jamais compter un transfert deux fois »
 
 Vérifié dans `apps/api/src/routes/transfers.ts` et le schéma : un virement

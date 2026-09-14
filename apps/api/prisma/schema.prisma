@@ -119,6 +119,7 @@ model User {
   savedEuroEvents        SavedEuroEvent[]
   wealthSnapshots        WealthSnapshot[]
   decisionCosts          DecisionCost[]
+  financingOffers        FinancingOffer[]
 }
 
 // Cout complet d'une decision (section 61) : additionne tous les composants
@@ -147,6 +148,41 @@ model DecisionCostItem {
   decisionCostId String
 
   @@index([decisionCostId])
+}
+
+enum FinancingType {
+  IMMOBILIER
+  CONSOMMATION
+  VOITURE
+  TRAVAUX
+  AUTRE
+}
+
+// Comparaison bancaire (section 49) : une offre nommee ("Banque A") garde
+// ses propres hypotheses (taux, duree, frais...) independamment des autres,
+// pour comparer plusieurs propositions reelles cote a cote. Les resultats
+// (mensualite, TAEG, cout total) ne sont jamais stockes : ils sont
+// recalcules a la lecture par simulateFinancing (meme fonction pure que le
+// simulateur ponctuel du Lot 30), pour ne jamais divorcer d'une formule
+// corrigee plus tard. interestRatePercent/insuranceMonthly/fees nullable :
+// distingue "non renseigne" (garde-fou section 78, jamais de fausse
+// precision) de "explicitement zero".
+model FinancingOffer {
+  id                  String        @id @default(cuid())
+  label               String
+  type                FinancingType
+  amount              Decimal       @db.Decimal(12, 2)
+  downPayment         Decimal       @default(0) @db.Decimal(12, 2)
+  durationMonths      Int
+  interestRatePercent Decimal?      @db.Decimal(6, 3)
+  insuranceMonthly    Decimal?      @db.Decimal(12, 2)
+  fees                Decimal?      @db.Decimal(12, 2)
+  createdAt           DateTime      @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@index([userId])
 }
 
 model BankAccount {
