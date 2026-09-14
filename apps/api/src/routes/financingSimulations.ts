@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
-import { listAccessibleAccounts } from "../utils/accountAccess.js";
+import { listAccessibleAccounts, excludeProfessionalAccounts } from "../utils/accountAccess.js";
 import { simulateFinancing } from "../utils/financingSimulator.js";
 import { computeEffortRate } from "../utils/effortRate.js";
 import { computeRealDisposableIncome } from "../utils/realDisposableIncome.js";
@@ -72,6 +72,7 @@ financingSimulationsRouter.post("/effort-rate", async (req, res) => {
   const now = new Date();
   const accounts = await listAccessibleAccounts(req.userId!);
   const accountIds = accounts.map((a) => a.id);
+  const incomeAccountIds = excludeProfessionalAccounts(accounts).map((a) => a.id);
 
   const months = Array.from({ length: 12 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
@@ -83,7 +84,7 @@ financingSimulationsRouter.post("/effort-rate", async (req, res) => {
     loansFor(req.userId!),
     prisma.income.findMany({
       where: {
-        bankAccountId: { in: accountIds },
+        bankAccountId: { in: incomeAccountIds },
         year: now.getFullYear(),
         month: now.getMonth() + 1,
         nature: "RECURRENT",

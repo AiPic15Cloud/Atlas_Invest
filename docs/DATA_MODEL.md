@@ -582,6 +582,54 @@ par défaut et la note « Ajouté via raccourci » ; jeton JWT rejeté sur
 `/api/quick-expense` (401) ; jeton personnel rejeté sur `/api/expenses`
 (401) ; après révocation, `/api/quick-expense` renvoie 401 immédiatement.
 
+### w. Revenu professionnel exclu du revenu du foyer (section 63) — comblé par Lot 37
+
+La spec section 63 est explicite : « Un compte professionnel ne doit pas
+automatiquement entrer dans le revenu du foyer. » Le type de compte `PRO`
+existait déjà depuis les tout premiers lots (choix à la création d'un
+compte bancaire) mais n'était traité nulle part différemment d'un compte
+courant — tout revenu logué dessus se retrouvait mélangé au revenu
+personnel/du foyer dans chaque calcul qui en dépend.
+
+Nouvelle fonction pure `excludeProfessionalAccounts` (testée) : filtre les
+comptes de type `PRO` d'une liste de `BankAccount`. Appliquée uniquement
+aux agrégats de **revenu** du foyer — jamais aux dépenses ni au solde
+(`currentBalance`/« argent réellement disponible », qui ne dérive pas des
+`Income` mais de `BankAccount.initialBalance`, donc hors périmètre de ce
+lot), qui restent suivis normalement sur un compte PRO comme sur n'importe
+quel autre. Un virement explicite du compte pro vers un compte
+personnel/joint (rémunération réellement disponible) crée un vrai `Income`
+sur le compte de destination et compte donc normalement — cohérent avec le
+garde-fou « jamais compter un transfert deux fois ».
+
+Points d'application : total et moyenne annuels du tableau de bord, revenu
+du mois affiché à côté du budget (`expenses.ts` `summary.totalIncome`),
+revenu de référence des stress tests, revenu de base des mois à risque,
+revenu utilisé par le taux d'effort et le reste à vivre réel, revenu
+récurrent du cockpit dette, records personnels/streak d'épargne (taux
+d'épargne dérivé du revenu), et parts du mode `PRORATA_REVENUS` de la
+répartition des charges (sinon un membre indépendant paierait une part
+disproportionnée calculée sur un chiffre d'affaires qui n'est pas sa
+rémunération réelle). Délibérément **non filtré** : les écrans de saisie
+et de consultation bruts des revenus (`incomes.ts` — liste, résumé annuel,
+revenus variables), où l'utilisateur doit continuer à voir/gérer tout ce
+qu'il a logué, y compris sur son compte pro ; et le rapprochement bancaire
+d'un compte (`bankAccounts.ts`), qui doit inclure le propre revenu du
+compte qu'il réconcilie.
+
+Volontairement hors périmètre (la spec le distingue explicitement comme
+un chantier séparé, section 63) : la distinction fine chiffre
+d'affaires/TVA/charges/rémunération réellement disponible à l'intérieur
+même d'un compte pro — ce lot ne fait que garantir que ce compte n'entre
+pas *automatiquement* dans le revenu du foyer, pas une comptabilité pro
+complète.
+
+Vérifié en local avec un compte PRO de test : un revenu de 5 000 €
+logué dessus laisse inchangés le total annuel du tableau de bord (6 400 €)
+et le revenu du mois affiché (3 200 €), tout en restant visible dans la
+liste brute des revenus (pour gestion) et dans le revenu de référence des
+stress tests (533,33 €/mois, inchangé) — nettoyage confirmé après coup.
+
 ## 3. Vérification du garde-fou « jamais compter un transfert deux fois »
 
 Vérifié dans `apps/api/src/routes/transfers.ts` et le schéma : un virement

@@ -5,7 +5,7 @@ import { requireAuth } from "../middleware/auth.js";
 import { applyLoanPayment, loanPaymentSplitIsValid } from "../utils/loanPayment.js";
 import { computeDebtCockpit, projectLoan } from "../utils/debtCockpit.js";
 import { simulateEarlyRepayment } from "../utils/earlyRepayment.js";
-import { listAccessibleAccounts } from "../utils/accountAccess.js";
+import { listAccessibleAccounts, excludeProfessionalAccounts } from "../utils/accountAccess.js";
 import type { Loan, LoanPayment } from "@prisma/client";
 
 export const loansRouter = Router();
@@ -79,13 +79,13 @@ loansRouter.get("/", async (req, res) => {
 loansRouter.get("/cockpit", async (req, res) => {
   const now = new Date();
   const accounts = await listAccessibleAccounts(req.userId!);
-  const accountIds = accounts.map((a) => a.id);
+  const incomeAccountIds = excludeProfessionalAccounts(accounts).map((a) => a.id);
 
   const [loans, incomes] = await Promise.all([
     loansFor(req.userId!),
     prisma.income.findMany({
       where: {
-        bankAccountId: { in: accountIds },
+        bankAccountId: { in: incomeAccountIds },
         year: now.getFullYear(),
         month: now.getMonth() + 1,
         nature: "RECURRENT",

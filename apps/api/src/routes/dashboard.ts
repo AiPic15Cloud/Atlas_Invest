@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
-import { listAccessibleAccounts } from "../utils/accountAccess.js";
+import { listAccessibleAccounts, excludeProfessionalAccounts } from "../utils/accountAccess.js";
 import { BUDGET_METHODS, computeBudgetBreakdown, type BudgetMethodKey } from "../constants/budgetMethods.js";
 import { computeAnnualTotals, computeMonthlyAverages } from "../utils/annualSummary.js";
 import { sumByCategory } from "../utils/expenseCategoryTotals.js";
@@ -41,9 +41,12 @@ dashboardRouter.get("/", async (req, res) => {
 
   const accounts = await listAccessibleAccounts(req.userId!);
   const accountIds = accounts.map((a) => a.id);
+  // Le revenu d'un compte PRO n'entre pas automatiquement dans le revenu du
+  // foyer (spec section 63) -- ses depenses/son solde restent suivis normalement.
+  const incomeAccountIds = excludeProfessionalAccounts(accounts).map((a) => a.id);
 
   const [incomes, expenses, template] = await Promise.all([
-    prisma.income.findMany({ where: { year: { in: years }, bankAccountId: { in: accountIds } }, select: { year: true, month: true, amount: true } }),
+    prisma.income.findMany({ where: { year: { in: years }, bankAccountId: { in: incomeAccountIds } }, select: { year: true, month: true, amount: true } }),
     prisma.expense.findMany({ where: { year: { in: years }, bankAccountId: { in: accountIds } }, select: { year: true, month: true, amount: true } }),
     prisma.budgetTemplate.findUnique({ where: { userId: req.userId! } }),
   ]);

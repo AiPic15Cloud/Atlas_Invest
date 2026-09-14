@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
+import { excludeProfessionalAccounts } from "../utils/accountAccess.js";
 
 export const householdSplitRouter = Router();
 
@@ -181,9 +182,14 @@ householdSplitRouter.get("/", async (req, res) => {
   const memberIncomes = await Promise.all(
     members.map(async (member) => {
       const accounts = await prisma.bankAccount.findMany({ where: { ownerId: member.id } });
-      const incomes = accounts.length
+      // Le chiffre d'affaires d'un compte pro n'entre pas dans le revenu
+      // servant a calculer les parts (section 63) : sinon un membre
+      // independant paierait une part disproportionnee de charges communes
+      // sur la base d'un revenu qui n'est pas sa remuneration reelle.
+      const incomeAccounts = excludeProfessionalAccounts(accounts);
+      const incomes = incomeAccounts.length
         ? await prisma.income.findMany({
-            where: { bankAccountId: { in: accounts.map((a) => a.id) }, year, month },
+            where: { bankAccountId: { in: incomeAccounts.map((a) => a.id) }, year, month },
             select: { amount: true },
           })
         : [];

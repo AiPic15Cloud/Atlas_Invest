@@ -33,3 +33,15 @@ export async function listAccessibleAccounts(userId: string): Promise<BankAccoun
     orderBy: { createdAt: "asc" },
   });
 }
+
+// Un compte professionnel ne doit jamais entrer automatiquement dans le
+// revenu du foyer (spec section 63) : son chiffre d'affaires n'est pas une
+// remuneration personnelle disponible tant qu'il n'a pas ete explicitement
+// vire vers un compte personnel/joint (ce virement, lui, cree un vrai
+// Income sur le compte de destination et compte normalement). Ne s'applique
+// qu'aux agregats de REVENU (tableau de bord, taux d'effort, mois a
+// risque...) -- pas aux depenses ni au solde, qui restent suivis
+// normalement sur un compte PRO comme sur n'importe quel autre compte.
+export function excludeProfessionalAccounts(accounts: BankAccount[]): BankAccount[] {
+  return accounts.filter((a) => a.type !== "PRO");
+}

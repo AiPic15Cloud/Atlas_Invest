@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
-import { listAccessibleAccounts } from "../utils/accountAccess.js";
+import { listAccessibleAccounts, excludeProfessionalAccounts } from "../utils/accountAccess.js";
 import { sumByCategory } from "../utils/expenseCategoryTotals.js";
 import { computeSavingsStreak } from "../utils/savingsStreak.js";
 import { computePersonalRecords } from "../utils/personalRecords.js";
@@ -26,10 +26,11 @@ function addMonths(year: number, month: number, delta: number) {
 recordsRouter.get("/", async (req, res) => {
   const accounts = await listAccessibleAccounts(req.userId!);
   const accountIds = accounts.map((a) => a.id);
+  const incomeAccountIds = excludeProfessionalAccounts(accounts).map((a) => a.id);
 
   const [incomes, expenses] = await Promise.all([
     prisma.income.findMany({
-      where: { bankAccountId: { in: accountIds } },
+      where: { bankAccountId: { in: incomeAccountIds } },
       select: { year: true, month: true, amount: true },
     }),
     prisma.expense.findMany({

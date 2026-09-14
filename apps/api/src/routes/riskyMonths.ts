@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
-import { listAccessibleAccounts } from "../utils/accountAccess.js";
+import { listAccessibleAccounts, excludeProfessionalAccounts } from "../utils/accountAccess.js";
 import { computeMonthlyProvision } from "../utils/provisions.js";
 import { computeRiskyMonths } from "../utils/riskyMonths.js";
 import type { AnticipatedExpense } from "@prisma/client";
@@ -77,11 +77,12 @@ riskyMonthsRouter.get("/", async (req, res) => {
   const now = new Date();
   const accounts = await listAccessibleAccounts(req.userId!);
   const accountIds = accounts.map((a) => a.id);
+  const incomeAccountIds = excludeProfessionalAccounts(accounts).map((a) => a.id);
 
   const [incomes, charges, provisions, anticipated] = await Promise.all([
     prisma.income.findMany({
       where: {
-        bankAccountId: { in: accountIds },
+        bankAccountId: { in: incomeAccountIds },
         year: now.getFullYear(),
         month: now.getMonth() + 1,
         nature: "RECURRENT",

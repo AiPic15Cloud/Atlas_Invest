@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
-import { listAccessibleAccounts } from "../utils/accountAccess.js";
+import { listAccessibleAccounts, excludeProfessionalAccounts } from "../utils/accountAccess.js";
 import { computeAnnualTotals, computeMonthlyAverages } from "../utils/annualSummary.js";
 import { simulateStressTest, type StressTestScenario } from "../utils/stressTest.js";
 
@@ -38,10 +38,11 @@ stressTestsRouter.post("/simulate", async (req, res) => {
 
   const accounts = await listAccessibleAccounts(req.userId!);
   const accountIds = accounts.map((a) => a.id);
+  const incomeAccountIds = excludeProfessionalAccounts(accounts).map((a) => a.id);
 
   const [incomes, expenses, emergencyFund] = await Promise.all([
     prisma.income.findMany({
-      where: { year: { in: years }, bankAccountId: { in: accountIds } },
+      where: { year: { in: years }, bankAccountId: { in: incomeAccountIds } },
       select: { year: true, month: true, amount: true },
     }),
     prisma.expense.findMany({

@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
-import { loadAccessibleAccount, listAccessibleAccounts } from "../utils/accountAccess.js";
+import { loadAccessibleAccount, listAccessibleAccounts, excludeProfessionalAccounts } from "../utils/accountAccess.js";
 import { shiftMonth } from "../utils/dateMath.js";
 import { buildItemTree, flattenLeafItems } from "../utils/budgetItemTree.js";
 import { computeBudgetBreakdown, type BudgetMethodKey } from "../constants/budgetMethods.js";
@@ -112,6 +112,7 @@ expensesRouter.get("/", async (req, res) => {
 
   const accounts = await listAccessibleAccounts(req.userId!);
   const accountIds = accounts.map((a) => a.id);
+  const incomeAccountIds = excludeProfessionalAccounts(accounts).map((a) => a.id);
 
   const [expenses, incomes, template, overrides] = await Promise.all([
     prisma.expense.findMany({
@@ -119,7 +120,7 @@ expensesRouter.get("/", async (req, res) => {
       include: { bankAccount: { select: { name: true } }, splits: true },
       orderBy: { createdAt: "asc" },
     }),
-    prisma.income.findMany({ where: { year, month, bankAccountId: { in: accountIds } }, select: { amount: true } }),
+    prisma.income.findMany({ where: { year, month, bankAccountId: { in: incomeAccountIds } }, select: { amount: true } }),
     prisma.budgetTemplate.findUnique({ where: { userId: req.userId! } }),
     prisma.monthlyBudgetOverride.findMany({ where: { userId: req.userId!, year, month } }),
   ]);
