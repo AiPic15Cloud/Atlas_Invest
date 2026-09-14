@@ -96,7 +96,7 @@ export interface AccountEnvelopesResponse {
   overAllocated: boolean;
 }
 
-export type IncomeNature = "RECURRENT" | "EXCEPTIONNEL" | "REMBOURSEMENT" | "AUTRE";
+export type IncomeNature = "RECURRENT" | "VARIABLE" | "EXCEPTIONNEL" | "REMBOURSEMENT" | "AUTRE";
 
 export interface Income {
   id: string;
@@ -121,6 +121,17 @@ export interface IncomeSummary {
   totalsByMonth: number[];
   nonRecurrentTotalByMonth: number[];
   byMonth: IncomeSummaryMonth[];
+}
+
+export interface VariableIncomeStat {
+  source: string;
+  average: number;
+  conservative: number;
+  observedMonths: number;
+}
+
+export interface VariableIncomeStatsResponse {
+  sources: VariableIncomeStat[];
 }
 
 export type BudgetMethodKey =

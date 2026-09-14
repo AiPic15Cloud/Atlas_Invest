@@ -3,13 +3,15 @@ import { z } from "zod";
 import { prisma } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
 import { loadAccessibleAccount, listAccessibleAccounts } from "../utils/accountAccess.js";
+import { normalizePosteKey } from "../constants/feelingRules.js";
+import { computeVariableIncomeStats } from "../utils/variableIncome.js";
 import type { Income } from "@prisma/client";
 
 export const incomesRouter = Router();
 
 incomesRouter.use(requireAuth);
 
-const INCOME_NATURES = ["RECURRENT", "EXCEPTIONNEL", "REMBOURSEMENT", "AUTRE"] as const;
+const INCOME_NATURES = ["RECURRENT", "VARIABLE", "EXCEPTIONNEL", "REMBOURSEMENT", "AUTRE"] as const;
 
 function serializeIncome(income: Income & { bankAccount: { name: string } }) {
   return {
@@ -96,6 +98,44 @@ incomesRouter.get("/summary", async (req, res) => {
   }
 
   res.json({ year: parsed.data.year, totalsByMonth, nonRecurrentTotalByMonth, byMonth });
+});
+
+// Revenus variables (section 62) : "revenu moyen" et "revenu prudent" par
+// source, sur une fenetre glissante de 12 mois -- jamais reinitialise au 1er
+// janvier comme le ferait un decoupage par annee calendaire, pour refleter
+// l'experience la plus recente d'un revenu par nature irregulier.
+incomesRouter.get("/variable-stats", async (req, res) => {
+  const accounts = await listAccessibleAccounts(req.userId!);
+  const accountIds = accounts.map((a) => a.id);
+
+  const now = new Date();
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
+    return { year: d.getFullYear(), month: d.getMonth() + 1 };
+  });
+  const years = [...new Set(months.map((m) => m.year))];
+
+  const incomes = await prisma.income.findMany({
+    where: { bankAccountId: { in: accountIds }, nature: "VARIABLE", year: { in: years } },
+    select: { year: true, month: true, source: true, amount: true },
+  });
+
+  const monthSet = new Set(months.map((m) => `${m.year}-${m.month}`));
+  const bySource = new Map<string, { source: string; amounts: number[] }>();
+  for (const income of incomes) {
+    if (!monthSet.has(`${income.year}-${income.month}`)) continue;
+    const key = normalizePosteKey(income.source);
+    const entry = bySource.get(key) ?? { source: income.source, amounts: [] };
+    entry.amounts.push(Number(income.amount));
+    entry.source = income.source;
+    bySource.set(key, entry);
+  }
+
+  const sources = [...bySource.values()]
+    .map((entry) => ({ source: entry.source, ...computeVariableIncomeStats(entry.amounts)! }))
+    .sort((a, b) => b.average - a.average);
+
+  res.json({ sources });
 });
 
 const createIncomeSchema = z.object({

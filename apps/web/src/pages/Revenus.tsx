@@ -3,7 +3,7 @@ import { apiFetch, ApiError } from "../api/client";
 import { IncomeForm, INCOME_NATURE_LABELS } from "../components/IncomeForm";
 import { useCurrencyFormatter } from "../lib/useCurrencyFormatter";
 import { IconTrendingUp } from "../components/icons";
-import type { BankAccountsResponse, Income, IncomeNature, IncomeSummary } from "../api/types";
+import type { BankAccountsResponse, Income, IncomeNature, IncomeSummary, VariableIncomeStatsResponse } from "../api/types";
 
 const MONTH_NAMES = [
   "Janvier",
@@ -37,6 +37,7 @@ export function Revenus() {
   const [incomes, setIncomes] = useState<Income[] | null>(null);
   const [summary, setSummary] = useState<IncomeSummary | null>(null);
   const [accounts, setAccounts] = useState<BankAccountsResponse | null>(null);
+  const [variableStats, setVariableStats] = useState<VariableIncomeStatsResponse | null>(null);
   const [showYear, setShowYear] = useState(false);
   const [adding, setAdding] = useState(false);
   const [copyOpen, setCopyOpen] = useState(false);
@@ -61,6 +62,11 @@ export function Revenus() {
     setAccounts(res);
   }
 
+  async function loadVariableStats() {
+    const res = await apiFetch<VariableIncomeStatsResponse>("/api/incomes/variable-stats");
+    setVariableStats(res);
+  }
+
   useEffect(() => {
     loadMonth();
     loadSummary();
@@ -69,6 +75,7 @@ export function Revenus() {
 
   useEffect(() => {
     loadAccounts();
+    loadVariableStats();
   }, []);
 
   const total = useMemo(() => (incomes ?? []).reduce((sum, i) => sum + Number(i.amount), 0), [incomes]);
@@ -86,13 +93,13 @@ export function Revenus() {
   async function handleAdd(data: { source: string; nature: IncomeNature; amount: number; bankAccountId: string }) {
     await apiFetch("/api/incomes", { method: "POST", body: JSON.stringify({ ...data, year, month }) });
     setAdding(false);
-    await Promise.all([loadMonth(), loadSummary()]);
+    await Promise.all([loadMonth(), loadSummary(), loadVariableStats()]);
   }
 
   async function handleDelete(id: string) {
     if (!confirm("Supprimer ce revenu ?")) return;
     await apiFetch(`/api/incomes/${id}`, { method: "DELETE" });
-    await Promise.all([loadMonth(), loadSummary()]);
+    await Promise.all([loadMonth(), loadSummary(), loadVariableStats()]);
   }
 
   if (error) {
@@ -224,6 +231,37 @@ export function Revenus() {
               </p>
             )}
           </section>
+
+          {variableStats && variableStats.sources.length > 0 && (
+            <section className="card">
+              <h2 className="font-semibold">Revenus variables — moyenne vs prudent (12 derniers mois)</h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Le revenu prudent est le minimum réellement observé sur la période, pas une estimation — pour
+                budgétiser une source de revenu irrégulière sans mauvaise surprise.
+              </p>
+              <ul className="mt-3 space-y-2">
+                {variableStats.sources.map((s) => (
+                  <li
+                    key={s.source}
+                    className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 py-2 last:border-0"
+                  >
+                    <div>
+                      <p className="text-sm font-medium">{s.source}</p>
+                      <p className="text-xs text-slate-500">{s.observedMonths} mois observé(s)</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm">
+                        Moyen <span className="font-semibold">{currency.format(s.average)}</span>
+                      </p>
+                      <p className="text-sm text-amber-700 dark:text-amber-400">
+                        Prudent <span className="font-semibold">{currency.format(s.conservative)}</span>
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </>
       )}
     </div>

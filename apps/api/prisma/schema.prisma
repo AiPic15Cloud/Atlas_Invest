@@ -212,6 +212,7 @@ model BalanceCheckpoint {
 
 enum IncomeNature {
   RECURRENT
+  VARIABLE
   EXCEPTIONNEL
   REMBOURSEMENT
   AUTRE

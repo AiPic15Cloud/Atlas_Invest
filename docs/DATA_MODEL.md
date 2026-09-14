@@ -497,6 +497,42 @@ page : `Export.tsx` a gardé la palette violette d'avant le re-skin
 purement visuel, sans impact sur les données, laissé pour un lot de
 polish séparé.
 
+### u. Revenus variables : revenu moyen et revenu prudent (section 62) — comblé par Lot 35
+
+La spec section 62 se contente d'inviter Atlas à calculer plus tard un
+« revenu moyen » et un « revenu prudent » pour une source de revenu
+irrégulière (freelance, commissions...), sans fournir d'exemple chiffré
+ni de méthode de calcul précise contrairement à d'autres sections — le
+calcul ci-dessous a donc été conçu dans les limites de la doctrine du
+projet plutôt que copié d'un exemple de la spec.
+
+Nouvelle nature de revenu `IncomeNature.VARIABLE`, distincte de
+`RECURRENT`/`EXCEPTIONNEL`/`REMBOURSEMENT`/`AUTRE` (migration
+`add_income_nature_variable`). Nouvelle route
+`GET /api/incomes/variable-stats` : regroupe les revenus `VARIABLE` du
+foyer par source normalisée (`normalizePosteKey`, déjà utilisé pour les
+règles de ressenti) sur une fenêtre glissante de 12 mois — jamais
+réinitialisée au 1er janvier comme le ferait un découpage par année
+civile, pour refléter l'expérience la plus récente d'une source
+irrégulière plutôt qu'un historique qui redevient vide chaque janvier.
+
+Pour chaque source : `average` (moyenne arithmétique) et `conservative`
+(le minimum réellement observé sur la fenêtre — jamais un percentile, un
+écart-type ou une autre extrapolation statistique qui inventerait une
+certitude que les données n'ont pas, garde-fou section 78 « jamais
+présenter une estimation comme une certitude »). Fonction pure testée
+(`computeVariableIncomeStats`), avec un test dédié qui vérifie
+explicitement que le revenu prudent reste le minimum littéral même sur
+une série à forte variance ([2000, 100, 2000, 2000, 2000] → prudent =
+100, pas un percentile lissé qui aurait masqué l'accident).
+
+Vérifié en saisissant deux revenus `VARIABLE` de test sur la même source
+(1 500 € et 800 €) : `average` = 1 150 €, `conservative` = 800 €,
+`observedMonths` = 2 — conforme au calcul attendu. Le frontend
+(`Revenus.tsx`) n'affiche la section que si au moins une source variable
+existe sur la fenêtre (`sources.length > 0`), pour ne jamais montrer un
+chiffre fabriqué en l'absence de données.
+
 ## 3. Vérification du garde-fou « jamais compter un transfert deux fois »
 
 Vérifié dans `apps/api/src/routes/transfers.ts` et le schéma : un virement

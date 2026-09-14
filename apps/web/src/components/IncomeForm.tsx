@@ -5,6 +5,7 @@ const COMMON_SOURCES = ["Salaire", "Freelance", "Dividendes", "Allocations", "Au
 
 export const INCOME_NATURE_LABELS: Record<IncomeNature, string> = {
   RECURRENT: "Récurrent",
+  VARIABLE: "Variable",
   EXCEPTIONNEL: "Exceptionnel",
   REMBOURSEMENT: "Remboursement",
   AUTRE: "Autre",
