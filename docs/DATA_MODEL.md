@@ -796,6 +796,64 @@ deux dans `GET /api/login-logs`, dans le bon ordre (plus récente en
 premier), avec le bon statut `success`/`ipAddress`. Capture d'écran de la
 section confirmée sur `Settings.tsx`.
 
+### z''. Export JSON de sauvegarde/reconstitution (section 71) — comblé par Lot 42
+
+La spec section 71 distingue explicitement le JSON des exports CSV/PDF déjà
+livrés : « Le JSON doit permettre une vraie sauvegarde/reconstitution des
+données ». Nouvelle route `GET /api/data-backup/json` qui sérialise
+l'intégralité des données que **cet utilisateur peut voir** en un seul
+fichier, avec `schemaVersion` et `exportedAt` pour dater/versionner le
+format.
+
+Scope retenu : les comptes bancaires accessibles à l'utilisateur (les
+siens + les comptes joints de son foyer, via `listAccessibleAccounts`, les
+mêmes règles que partout ailleurs dans l'API) déterminent les données
+rattachées à un compte (revenus, dépenses + splits/assignations,
+virements, échéances récurrentes, enveloppes, points de rapprochement).
+Les données propres à l'utilisateur (budget type, objectifs, patrimoine,
+prêts, abonnements, provisions, historique de correction...) sont
+filtrées par `userId`. Les données partagées par le foyer entier
+(`MonthlyGoal`, `MonthlyChallenge`) sont incluses si l'utilisateur a un
+foyer.
+
+**Exclusions volontaires, jamais exportées** : `passwordHash` et
+`twoFactorSecret` de `User` (repris uniquement les champs sûrs : id,
+email, prénom, date de création, réglage de partage) ; `TwoFactorBackupCode`
+(codes de secours — usage unique, aucun sens à sauvegarder) ; `LoginLog`
+(journal de sécurité, pas une donnée financière à restaurer) ; le
+`tokenHash` de `PersonalAccessToken` (seuls label/compte/poste/catégorie
+par défaut/dates sont repris — jamais le hash, qui resterait un secret
+même haché). Documenté explicitement dans le champ `note` du JSON généré,
+pas seulement dans ce fichier, pour que quiconque ouvre le fichier
+comprenne la limite sans avoir à lire le code.
+
+Nouvelle fonction pure `convertDecimals` (`apps/api/src/utils/jsonDecimal.ts`,
+testée) : parcourt récursivement l'objet et convertit chaque
+`Prisma.Decimal` en `number` **avant** `JSON.stringify` plutôt que via un
+replacer — découverte en testant que `Prisma.Decimal` expose son propre
+`toJSON()` (renvoie une chaîne), appelé par `JSON.stringify` avant qu'un
+replacer ne voie la valeur d'origine, ce qui aurait silencieusement laissé
+tous les montants en chaînes de caractères.
+
+**Hors scope explicite de ce lot** : la réimportation/restauration
+automatique du JSON. Réinjecter ces données toucherait l'intégrité
+référentielle de toutes les tables ci-dessus (déduplication, gestion des
+ID déjà existants, ordre d'insertion à cause des clés étrangères...) et
+mérite son propre lot avec ses propres garde-fous — ce fichier sert de
+sauvegarde de référence consultable/exploitable manuellement, pas encore
+d'un bouton "restaurer".
+
+Frontend (`Export.tsx`) : nouvelle section « Sauvegarde complète (JSON) »
+sous les exports CSV existants, un bouton qui appelle la route puis
+déclenche le téléchargement du fichier côté navigateur (`downloadJson`,
+même pattern que `downloadCsv`).
+
+Vérifié en local avec le compte de seed : la route exige l'authentification
+(401 sans jeton), renvoie les en-têtes `Content-Disposition`/`Content-Type`
+attendus, contient bien les 4 revenus et 10 dépenses attendus du foyer de
+seed avec des montants en nombres (pas en chaînes), et ne contient ni
+`passwordHash`, ni `twoFactorSecret`, ni `tokenHash`.
+
 ## 3. Vérification du garde-fou « jamais compter un transfert deux fois »
 
 Vérifié dans `apps/api/src/routes/transfers.ts` et le schéma : un virement

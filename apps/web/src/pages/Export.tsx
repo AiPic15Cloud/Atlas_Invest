@@ -25,6 +25,18 @@ const MONTH_LABELS = [
   "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
 ];
 
+function downloadJson(filename: string, data: unknown) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function downloadCsv(filename: string, rows: (string | number)[][]) {
   const csv = rows
     .map((row) =>
@@ -62,6 +74,8 @@ export function Export() {
   const [loans, setLoans] = useState<LoansResponse | null>(null);
   const [savedEuros, setSavedEuros] = useState<SavedEurosResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [backupBusy, setBackupBusy] = useState(false);
+  const [backupError, setBackupError] = useState<string | null>(null);
 
   async function load() {
     try {
@@ -219,6 +233,19 @@ export function Export() {
     downloadCsv(`rapport-annuel-${year}.csv`, rows);
   }
 
+  async function handleDownloadBackup() {
+    setBackupBusy(true);
+    setBackupError(null);
+    try {
+      const backup = await apiFetch<unknown>("/api/data-backup/json");
+      downloadJson(`atlas-invest-sauvegarde-${new Date().toISOString().slice(0, 10)}.json`, backup);
+    } catch (err) {
+      setBackupError(err instanceof ApiError ? err.message : "Impossible de générer la sauvegarde.");
+    } finally {
+      setBackupBusy(false);
+    }
+  }
+
   if (error) return <p className="text-sm text-red-600">{error}</p>;
 
   return (
@@ -312,6 +339,24 @@ export function Export() {
               className="mt-3 rounded-md bg-slate-100 dark:bg-slate-800 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
             >
               Télécharger le récapitulatif annuel (CSV)
+            </button>
+          </section>
+
+          <section className="card">
+            <h2 className="font-semibold">Sauvegarde complète (JSON)</h2>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+              Un fichier JSON avec toutes tes données (comptes, revenus, dépenses, budget type, prêts, patrimoine,
+              objectifs, abonnements...) — pour une vraie sauvegarde, indépendante d'Atlas Invest. Ne contient jamais
+              ton mot de passe, ton secret 2FA, tes codes de secours ni tes jetons d'accès personnels. La
+              réimportation automatique n'est pas encore possible : ce fichier sert de sauvegarde de référence.
+            </p>
+            {backupError && <p className="mt-2 text-sm text-red-600">{backupError}</p>}
+            <button
+              onClick={handleDownloadBackup}
+              disabled={backupBusy}
+              className="mt-3 rounded-md bg-slate-100 dark:bg-slate-800 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-60"
+            >
+              {backupBusy ? "Génération…" : "Télécharger la sauvegarde complète (JSON)"}
             </button>
           </section>
         </>

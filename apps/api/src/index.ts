@@ -35,6 +35,7 @@ import { personalTokensRouter } from "./routes/personalTokens.js";
 import { quickExpenseRouter } from "./routes/quickExpense.js";
 import { financingOffersRouter } from "./routes/financingOffers.js";
 import { loginLogsRouter } from "./routes/loginLogs.js";
+import { dataBackupRouter } from "./routes/dataBackup.js";
 
 const app = express();
 
@@ -84,6 +85,7 @@ app.use("/api/personal-tokens", personalTokensRouter);
 app.use("/api/quick-expense", quickExpenseRouter);
 app.use("/api/financing-offers", financingOffersRouter);
 app.use("/api/login-logs", loginLogsRouter);
+app.use("/api/data-backup", dataBackupRouter);
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);
